@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { LOCALES } from '@/lib/config';
-import { departmentName } from '@/lib/departments';
+import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 
@@ -54,7 +54,7 @@ export default function Account({ params }) {
               {me.id && <p className="muted" style={{ margin: '0 0 4px' }}>{t.accountId}: {me.id}</p>}
               <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone}{me.email ? ` · ${me.email}` : ''}</p>
               {me.location && (
-                <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {departmentName(me.location.department, params.locale)}</p>
+                <p className="muted" style={{ margin: '0 0 12px' }}>📍 {communeName(me.location.commune, params.locale)}, {departmentName(me.location.department, params.locale)}</p>
               )}
               {me.activated ? (
                 <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>

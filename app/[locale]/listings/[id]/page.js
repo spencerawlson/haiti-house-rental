@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { getListing, rentPeriodLabel } from '@/lib/listings';
+import { communeName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
 import VisitScheduler from '@/components/VisitScheduler';
@@ -17,10 +18,10 @@ export default function ListingDetail({ params }) {
         {l.photos?.length > 0 ? (
           <img src={l.photos[0]} alt="" style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block' }} />
         ) : (
-          <div className="house-art" style={{ borderRadius: 16, marginTop: 16, height: 200 }}>{l.commune}</div>
+          <div className="house-art" style={{ borderRadius: 16, marginTop: 16, height: 200 }}>{communeName(l.commune, params.locale)}</div>
         )}
         <h1 style={{ marginBottom: 4 }}>{l.title}</h1>
-        <p className="muted" style={{ marginTop: 0 }}>{l.commune} · {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</p>
+        <p className="muted" style={{ marginTop: 0 }}>{communeName(l.commune, params.locale)} · {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</p>
         {l.advertised && <p><span className="badge">📣 {t.advertised}</span></p>}
         <p className="price">{l.priceHTG.toLocaleString()} HTG {l.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{rentPeriodLabel(l.rentPeriod, t)}</span>}</p>
         <div className="card" style={{ marginTop: 16 }}>

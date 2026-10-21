@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
-import { DEPARTMENTS, departmentName } from '@/lib/departments';
+import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
 import { hashPassword } from '@/lib/account';
 import BackButton from '@/components/BackButton';
 
@@ -160,7 +160,7 @@ export default function Admin({ params }) {
             <div className="card-body">
               <h3 style={{ margin: '0 0 4px' }}>{a.id ? `${a.id} · ` : ''}{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? ` · 🤝 ${t.partner}` : ''}</h3>
               <p className="muted" style={{ margin: '0 0 4px' }}>
-                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${a.location.commune}, ${departmentName(a.location.department, params.locale)}` : ''}
+                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${communeName(a.location.commune, params.locale)}, ${departmentName(a.location.department, params.locale)}` : ''}
               </p>
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
@@ -208,7 +208,7 @@ export default function Admin({ params }) {
             <select className="input" value={partnerCommune} onChange={(e) => setPartnerCommune(e.target.value)} required>
               <option value=""></option>
               {(DEPARTMENTS.find((d) => d.id === partnerDepartment)?.communes || []).map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>{communeName(c, params.locale)}</option>
               ))}
             </select>
           </div>
@@ -271,7 +271,7 @@ export default function Admin({ params }) {
             <div className="card-body">
               <h3 style={{ margin: '0 0 4px' }}>{l.title}</h3>
               <p className="muted" style={{ margin: '0 0 8px' }}>
-                {l.commune} · {l.priceHTG.toLocaleString()} HTG
+                {communeName(l.commune, params.locale)} · {l.priceHTG.toLocaleString()} HTG
                 {l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}
                 {l.advertised && <> · <span className="badge">📣 {t.advertised}</span></>}
                 {l.advertisedRequested && !l.advertised && <> · <span className="badge">{t.advertisedRequestedBadge}</span></>}

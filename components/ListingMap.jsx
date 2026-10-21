@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { rentPeriodLabel } from '@/lib/listings';
+import { communeName } from '@/lib/departments';
 
 // Centris-style map view, powered by Leaflet + OpenStreetMap tiles
 // (free, no key). Listings without coordinates don't get a pin.
@@ -35,7 +36,7 @@ export default function ListingMap({ listings, locale, t, userLocation }) {
           .addTo(map)
           .bindPopup(
             `<strong>${l.priceHTG.toLocaleString()} HTG${l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}</strong><br/>` +
-            `<a href="/${locale}/listings/${l.id}">${l.title}</a><br/>${l.commune}`,
+            `<a href="/${locale}/listings/${l.id}">${l.title}</a><br/>${communeName(l.commune, locale)}`,
           );
       }
       if (points.length > 1) map.fitBounds(points, { padding: [30, 30] });

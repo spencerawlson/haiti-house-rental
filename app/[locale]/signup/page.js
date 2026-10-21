@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
-import { DEPARTMENTS, departmentName } from '@/lib/departments';
+import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
 import { ACTIVATION_FEE_HTG } from '@/lib/config';
 import { createAccount, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -172,7 +172,7 @@ export default function Signup({ params }) {
                 <select className="input" value={commune} onChange={(e) => setCommune(e.target.value)} required>
                   <option value="">{t.commune}</option>
                   {communes.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <option key={c} value={c}>{communeName(c, params.locale)}</option>
                   ))}
                 </select>
               </div>

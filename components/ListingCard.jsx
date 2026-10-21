@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import FavoriteButton from './FavoriteButton';
 import { rentPeriodLabel } from '@/lib/listings';
+import { communeName } from '@/lib/departments';
 
 export default function ListingCard({ listing, locale, t }) {
   return (
@@ -10,7 +11,7 @@ export default function ListingCard({ listing, locale, t }) {
         {listing.photos?.length > 0 ? (
           <img src={listing.photos[0]} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
         ) : (
-          <div className="house-art">{listing.commune}</div>
+          <div className="house-art">{communeName(listing.commune, locale)}</div>
         )}
         <div className="card-body">
           <p className="price" style={{ margin: '0 0 4px' }}>
@@ -19,7 +20,7 @@ export default function ListingCard({ listing, locale, t }) {
           {listing.advertised && <p style={{ margin: '0 0 4px' }}><span className="badge">📣 {t.advertised}</span></p>}
           <h3 style={{ margin: '0 0 4px' }}>{listing.title}</h3>
           <p className="muted" style={{ margin: 0 }}>
-            {listing.commune} · {listing.type === 'land'
+            {communeName(listing.commune, locale)} · {listing.type === 'land'
               ? (listing.areaM2 ? `${listing.areaM2.toLocaleString()} m²` : t.land)
               : `${listing.bedrooms} ${t.bedrooms} · ${listing.bathrooms} ${t.bathrooms}`}
             {listing.photos?.length > 0 && ` · ${listing.photos.length} 📷`}
