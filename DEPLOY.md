@@ -12,9 +12,9 @@
 ## 1. On FedServ — build and run
 
 ```sh
-cd /opt
-git clone https://github.com/spencerawlson/haiti-house-rental.git kayayiti
-cd kayayiti
+mkdir -p /opt/kayayiti && cd /opt/kayayiti
+git clone https://github.com/spencerawlson/haiti-house-rental.git
+cd haiti-house-rental
 export ADMIN_PASSWORD='a-strong-password-you-choose'
 docker compose up -d --build
 curl -s http://localhost:8097/ht | head -c 200
@@ -47,7 +47,7 @@ No A record is needed: the tunnel's CNAME is the DNS entry.
 ## Updating later
 
 ```sh
-cd /opt/kayayiti
+cd /opt/kayayiti/haiti-house-rental
 git pull
 docker compose up -d --build
 ```
