@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
-import { ACTIVATION_FEE_HTG, FEATURED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
+import { ACTIVATION_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS } from '@/lib/departments';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -23,7 +23,7 @@ export default function ListHome({ params }) {
   const [rentPeriod, setRentPeriod] = useState('monthly');
   const [homeType, setHomeType] = useState('house');
   const [areaM2, setAreaM2] = useState('');
-  const [featuredRequested, setFeaturedRequested] = useState(false);
+  const [advertisedRequested, setAdvertisedRequested] = useState(false);
   const [bedrooms, setBedrooms] = useState(2);
   const [bathrooms, setBathrooms] = useState(1);
   const [phone, setPhone] = useState('');
@@ -62,7 +62,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested, type: homeType, areaM2, owner: myUsername, rentPeriod }),
+        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, owner: myUsername, rentPeriod }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -84,7 +84,7 @@ export default function ListHome({ params }) {
         <li>{t.landlordStep3}</li>
       </ol>
       <p>{t.activationFee}: <strong>{ACTIVATION_FEE_HTG.toLocaleString()} HTG</strong></p>
-      <p className="muted">{t.featuredFee}: <strong>{FEATURED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
+      <p className="muted">{t.advertisedFee}: <strong>{ADVERTISED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
       {myUsername && <p>{t.postingAs} <strong>@{myUsername}</strong></p>}
       <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
@@ -163,7 +163,7 @@ export default function ListHome({ params }) {
           <input type="file" accept="video/*" multiple onChange={(e) => setVideoFiles([...e.target.files])} />
         </div>
         <label>
-          <input type="checkbox" checked={featuredRequested} onChange={(e) => setFeaturedRequested(e.target.checked)} /> {t.featureRequest}
+          <input type="checkbox" checked={advertisedRequested} onChange={(e) => setAdvertisedRequested(e.target.checked)} /> {t.advertiseRequest}
         </label>
         <button className="btn" type="submit">{t.publish}</button>
         {status && <p>{status}</p>}

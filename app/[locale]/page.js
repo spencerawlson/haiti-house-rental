@@ -22,8 +22,17 @@ export default function LocaleHome({ params }) {
             <Link className="btn btn-secondary" href={`/${params.locale}/list`}>＋ {t.postHome}</Link>
           </p>
         </section>
-        <h2>{t.department}</h2>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {LISTINGS.some((l) => l.advertised) && (
+          <>
+            <h2 style={{ marginTop: 36 }}>{t.advertisedSection}</h2>
+            <div className="carousel">
+              {LISTINGS.filter((l) => l.advertised).map((l) => (
+                <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
+              ))}
+            </div>
+          </>
+        )}
+        <h2>{t.department}</h2>        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {DEPARTMENTS.map((d) => (
             <Link key={d.id} className="chip" href={`/${params.locale}/listings?department=${d.id}`}>{d.communes[0]}</Link>
           ))}

@@ -16,7 +16,7 @@ export default function ListingCard({ listing, locale, t }) {
           <p className="price" style={{ margin: '0 0 4px' }}>
             {listing.priceHTG.toLocaleString()} HTG {listing.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{rentPeriodLabel(listing.rentPeriod, t)}</span>}
           </p>
-          {listing.featured && <p style={{ margin: '0 0 4px' }}><span className="badge">★ {t.featured}</span></p>}
+          {listing.advertised && <p style={{ margin: '0 0 4px' }}><span className="badge">📣 {t.advertised}</span></p>}
           <h3 style={{ margin: '0 0 4px' }}>{listing.title}</h3>
           <p className="muted" style={{ margin: 0 }}>
             {listing.commune} · {listing.type === 'land'

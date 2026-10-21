@@ -34,7 +34,7 @@ container `kayayiti-web` on FedServ host port 8097.
 - **Two-sided marketplace:** landlords list homes; tenants search and find
   homes. Tenants browse free.
 - **Landlord fees (decided 2026-10-21):** account activation (one-time,
-  MonCash/NatCash) **500 HTG**; featured placement **75 HTG/month**,
+  MonCash/NatCash) **500 HTG**; advertising **75 HTG/month**,
   admin-approved. Activation is manual: the user transfers from the phone
   number on their account to the admin-set MonCash (Digicel) / NatCash
   (Natcom) destination number, and the admin activates.
@@ -93,13 +93,24 @@ container `kayayiti-web` on FedServ host port 8097.
 ## Pricing (decided 2026-10-21)
 
 - Account activation (one-time, MonCash/NatCash): **500 HTG**.
-- Featured placement (house shown first, rent or sale): **75 HTG/month**.
-- Admin-handled: nothing money-related is automatic. A landlord's featured
-  checkbox is only a REQUEST; the admin approves it on the Admin page
-  (`/[locale]/admin`), and only approved homes get the badge and sort first.
-  Same for activation: the landlord pays, the admin activates the account.
-  Payment collection and account approvals are still manual — the app records
-  the prices and the requests, it does not move money yet.
+- Advertising (rent or sale): **75 HTG/month**. This buys VISIBILITY, not
+  rank: the home appears in the advertised carousel on the home page, with
+  its price, where people see it without typing anything. Search order stays
+  fair for everyone — every advertiser pays the same price, so no home can
+  be "first" (corrected 2026-10-21: the old "put my house first" wording was
+  unfair and is gone, from the copy and from the sort).
+- Admin-handled: nothing money-related is automatic. A landlord's
+  advertising checkbox is only a REQUEST; the admin approves it on the Admin
+  page (`/[locale]/admin`), and only approved homes get the 📣 badge and the
+  carousel slot. Same for activation: the landlord pays, the admin
+  activates the account. Payment collection and account approvals are still
+  manual — the app records the prices and the requests, it does not move
+  money yet.
+- Admin revenue ledger: every landlord activation logs **500 HTG** (once per
+  account; tenant accounts are free and never counted). The Admin page shows
+  the running total, the activation roster, and a live HTG → USD / CAD
+  converter (rate from open.er-api.com, refreshed hourly; no rate is shown
+  if the fetch fails).
 - Listings are for rent OR for purchase (purpose field); sale prices show
   as a total, rent as HTG/month.
 - Property types: house, apartment, land. Land listings carry an area in

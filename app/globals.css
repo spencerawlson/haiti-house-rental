@@ -227,3 +227,17 @@ a:hover { text-decoration: underline; }
 .gallery img { width: 100%; max-width: 320px; height: 200px; object-fit: cover; border-radius: 12px; }
 
 .lang-picker { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* Advertised homes roster: a horizontal carousel on the home page, so
+   advertised homes are seen with their prices without typing anything. */
+.carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+}
+.carousel > * {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
