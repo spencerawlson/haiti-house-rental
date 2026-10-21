@@ -11,7 +11,7 @@ export default function ListingDetail({ params }) {
   if (!l) notFound();
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <Link href={`/${params.locale}/listings`}>← {t.back}</Link>
         {l.photos?.length > 0 ? (

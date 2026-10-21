@@ -27,7 +27,7 @@ export default function Listings({ params, searchParams }) {
   const mapHref = (() => { const p = new URLSearchParams(searchParams); p.set('view', 'map'); return `/${params.locale}/listings?${p.toString()}`; })();
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <h1>{t.browse}</h1>
         <form method="get" className="card" style={{ marginBottom: 20 }}>

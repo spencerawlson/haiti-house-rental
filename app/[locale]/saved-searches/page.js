@@ -44,7 +44,7 @@ export default function SavedSearches({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <h1>🔔 {t.savedSearches}</h1>
         {searches === null && <p>...</p>}

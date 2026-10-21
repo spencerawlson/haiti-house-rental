@@ -9,7 +9,7 @@ export default function LocaleHome({ params }) {
   const t = getDict(params.locale);
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <section className="hero">
           <h1>{t.tagline}</h1>
@@ -18,6 +18,9 @@ export default function LocaleHome({ params }) {
             <input className="input" name="q" placeholder={t.searchPlaceholder} style={{ flex: 1 }} />
             <button className="btn" type="submit">{t.browse}</button>
           </form>
+          <p style={{ marginTop: 16 }}>
+            <Link className="btn btn-secondary" href={`/${params.locale}/near-me`}>📍 {t.nearMe}</Link>
+          </p>
         </section>
         <h2>{t.department}</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

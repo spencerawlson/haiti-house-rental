@@ -62,7 +62,7 @@ export default function ListHome({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
       <Link href={`/${params.locale}`}>{t.back}</Link>
       <h1>{t.landlordTitle}</h1>

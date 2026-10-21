@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 
 // Centris-style map view, powered by Leaflet + OpenStreetMap tiles
 // (free, no key). Listings without coordinates don't get a pin.
-export default function ListingMap({ listings, locale, perMonth }) {
+export default function ListingMap({ listings, locale, perMonth, userLocation }) {
   const divRef = useRef(null);
   const mapRef = useRef(null);
 
@@ -21,6 +21,12 @@ export default function ListingMap({ listings, locale, perMonth }) {
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
       const points = [];
+      if (userLocation) {
+        points.push([userLocation.lat, userLocation.lng]);
+        L.circleMarker([userLocation.lat, userLocation.lng], {
+          radius: 10, color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.9,
+        }).addTo(map).bindPopup('📍');
+      }
       for (const l of listings) {
         if (typeof l.lat !== 'number' || typeof l.lng !== 'number') continue;
         points.push([l.lat, l.lng]);
@@ -56,7 +62,7 @@ export default function ListingMap({ listings, locale, perMonth }) {
         mapRef.current = null;
       }
     };
-  }, [listings, locale, perMonth]);
+  }, [listings, locale, perMonth, userLocation]);
 
   return <div ref={divRef} style={{ height: 480, width: '100%', borderRadius: 16, border: '1px solid #e7e2dc', zIndex: 0 }} />;
 }

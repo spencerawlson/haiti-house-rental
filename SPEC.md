@@ -70,6 +70,10 @@
   the Alerts page re-runs each saved search against live listings and flags
   listings created after the search was saved as new. Email/push alerts need
   accounts — that's the upgrade path, not a missing piece of the pattern.
+- Near me: one tap on "Toupre m" asks the phone for location permission,
+  then lists homes nearest-first by real Haversine distance, with a radius
+  filter and a map centered on the visitor. No typing. Homes without
+  coordinates don't appear here (they still appear in list search).
 
 ## Photos and videos
 
