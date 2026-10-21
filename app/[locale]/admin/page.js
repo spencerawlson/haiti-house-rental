@@ -22,6 +22,7 @@ export default function Admin({ params }) {
   const [moncashNumber, setMoncashNumber] = useState('');
   const [natcashNumber, setNatcashNumber] = useState('');
   const [numbersSaved, setNumbersSaved] = useState(false);
+  const [presence, setPresence] = useState({ users: [], visitors: 0 });
   const [partnerName, setPartnerName] = useState('');
   const [partnerUsername, setPartnerUsername] = useState('');
   const [partnerPassword, setPartnerPassword] = useState('');
@@ -66,7 +67,18 @@ export default function Admin({ params }) {
     }
   }
 
-  useEffect(() => { load(); loadRates(false); }, []);
+  useEffect(() => {
+    load();
+    loadRates(false);
+    loadPresence();
+    const pid = setInterval(loadPresence, 30000);
+    return () => clearInterval(pid);
+  }, []);
+
+  async function loadPresence() {
+    const res = await fetch('/api/admin/presence');
+    if (res.ok) setPresence(await res.json());
+  }
 
   async function saveNumbers(e) {
     e.preventDefault();
@@ -134,6 +146,22 @@ export default function Admin({ params }) {
         <BackButton locale={params.locale} />
       <h1>{t.adminTitle}</h1>
       <p className="muted">{t.adminNote}</p>
+      <h2>{t.liveNow}</h2>
+      <p className="muted">{t.liveNowNote}</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <span className="chip">🟢 {presence.users.length} {t.liveUsers}</span>
+        <span className="chip">{presence.visitors} {t.visitorsBrowsing}</span>
+      </div>
+      <div className="grid">
+        {presence.users.map((u) => (
+          <section key={u.username} className="card">
+            <div className="card-body">
+              <p style={{ margin: 0 }}>🟢 <strong>{u.name || u.username}</strong> · @{u.username}{u.id ? ` · ${u.id}` : ''} · {u.secondsAgo}s</p>
+            </div>
+          </section>
+        ))}
+        {presence.users.length === 0 && <p className="muted">{t.noLiveUsers}</p>}
+      </div>
       <h2>{t.paymentNumbers}</h2>
       <form className="card" onSubmit={saveNumbers}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>

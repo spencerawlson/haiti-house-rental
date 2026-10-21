@@ -210,3 +210,11 @@ container `kayayiti-web` on FedServ host port 8097.
   /department to the known spelling on creation (unknown places pass through).
 - Landing page now has a sign-in button (top bar) — returning users had no
   way back in from the entry page.
+
+## Live presence (2026-10-21)
+- Every open page pings /api/presence once a minute (signed-in users by
+  username, others by an anonymous browser id). Admin Board "Live now"
+  shows users seen in the last 3 minutes (name, @username, account id) plus
+  a count of anonymous visitors browsing, refreshing every 30s. A closed
+  tab lingers up to 3 minutes; an idle open tab still counts. Approximate
+  by design — it is presence, not exact surveillance.
