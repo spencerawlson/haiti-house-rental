@@ -21,9 +21,13 @@ container `kayayiti-web` on FedServ host port 8097.
   carry a rent period; prices display it (e.g. "75,000 HTG pa mwa",
   "225,000 HTG chak 3 mwa"). Sale listings show no period.
 - Landing page: `/` is the entry before the full app — hero, language
-  switcher, search into the app, post-a-home and tenant doors, department
-  chips, how-it-works, MonCash/NatCash note. No tab bar on the landing;
-  the app lives behind it.
+  switcher, search into the app, department chips, how-it-works. No tab
+  bar on the landing; the app lives behind it. Who pays what is spelled
+  out per audience in two cards (never one shared line — that confused
+  landlords and tenants): tenants free, no fee, no activation; landlords
+  one-time 500 HTG activation via MonCash/NatCash. Bottom gallery: four
+  pale Haiti illustrations (mountains, beach, house, palms) in
+  `public/images/`.
 
 ## Decisions (from Spencer, 2026-10-21)
 
