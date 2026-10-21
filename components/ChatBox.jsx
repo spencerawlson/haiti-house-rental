@@ -37,24 +37,27 @@ export default function ChatBox({ listingId, strings }) {
   }
 
   return (
-    <section style={{ border: '1px solid #ccc', borderRadius: 8, padding: 16, marginTop: 32 }}>
-      <h2>{strings.chatTitle}</h2>
-      <div style={{ display: 'grid', gap: 8, marginBottom: 16 }}>
-        {messages.map((m) => (
-          <p key={m.id} style={{ textAlign: m.sender === 'tenant' ? 'right' : 'left', margin: 0 }}>
-            <strong>{m.sender === 'tenant' ? strings.youLabel : strings.ownerLabel}:</strong> {m.text}
-          </p>
-        ))}
+    <section className="card" style={{ marginTop: 28 }}>
+      <div className="card-body">
+        <h2 style={{ margin: '0 0 14px' }}>{strings.chatTitle}</h2>
+        <div className="chat-box" style={{ marginBottom: 16 }}>
+          {messages.map((m) => (
+            <p key={m.id} className={`bubble ${m.sender === 'tenant' ? 'bubble-tenant' : 'bubble-owner'}`}>
+              <strong>{m.sender === 'tenant' ? strings.youLabel : strings.ownerLabel}:</strong> {m.text}
+            </p>
+          ))}
+        </div>
+        <form onSubmit={send} style={{ display: 'flex', gap: 8 }}>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={strings.chatPlaceholder}
+            className="input"
+            style={{ flex: 1 }}
+          />
+          <button className="btn" type="submit">{strings.send}</button>
+        </form>
       </div>
-      <form onSubmit={send} style={{ display: 'flex', gap: 8 }}>
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={strings.chatPlaceholder}
-          style={{ flex: 1, padding: 8 }}
-        />
-        <button type="submit">{strings.send}</button>
-      </form>
     </section>
   );
 }

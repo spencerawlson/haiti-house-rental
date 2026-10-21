@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { LISTING_FEE_LABEL, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS } from '@/lib/departments';
+import Header from '@/components/Header';
 
 // Landlord posting form: details + house photos and videos.
 // v0: uploads go to /api/upload (server disk), then the listing is created
@@ -60,61 +61,68 @@ export default function ListHome({ params }) {
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: '0 auto', padding: 24 }}>
+    <>
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} />
+      <main className="container">
       <Link href={`/${params.locale}`}>{t.back}</Link>
       <h1>{t.landlordTitle}</h1>
-      <ol>
+      <ol className="muted">
         <li>{t.landlordStep1}</li>
         <li>{t.landlordStep2}</li>
         <li>{t.landlordStep3}</li>
       </ol>
       <p>{t.feeLabel}: <strong>{LISTING_FEE_LABEL}</strong> — {t.feeTbd}</p>
-      <form onSubmit={submit} style={{ display: 'grid', gap: 12, marginTop: 24 }}>
-        <label>{t.titleLabel}<br />
-          <input value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: '100%', padding: 8 }} />
-        </label>
-        <label>{t.department}<br />
-          <select value={department} onChange={(e) => setDepartment(e.target.value)} style={{ padding: 8 }}>
+      <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
+        <div className="card-body" style={{ display: 'grid', gap: 14 }}>
+        <div className="field"><label>{t.titleLabel}</label>
+          <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        </div>
+        <div className="field"><label>{t.department}</label>
+          <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
             {DEPARTMENTS.map((d) => (
               <option key={d.id} value={d.id}>{d.id}</option>
             ))}
           </select>
-        </label>
-        <label>{t.commune}<br />
-          <input value={commune} onChange={(e) => setCommune(e.target.value)} required style={{ width: '100%', padding: 8 }} />
-        </label>
-        <label>{t.priceLabel}<br />
-          <input type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required style={{ padding: 8 }} /> HTG {t.perMonth}
-        </label>
-        <label>{t.bedrooms}<br />
-          <input type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} style={{ padding: 8 }} />
-        </label>
-        <label>{t.bathrooms}<br />
-          <input type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} style={{ padding: 8 }} />
-        </label>
-        <label>{t.phoneLabel}<br />
-          <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+509 ____ ____" style={{ width: '100%', padding: 8 }} />
-        </label>
-        <p>{t.providerLabel}<br />
+        </div>
+        <div className="field"><label>{t.commune}</label>
+          <input className="input" value={commune} onChange={(e) => setCommune(e.target.value)} required />
+        </div>
+        <div className="field"><label>{t.priceLabel} (HTG {t.perMonth})</label>
+          <input className="input" type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="field"><label>{t.bedrooms}</label>
+          <input className="input" type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
+        </div>
+        <div className="field"><label>{t.bathrooms}</label>
+          <input className="input" type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
+        </div>
+        </div>
+        <div className="field"><label>{t.phoneLabel}</label>
+          <input className="input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+509 ____ ____" />
+        </div>
+        <p style={{ margin: 0 }}>{t.providerLabel}<br />
           {PAYMENT_PROVIDERS.map((p) => (
             <label key={p} style={{ marginRight: 16 }}>
               <input type="radio" name="provider" value={p} checked={provider === p} onChange={() => setProvider(p)} /> {p}
             </label>
           ))}
         </p>
-        <label>{t.photosLabel}<br />
+        <div className="field"><label>{t.photosLabel}</label>
           <input type="file" accept="image/*" multiple onChange={(e) => setPhotoFiles([...e.target.files])} />
-        </label>
-        <label>{t.videosLabel}<br />
+        </div>
+        <div className="field"><label>{t.videosLabel}</label>
           <input type="file" accept="video/*" multiple onChange={(e) => setVideoFiles([...e.target.files])} />
-        </label>
-        <button type="submit" style={{ padding: 12 }}>{t.publish}</button>
+        </div>
+        <button className="btn" type="submit">{t.publish}</button>
         {status && <p>{status}</p>}
         {createdId && (
           <p><Link href={`/${params.locale}/listings/${createdId}`}>{t.viewListing}</Link></p>
         )}
+        </div>
       </form>
-      <p style={{ marginTop: 24, color: '#666' }}>{t.activationNote}</p>
-    </main>
+      <p className="muted" style={{ marginTop: 24 }}>{t.activationNote}</p>
+      </main>
+    </>
   );
 }
