@@ -42,6 +42,16 @@
    account activation by verified payment, photo uploads, listing
    moderation, tenant accounts, in-app messaging.
 
+## Visits (appointments)
+
+- On every listing, under the chat: a signed-in tenant proposes a date +
+  time (+ optional message) to see the home. The listing owner confirms
+  or declines from the same listing page (the server checks the caller
+  is the owner). The appointment is shared in-app: both sides see it on
+  the listing and in Account → My visits, with its status (proposed /
+  confirmed / declined). No SMS/email notification yet — that arrives
+  with the backend notification phase.
+
 ## Chat (owner ↔ tenant)
 
 - Every listing page has a discussion box: a potential tenant writes, the

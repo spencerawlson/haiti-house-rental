@@ -16,11 +16,18 @@ export default function Account({ params }) {
   const [loaded, setLoaded] = useState(false);
   const [provider, setProvider] = useState('moncash');
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
+  const [visits, setVisits] = useState([]);
 
   useEffect(() => {
     getMyAccount().then((a) => {
       setMe(a);
       setLoaded(true);
+      if (a) {
+        fetch(`/api/visits?username=${encodeURIComponent(a.username)}`)
+          .then((r) => r.json())
+          .then((d) => setVisits(d.visits || []))
+          .catch(() => {});
+      }
     });
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
   }, []);
@@ -88,6 +95,20 @@ export default function Account({ params }) {
           <Link href={`/${params.locale}/list`} className="card" style={{ color: 'inherit' }}>
             <div className="card-body">＋ {t.postHome} <span style={{ float: 'right' }}>›</span></div>
           </Link>
+        </div>
+        <h2 style={{ marginTop: 32 }}>{t.myVisits}</h2>
+        {loaded && me && visits.length === 0 && <p className="muted">{t.noVisits}</p>}
+        <div className="grid">
+          {visits.map((v) => (
+            <Link key={v.id} href={`/${params.locale}/listings/${v.listingId}`} className="card" style={{ color: 'inherit' }}>
+              <div className="card-body">
+                <p style={{ margin: '0 0 4px' }}><strong>{v.listingTitle}</strong></p>
+                <p className="muted" style={{ margin: 0 }}>
+                  {v.date} · {v.time} — {v.status === 'confirmed' ? t.visitConfirmed : v.status === 'declined' ? t.visitDeclined : t.visitProposed}
+                </p>
+              </div>
+            </Link>
+          ))}
         </div>
         <h2 style={{ marginTop: 32 }}>{t.settings}</h2>
         <div className="card">

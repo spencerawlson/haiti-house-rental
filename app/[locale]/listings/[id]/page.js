@@ -4,6 +4,7 @@ import { getDict } from '@/lib/dictionaries';
 import { getListing } from '@/lib/listings';
 import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
+import VisitScheduler from '@/components/VisitScheduler';
 
 export default function ListingDetail({ params }) {
   const t = getDict(params.locale);
@@ -57,6 +58,7 @@ export default function ListingDetail({ params }) {
           <button className="btn" type="button">{t.contact}</button>
         </div>
         <ChatBox listingId={l.id} owner={l.owner} strings={t} />
+        <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
         <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
