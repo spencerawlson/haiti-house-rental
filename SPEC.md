@@ -25,7 +25,7 @@ container `kayayiti-web` on FedServ host port 8097.
   bar on the landing; the app lives behind it. Who pays what is spelled
   out per audience in two cards (never one shared line — that confused
   landlords and tenants): tenants free, no fee, no activation; landlords
-  one-time 500 HTG activation via MonCash/NatCash. Background carousel:
+  one-time 1000 HTG activation via MonCash/NatCash. Background carousel:
   four pale Haiti illustrations (mountains, beach, house, palms) in
   public/images play one after another behind the landing content
   (28s cycle, crossfading, pale white wash over them); all info boxes
@@ -53,7 +53,7 @@ container `kayayiti-web` on FedServ host port 8097.
 - **Two-sided marketplace:** landlords list homes; tenants search and find
   homes. Tenants browse free.
 - **Landlord fees (decided 2026-10-21):** account activation (one-time,
-  MonCash/NatCash) **500 HTG**; advertising **75 HTG/month**,
+  MonCash/NatCash) **1000 HTG**; advertising **75 HTG/month**,
   admin-approved. Activation is manual: the user transfers from the phone
   number on their account to the admin-set MonCash (Digicel) / NatCash
   (Natcom) destination number, and the admin activates.
@@ -111,7 +111,7 @@ container `kayayiti-web` on FedServ host port 8097.
 
 ## Pricing (decided 2026-10-21)
 
-- Account activation (one-time, MonCash/NatCash): **500 HTG**.
+- Account activation (one-time, MonCash/NatCash): **1000 HTG**.
 - Advertising (rent or sale): **75 HTG/month**. This buys VISIBILITY, not
   rank: the home appears in the advertised carousel on the home page, with
   its price, where people see it without typing anything. Search order stays
@@ -125,7 +125,7 @@ container `kayayiti-web` on FedServ host port 8097.
   activates the account. Payment collection and account approvals are still
   manual — the app records the prices and the requests, it does not move
   money yet.
-- Admin revenue ledger: every landlord activation logs **500 HTG** (once per
+- Admin revenue ledger: every landlord activation logs **1000 HTG** (once per
   account; tenant accounts are free and never counted). The Admin page shows
   the running total, the activation roster, and a live HTG → USD / CAD
   converter (rate from open.er-api.com, refreshed hourly; no rate is shown
@@ -142,7 +142,7 @@ container `kayayiti-web` on FedServ host port 8097.
   phone, email, then location (phone GPS with reverse-geocode, or manual
   department/commune pick). Passwords are SHA-256 hashed in the browser;
   the server stores only hashes, never passwords. Activation is manual:
-  the user sends 500 HTG by MonCash or NatCash from the phone number on
+  the user sends 1000 HTG by MonCash or NatCash from the phone number on
   their account, taps "I sent the transfer", and the admin matches the
   transfer to that number and activates the account from /admin. Server
   accounts with bcrypt, cross-device sign-in, and real payment verification

@@ -37,7 +37,7 @@ No A record is needed: the tunnel's CNAME is the DNS entry.
 
 ## 3. After launch — first checks
 
-1. Create a landlord account, send the 500 HTG test transfer, activate it
+1. Create a landlord account, send the 1000 HTG test transfer, activate it
    from the Admin Board (log in with `ADMIN_PASSWORD`).
 2. Set the MonCash (Digicel) and NatCash (Natcom) destination numbers on
    the Admin Board.

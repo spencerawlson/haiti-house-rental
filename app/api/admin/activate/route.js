@@ -3,7 +3,7 @@ import { logActivation } from '@/lib/revenue-server';
 
 // Admin activation: the admin matched the MonCash/NatCash transfer to the
 // phone number on the account and activates it. Activating a landlord
-// account logs 500 HTG of revenue (once per account, tenants excluded).
+// account logs 1000 HTG of revenue (once per account, tenants excluded).
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
   const account = setAccountActivated(data.username, data.activated);
