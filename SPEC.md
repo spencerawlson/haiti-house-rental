@@ -3,6 +3,19 @@
 Live domain (registered 2026-10-21, not yet pointed at a host):
 **kayayiti.app** (Cloudflare nameservers; no A record yet — deploy wires it up).
 
+- **Tenant accounts (free):** tenants create an account with full name,
+  username, password and phone number — just like landlords, except no
+  fee and no admin activation (active immediately). No Gmail login:
+  accounts are created in-app. Tenant landing page: `/[locale]/tenants`
+  (sign in or create). Sign-in page: `/[locale]/signin` (username +
+  password, hashed in the browser).
+- **Admin gate:** the Admin Board is password-gated. The password lives
+  only in the server env (`ADMIN_PASSWORD`); the cookie holds its hash.
+  Without the env var, the admin area stays closed. The full accounts
+  list is admin-only too.
+- **Deploy:** see `DEPLOY.md` — Docker on FedServ (port 8097) +
+  Cloudflare Tunnel for **kayayiti.app**.
+
 ## Decisions (from Spencer, 2026-10-21)
 
 - **Launch city:** Port-au-Prince first. **Coverage:** all 10 departments of Haiti

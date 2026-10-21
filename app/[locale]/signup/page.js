@@ -122,6 +122,9 @@ export default function Signup({ params }) {
     <>
       <main className="container">
         <h1>{t.createAccount}</h1>
+        <p>
+          <Link href={`/${params.locale}/tenants`}>{t.tenantLink}</Link>
+        </p>
         {step === 1 && (
           <form className="card" onSubmit={(e) => { e.preventDefault(); next(); }}>
             <div className="card-body" style={{ display: 'grid', gap: 14 }}>

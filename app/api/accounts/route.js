@@ -16,7 +16,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
-  if (!data.name || !data.username || !data.passwordHash || !data.phone || !data.email || !data.location?.commune) {
+  if (!data.name || !data.username || !data.passwordHash || !data.phone) {
     return Response.json({ error: 'Missing fields' }, { status: 400 });
   }
   const account = createServerAccount(data);

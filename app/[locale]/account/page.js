@@ -50,9 +50,11 @@ export default function Account({ params }) {
           <section className="card" style={{ marginBottom: 24 }}>
             <div className="card-body">
               <h2 style={{ margin: '0 0 8px' }}>{t.myProfile}</h2>
-              <p style={{ margin: '0 0 4px' }}><strong>{me.name}</strong> · @{me.username}</p>
-              <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone} · {me.email}</p>
-              <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {me.location.department}</p>
+              <p style={{ margin: '0 0 4px' }}><strong>{me.name}</strong> · @{me.username} · {me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
+              <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone}{me.email ? ` · ${me.email}` : ''}</p>
+              {me.location && (
+                <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {me.location.department}</p>
+              )}
               {me.activated ? (
                 <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>
               ) : me.transferSent ? (
@@ -77,8 +79,9 @@ export default function Account({ params }) {
           </section>
         )}
         {loaded && !me && (
-          <p>
+          <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link className="btn" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+            <Link className="btn btn-secondary" href={`/${params.locale}/signin`}>{t.signIn}</Link>
           </p>
         )}
         <h2>{t.myActivity}</h2>

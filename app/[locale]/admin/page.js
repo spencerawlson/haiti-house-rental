@@ -86,18 +86,18 @@ export default function Admin({ params }) {
         {accounts.map((a) => (
           <section key={a.username} className="card">
             <div className="card-body">
-              <h3 style={{ margin: '0 0 4px' }}>{a.name} · @{a.username}</h3>
+              <h3 style={{ margin: '0 0 4px' }}>{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}</h3>
               <p className="muted" style={{ margin: '0 0 4px' }}>
-                {a.phone} · {a.email} · {a.location.commune}, {a.location.department}
+                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${a.location.commune}, ${a.location.department}` : ''}
               </p>
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                {!a.activated && (
+                {a.role !== 'tenant' && !a.activated && (
                   <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
                 )}
-                {a.activated && (
+                {a.role !== 'tenant' && a.activated && (
                   <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
                 )}
               </div>

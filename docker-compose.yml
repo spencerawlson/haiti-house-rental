@@ -1,0 +1,16 @@
+services:
+  kayayiti:
+    build: .
+    container_name: kayayiti-web
+    restart: unless-stopped
+    ports:
+      - "8097:3000"
+    environment:
+      # Set a strong password before launch. Without it, the admin area
+      # stays closed (fail closed) and nobody can administer the app.
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    volumes:
+      - kayayiti-uploads:/app/public/uploads
+
+volumes:
+  kayayiti-uploads:
