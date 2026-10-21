@@ -16,7 +16,7 @@ export default function ListingMap({ listings, locale, perMonth }) {
       if (cancelled || !divRef.current) return;
       if (mapRef.current) mapRef.current.remove();
       const map = L.map(divRef.current).setView([18.7, -72.7], 8);
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer('/api/tiles/{z}/{x}/{y}', {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
