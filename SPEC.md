@@ -1,7 +1,9 @@
 # Haiti House Rental App — Product Spec (v0)
 
-Live domain (registered 2026-10-21, not yet pointed at a host):
-**kayayiti.app** (Cloudflare nameservers; no A record yet — deploy wires it up).
+Live domain (registered 2026-10-21, live the same day):
+**kayayiti.app** — served through the existing Cloudflare Tunnel
+"domainfolio" (hostname kayayiti.app → http://localhost:8097, Healthy),
+container `kayayiti-web` on FedServ host port 8097.
 
 - **Tenant accounts (free):** tenants create an account with full name,
   username, password and phone number — just like landlords, except no
