@@ -9,12 +9,18 @@ import { getDict } from '@/lib/dictionaries';
 export default function Admin({ params }) {
   const t = getDict(params.locale);
   const [listings, setListings] = useState([]);
+  const [accounts, setAccounts] = useState([]);
 
   async function load() {
     const res = await fetch('/api/listings');
     if (res.ok) {
       const data = await res.json();
       setListings(data.listings);
+    }
+    const ares = await fetch('/api/accounts');
+    if (ares.ok) {
+      const data = await ares.json();
+      setAccounts(data.accounts);
     }
   }
 
@@ -29,10 +35,46 @@ export default function Admin({ params }) {
     load();
   }
 
+  async function setActivated(username, activated) {
+    await fetch('/api/admin/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, activated }),
+    });
+    load();
+  }
+
   return (
     <main className="container">
       <h1>{t.adminTitle}</h1>
       <p className="muted">{t.adminNote}</p>
+      <h2>{t.accountsTitle}</h2>
+      <p className="muted">{t.accountsNote}</p>
+      <div className="grid">
+        {accounts.map((a) => (
+          <section key={a.username} className="card">
+            <div className="card-body">
+              <h3 style={{ margin: '0 0 4px' }}>{a.name} · @{a.username}</h3>
+              <p className="muted" style={{ margin: '0 0 4px' }}>
+                {a.phone} · {a.email} · {a.location.commune}, {a.location.department}
+              </p>
+              <p className="muted" style={{ margin: '0 0 8px' }}>
+                {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
+              </p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {!a.activated && (
+                  <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
+                )}
+                {a.activated && (
+                  <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
+                )}
+              </div>
+            </div>
+          </section>
+        ))}
+        {accounts.length === 0 && <p className="muted">{t.noAccounts}</p>}
+      </div>
+      <h2 style={{ marginTop: 32 }}>{t.featuredTitle || t.adminTitle}</h2>
       <div className="grid">
         {listings.map((l) => (
           <section key={l.id} className="card">

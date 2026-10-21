@@ -1,0 +1,22 @@
+import { createServerAccount, listServerAccounts, getServerAccount } from '@/lib/accounts-server';
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const username = searchParams.get('username');
+  if (username) {
+    const account = getServerAccount(username);
+    if (!account) return Response.json({ error: 'Not found' }, { status: 404 });
+    return Response.json({ account });
+  }
+  return Response.json({ accounts: listServerAccounts() });
+}
+
+export async function POST(request) {
+  const data = await request.json().catch(() => ({}));
+  if (!data.name || !data.username || !data.passwordHash || !data.phone || !data.email || !data.location?.commune) {
+    return Response.json({ error: 'Missing fields' }, { status: 400 });
+  }
+  const account = createServerAccount(data);
+  if (!account) return Response.json({ error: 'Username taken' }, { status: 409 });
+  return Response.json({ account });
+}

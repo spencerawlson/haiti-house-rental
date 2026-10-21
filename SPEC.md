@@ -67,6 +67,16 @@
   as a total, rent as HTG/month.
 - Property types: house, apartment, land. Land listings carry an area in
   m² instead of bedrooms/bathrooms, and landlords pick the type on the form.
+- Accounts (v0, server store): creation asks full name, username, password,
+  phone, email, then location (phone GPS with reverse-geocode, or manual
+  department/commune pick). Passwords are SHA-256 hashed in the browser;
+  the server stores only hashes, never passwords. Activation is manual:
+  the user sends 1000 HTG by MonCash or NatCash from the phone number on
+  their account, taps "I sent the transfer", and the admin matches the
+  transfer to that number and activates the account from /admin. Server
+  accounts with bcrypt, cross-device sign-in, and real payment verification
+  arrive with the backend. Store is in-memory for now (resets on restart),
+  like listings and chat.
 
 ## Search (Centris-style)
 

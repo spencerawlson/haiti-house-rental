@@ -1,17 +1,76 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { LOCALES } from '@/lib/config';
+import { getMyAccount, signOut, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 
-// Centris-style Account screen: only what exists today. Personal info and
-// sign-in arrive with accounts; no payment calculator — Haiti is a
+// Centris-style Account screen. With a local account, it shows the profile;
+// without one, it offers creation. No payment calculator — Haiti is a
 // no-mortgage market.
 export default function Account({ params }) {
   const t = getDict(params.locale);
+  const [me, setMe] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [provider, setProvider] = useState('moncash');
+
+  useEffect(() => {
+    getMyAccount().then((a) => {
+      setMe(a);
+      setLoaded(true);
+    });
+  }, []);
+
+  function logout() {
+    signOut();
+    setMe(null);
+  }
+
+  async function sentTransfer() {
+    const data = await markMyTransferSent(provider);
+    if (data?.account) setMe(data.account);
+  }
+
   return (
     <>
       <main className="container">
         <h1>{t.account}</h1>
+        {loaded && me && (
+          <section className="card" style={{ marginBottom: 24 }}>
+            <div className="card-body">
+              <h2 style={{ margin: '0 0 8px' }}>{t.myProfile}</h2>
+              <p style={{ margin: '0 0 4px' }}><strong>{me.name}</strong> · @{me.username}</p>
+              <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone} · {me.email}</p>
+              <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {me.location.department}</p>
+              {me.activated ? (
+                <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>
+              ) : me.transferSent ? (
+                <p>⏳ {t.waitingActivation} ({t.transferFrom} {me.phone} {t.viaProvider} {me.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'})</p>
+              ) : (
+                <div style={{ display: 'grid', gap: 10 }}>
+                  <p style={{ margin: 0 }}>{t.accountPending} {t.sendTransfer}</p>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <label>
+                      <input type="radio" checked={provider === 'moncash'} onChange={() => setProvider('moncash')} /> MonCash
+                    </label>
+                    <label>
+                      <input type="radio" checked={provider === 'natcash'} onChange={() => setProvider('natcash')} /> NatCash
+                    </label>
+                  </div>
+                  <button className="btn" type="button" onClick={sentTransfer} style={{ minHeight: 40, padding: '8px 16px' }}>{t.transferSent}</button>
+                </div>
+              )}
+              <button className="btn btn-secondary" type="button" onClick={logout} style={{ minHeight: 40, padding: '8px 16px', marginTop: 12 }}>{t.signOut}</button>
+            </div>
+          </section>
+        )}
+        {loaded && !me && (
+          <p>
+            <Link className="btn" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+          </p>
+        )}
         <h2>{t.myActivity}</h2>
         <div className="grid">
           <Link href={`/${params.locale}/saved-searches`} className="card" style={{ color: 'inherit' }}>
