@@ -4,6 +4,7 @@ import { LISTINGS } from '@/lib/listings';
 import { DEPARTMENTS } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
+import AdvertisedCarousel from '@/components/AdvertisedCarousel';
 
 export default function LocaleHome({ params }) {
   const t = getDict(params.locale);
@@ -25,11 +26,11 @@ export default function LocaleHome({ params }) {
         {LISTINGS.some((l) => l.advertised) && (
           <>
             <h2 style={{ marginTop: 36 }}>{t.advertisedSection}</h2>
-            <div className="carousel">
+            <AdvertisedCarousel>
               {LISTINGS.filter((l) => l.advertised).map((l) => (
                 <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
               ))}
-            </div>
+            </AdvertisedCarousel>
           </>
         )}
         <h2>{t.department}</h2>        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
