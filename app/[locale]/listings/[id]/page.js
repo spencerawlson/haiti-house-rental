@@ -15,6 +15,26 @@ export default function ListingDetail({ params }) {
       <p>{l.commune} — {l.type}</p>
       <p>{l.bedrooms} {t.bedrooms} · {l.bathrooms} {t.bathrooms}</p>
       <p><strong>{l.priceHTG.toLocaleString()} HTG {t.perMonth}</strong></p>
+      {l.photos?.length > 0 && (
+        <div>
+          <h2>{t.photosLabel}</h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+            {l.photos.map((src) => (
+              <img key={src} src={src} alt="" style={{ width: 260, height: 180, objectFit: 'cover', borderRadius: 8 }} />
+            ))}
+          </div>
+        </div>
+      )}
+      {l.videos?.length > 0 && (
+        <div>
+          <h2>{t.videosLabel}</h2>
+          <div style={{ display: 'grid', gap: 12 }}>
+            {l.videos.map((src) => (
+              <video key={src} src={src} controls style={{ width: '100%', maxWidth: 640, borderRadius: 8 }} />
+            ))}
+          </div>
+        </div>
+      )}
       <button type="button">{t.contact}</button>
       <ChatBox listingId={l.id} strings={t} />
       <p style={{ marginTop: 40, color: '#666' }}>{t.demoNote}</p>

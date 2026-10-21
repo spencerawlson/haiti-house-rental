@@ -53,6 +53,17 @@
   Production: Postgres threads + messages, auth for both sides, moderation
   and new-message notifications.
 
+## Photos and videos
+
+- Landlords attach house photos and videos on the posting form
+  (`/api/upload`, then `/api/listings`). Detail pages show a photo gallery
+  and video players.
+- Limits: images 10 MB, videos 100 MB, images and videos only.
+- Storage: server disk under `public/uploads/` (git-ignored). Works on a
+  persistent server; serverless hosting needs object storage (S3/R2/Spaces).
+- v0 limits: no moderation of uploads; posting does NOT yet enforce payment
+  activation (arrives with landlord accounts).
+
 ## Honest v0 limits
 
 - Listings in v0 are seed/demo data, not real homes.
