@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
+import { rentPeriodLabel } from '@/lib/listings';
 import { ACTIVATION_FEE_HTG, FEATURED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS } from '@/lib/departments';
 import { getSession } from '@/lib/account';
@@ -19,6 +20,7 @@ export default function ListHome({ params }) {
   const [commune, setCommune] = useState('');
   const [priceHTG, setPriceHTG] = useState('');
   const [purpose, setPurpose] = useState('rent');
+  const [rentPeriod, setRentPeriod] = useState('monthly');
   const [homeType, setHomeType] = useState('house');
   const [areaM2, setAreaM2] = useState('');
   const [featuredRequested, setFeaturedRequested] = useState(false);
@@ -60,7 +62,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested, type: homeType, areaM2, owner: myUsername }),
+        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested, type: homeType, areaM2, owner: myUsername, rentPeriod }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -118,9 +120,18 @@ export default function ListHome({ params }) {
         <div className="field"><label>{t.commune}</label>
           <input className="input" value={commune} onChange={(e) => setCommune(e.target.value)} required />
         </div>
-        <div className="field"><label>{t.priceLabel} (HTG{purpose === 'rent' ? ` ${t.perMonth}` : ''})</label>
+        <div className="field"><label>{t.priceLabel} (HTG{purpose === 'rent' ? ` ${rentPeriodLabel(rentPeriod, t)}` : ''})</label>
           <input className="input" type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required />
         </div>
+        {purpose === 'rent' && (
+          <p style={{ margin: 0 }}>{t.rentPeriod}<br />
+            {['monthly', 'quarterly', 'semiannual', 'annual'].map((p) => (
+              <label key={p} style={{ marginRight: 16 }}>
+                <input type="radio" name="rentperiod" value={p} checked={rentPeriod === p} onChange={() => setRentPeriod(p)} /> {rentPeriodLabel(p, t)}
+              </label>
+            ))}
+          </p>
+        )}
         {homeType === 'land' ? (
           <div className="field"><label>{t.areaM2}</label>
             <input className="input" type="number" value={areaM2} onChange={(e) => setAreaM2(e.target.value)} required />

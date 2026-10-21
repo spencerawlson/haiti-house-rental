@@ -117,7 +117,7 @@ export default function Account({ params }) {
         <div className="card">
           <div className="card-body">
             <p style={{ margin: '0 0 8px' }}>{t.language}</p>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {LOCALES.map((l) => (
                 <Link key={l} className={l === params.locale ? 'btn' : 'btn btn-secondary'} href={`/${l}/account`} style={{ minHeight: 40, padding: '8px 16px' }}>
                   {l === 'ht' ? 'Kreyòl' : l === 'fr' ? 'Français' : 'English'}

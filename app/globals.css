@@ -14,15 +14,39 @@
 
 * { box-sizing: border-box; }
 
+html { background: var(--bg); }
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  /* Blend of turquoise and off-white, off-white prevailing: a soft
-     turquoise wash at the top melting into the off-white base. */
-  background: linear-gradient(180deg, #bfeee6 0%, #faf8f5 38%);
-  background-attachment: fixed;
+  background: transparent;
   color: var(--ink);
   line-height: 1.5;
+}
+
+/* Lively Farelune-style sky: bright blue sky melting into turquoise
+   sea and warm off-white, with a sun glow and slow-drifting color
+   blobs behind the content. Cards stay white so text stays readable. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(520px 280px at 85% -5%, rgba(253, 224, 71, 0.35), transparent 70%),
+    radial-gradient(560px 420px at -10% 8%, rgba(125, 211, 252, 0.55), transparent 70%),
+    radial-gradient(720px 520px at 110% 28%, rgba(45, 212, 191, 0.45), transparent 70%),
+    linear-gradient(180deg, #bae6fd 0%, #a5f3fc 22%, #ecfeff 40%, #fffdf5 62%, #faf8f5 100%);
+  animation: sky-drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes sky-drift {
+  from { transform: translate3d(0, 0, 0) scale(1.02); }
+  to { transform: translate3d(0, -2%, 0) scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
 }
 
 a { color: var(--primary); text-decoration: none; }

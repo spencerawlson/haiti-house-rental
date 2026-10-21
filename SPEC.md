@@ -17,6 +17,13 @@ container `kayayiti-web` on FedServ host port 8097.
   list is admin-only too.
 - **Deploy:** see `DEPLOY.md` — Docker on FedServ (port 8097) +
   Cloudflare Tunnel for **kayayiti.app**.
+- Rent is paid monthly, quarterly, every six months, or yearly. Listings
+  carry a rent period; prices display it (e.g. "75,000 HTG pa mwa",
+  "225,000 HTG chak 3 mwa"). Sale listings show no period.
+- Landing page: `/` is the entry before the full app — hero, language
+  switcher, search into the app, post-a-home and tenant doors, department
+  chips, how-it-works, MonCash/NatCash note. No tab bar on the landing;
+  the app lives behind it.
 
 ## Decisions (from Spencer, 2026-10-21)
 

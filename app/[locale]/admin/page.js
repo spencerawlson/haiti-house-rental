@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
+import { rentPeriodLabel } from '@/lib/listings';
 
 // Admin: approve or remove featured placement. Nothing here is automatic —
 // a landlord's featured checkbox is only a request until the admin approves.
@@ -114,7 +115,7 @@ export default function Admin({ params }) {
               <h3 style={{ margin: '0 0 4px' }}>{l.title}</h3>
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {l.commune} · {l.priceHTG.toLocaleString()} HTG
-                {l.purpose === 'rent' ? ` ${t.perMonth}` : ''}
+                {l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}
                 {l.featured && <> · <span className="badge">★ {t.featured}</span></>}
                 {l.featuredRequested && !l.featured && <> · <span className="badge">{t.requestedBadge}</span></>}
               </p>

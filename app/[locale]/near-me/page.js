@@ -77,7 +77,7 @@ export default function NearMe({ params }) {
                 <option value="50">50 km</option>
               </select>
             </div>
-            <ListingMap listings={shown} locale={params.locale} perMonth={t.perMonth} userLocation={user} />
+            <ListingMap listings={shown} locale={params.locale} t={t} userLocation={user} />
             <p className="muted" style={{ marginTop: 16 }}>
               <strong>{shown.length}</strong> {t.resultsFound}
               {unplaced > 0 && <> · {t.unplacedNote}</>}

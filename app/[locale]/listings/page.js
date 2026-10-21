@@ -90,7 +90,7 @@ export default function Listings({ params, searchParams }) {
           <SaveSearchButton savedLabel={t.saveSearch} />
         </div>
         {view === 'map' ? (
-          <ListingMap listings={shown} locale={params.locale} perMonth={t.perMonth} />
+          <ListingMap listings={shown} locale={params.locale} t={t} />
         ) : (
           <div className="grid grid-2">
             {shown.map((l) => (
