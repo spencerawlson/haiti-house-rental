@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS } from '@/lib/departments';
 import { ACTIVATION_FEE_HTG } from '@/lib/config';
 import { createAccount, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import BackButton from '@/components/BackButton';
 
 // Account creation, in Spencer's order: identity first, then location.
 // Step 1: full name, username, password, phone, email.
@@ -121,6 +123,7 @@ export default function Signup({ params }) {
   return (
     <>
       <main className="container">
+        <BackButton locale={params.locale} />
         <h1>{t.createAccount}</h1>
         <p>
           <Link href={`/${params.locale}/tenants`}>{t.tenantLink}</Link>

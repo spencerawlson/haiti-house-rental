@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import TabBar from '@/components/TabBar';
+import BackButton from '@/components/BackButton';
 
 // Little landing page for tenants: sign in or create a free account.
 // No Gmail login — accounts are created here, with a username and a phone
@@ -10,6 +11,7 @@ export default function Tenants({ params }) {
   return (
     <>
       <main className="container">
+        <BackButton locale={params.locale} />
         <h1>{t.tenantLandingTitle}</h1>
         <p className="muted">{t.tenantLandingNote}</p>
         <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>

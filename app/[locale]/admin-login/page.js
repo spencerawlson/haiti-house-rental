@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import TabBar from '@/components/TabBar';
+import BackButton from '@/components/BackButton';
 
 // Admin login. The password is set in the server env (ADMIN_PASSWORD) and
 // is never in the code or the repo.
@@ -31,6 +32,7 @@ export default function AdminLogin({ params }) {
   return (
     <>
       <main className="container">
+        <BackButton locale={params.locale} />
         <h1>{t.adminLogin}</h1>
         <form className="card" onSubmit={submit}>
           <div className="card-body" style={{ display: 'grid', gap: 14 }}>

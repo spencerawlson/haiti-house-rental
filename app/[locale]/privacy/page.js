@@ -10,7 +10,7 @@ const TEXT = {
     intro: 'Kay Ayiti respekte vi prive w. Men sa aplikasyon an kenbe, ak poukisa.',
     items: [
       'Kont ou: non konplè, non itilizatè, nimewo telefòn, imèl (si ou bay li) ak kote ou ye. Sa pèmèt ou konekte, epi admin an ka matche transfè MonCash/NatCash ou a ak kont ou.',
-      'Kay ou mete yo: tit, pri, foto ak videyo ou telechaje yo. Yo vizib pou tout moun ki vizite sit la — pa mete enfòmasyon pèsonèl nan foto yo.',
+      'Kay ou mete yo: tit, pri, foto ak videyo ou televèse yo. Yo vizib pou tout moun ki vizite sit la — pa mete enfòmasyon pèsonèl nan foto yo.',
       'Mesaj chat ak vizit: mesaj ou echanje ak lòt itilizatè yo, ak randevou vizit ou pwopoze yo.',
       'Peman: Kay Ayiti pa janm mande nimewo kat labank. Aktivasyon ak piblisite peye pa transfè MonCash oswa NatCash, admin an verifye yo alamen.',
       'Limit vèsyon sa a: done yo kenbe nan memwa sèvè a pou kounye a — si sèvè a rekòmanse, done yo efase. Yon baz done pèmanan ap vini.',

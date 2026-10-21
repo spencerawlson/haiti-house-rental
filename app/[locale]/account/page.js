@@ -135,7 +135,6 @@ export default function Account({ params }) {
             </div>
           </div>
         </div>
-        <p className="muted" style={{ marginTop: 24 }}>{t.accountNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>

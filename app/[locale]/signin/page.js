@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { signIn } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import BackButton from '@/components/BackButton';
 
 // Sign-in for returning users, on any device. Username + password; the
 // password is hashed in the browser before it leaves the device.
@@ -30,6 +31,7 @@ export default function SignIn({ params }) {
   return (
     <>
       <main className="container">
+        <BackButton locale={params.locale} />
         <h1>{t.signIn}</h1>
         <p>
           <Link href={`/${params.locale}/tenants`}>{t.tenantLink}</Link>

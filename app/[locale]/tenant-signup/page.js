@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { createAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import BackButton from '@/components/BackButton';
 
 // Tenant account: username + phone number + password, just like a landlord
 // account — except free. No fee, no admin activation: active immediately.
@@ -54,6 +55,7 @@ export default function TenantSignup({ params }) {
   return (
     <>
       <main className="container">
+        <BackButton locale={params.locale} />
         <h1>{t.createTenantAccount}</h1>
         <p className="muted">{t.tenantFree}</p>
         <form className="card" onSubmit={submit}>

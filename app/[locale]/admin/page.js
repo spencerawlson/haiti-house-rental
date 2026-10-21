@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
+import BackButton from '@/components/BackButton';
 
 // Admin: approve or remove advertising, track activation revenue, and
 // convert it. Nothing here is automatic — a landlord's advertising
@@ -87,6 +88,7 @@ export default function Admin({ params }) {
 
   return (
     <main className="container">
+        <BackButton locale={params.locale} />
       <h1>{t.adminTitle}</h1>
       <p className="muted">{t.adminNote}</p>
       <h2>{t.paymentNumbers}</h2>
