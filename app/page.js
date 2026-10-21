@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS } from '@/lib/departments';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
+import LandingLangSwitch from '@/components/LandingLangSwitch';
 
 // Landing page: the entry before the full app. The top right stays clean —
 // no language links here. Language is chosen once, in Account → Settings,
@@ -26,7 +27,10 @@ export default function Landing() {
         <div className="landing-wash" />
       </div>
       <main className="container" style={{ position: 'relative', zIndex: 1 }}>
-        <p style={{ fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>Kay <span style={{ color: '#1d4ed8' }}>Ayiti</span></p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>Kay <span style={{ color: '#1d4ed8' }}>Ayiti</span></p>
+          <LandingLangSwitch current={lang} />
+        </div>
 
         <section className="hero">
           <h1>{t.landingHero}</h1>

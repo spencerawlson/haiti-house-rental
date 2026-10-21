@@ -31,7 +31,11 @@ container `kayayiti-web` on FedServ host port 8097.
   (28s cycle, crossfading, pale white wash over them); all info boxes
   sit on top. Language is chosen in Account -> Settings only (never
   on the landing top right); the choice is remembered in the
-  kay_locale cookie, which the landing reads (default Creole).
+  kay_locale cookie, which the landing reads (default Creole). On
+  desktop only, the landing top right shows the two NOT-selected
+  language codes (KR/FR/EN, space-separated, no backslash): KR picked
+  shows FR EN, FR picked shows KR EN, EN picked shows KR FR. Phones
+  show nothing on top.
 
 ## Decisions (from Spencer, 2026-10-21)
 

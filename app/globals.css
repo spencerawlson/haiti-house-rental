@@ -281,3 +281,18 @@ a:hover { text-decoration: underline; }
   .landing-bg img { animation: none; opacity: 0; }
   .landing-bg img:first-child { opacity: 1; }
 }
+
+/* Landing top language codes: hidden on phones, shown on computers. */
+.lang-switch-desktop { display: none; gap: 14px; }
+.lang-code {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 4px 2px;
+}
+@media (min-width: 768px) {
+  .lang-switch-desktop { display: flex; }
+}
