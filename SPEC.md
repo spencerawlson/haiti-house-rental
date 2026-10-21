@@ -254,3 +254,32 @@ container `kayayiti-web` on FedServ host port 8097.
   seed rows (exact -m1/-m2 ids, which real messages can never carry).
   The send box no longer clears the draft on failure — a failed send
   shows an error and keeps the text.
+
+## Chat notifications, takedown, edit, library, dark mode (2026-10-21)
+- Real chat notifications: every message records its author; a
+  per-user, per-thread read marker (chat_reads) tracks what each side
+  has seen. The Account tab shows a red unread count (30s refresh),
+  Account -> Messages lists each thread with its unread count and last
+  message, and opening a listing's chat marks its thread read. Delivery
+  itself is the existing 5s poll — near-instant in practice, no push or
+  SMS channel exists yet (no email/SMS infra on the app).
+- Takedown: the listing owner (from the detail page or Account -> My
+  listings) or the admin (Admin Board) can take a listing down. It is
+  hidden from home, search and detail pages, but the row and its chats
+  and visits stay in the database, so a takedown is reversible.
+- Edit: the owner can change every creation field (title, description,
+  place, price, rooms/area, purpose, rent period, photos/videos with
+  remove + add, advertising request) from the detail page or My
+  listings. A changed commune re-geocodes the map pin. Non-owners get a
+  notice, and the API enforces owner-or-admin on both edit and takedown.
+- Library: /[locale]/library lists every home a landlord ever posted,
+  live and taken down, newest first, with status badges and
+  View/Edit/Take down (live) or Put back online (taken down) actions.
+  Account -> My listings links to it.
+- Dark mode: light/dark theme via CSS variables ([data-theme="dark"]
+  overrides), a Light/Dark switch in Account -> Settings, and a
+  no-flash script in the root layout that applies the stored choice
+  (or the system preference when nothing is stored) before first paint.
+- Known v0 limit (same as the rest of the app): landlord actions trust
+  the username the browser reports for the signed-in user — there is no
+  server session yet. Hardening that is a separate step if wanted.

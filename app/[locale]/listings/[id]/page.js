@@ -6,6 +6,8 @@ import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
+import TakeDownButton from '@/components/TakeDownButton';
+import EditListingButton from '@/components/EditListingButton';
 import VisitScheduler from '@/components/VisitScheduler';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +15,15 @@ export const dynamic = 'force-dynamic';
 export default async function ListingDetail({ params }) {
   const t = getDict(params.locale);
   const l = await getListing(params.id);
-  if (!l) notFound();
+  if (!l || l.status !== 'active') notFound();
   return (
     <>
       <main className="container">
         <Link href={`/${params.locale}/listings`}>← {t.back}</Link>
+        <p style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+          <EditListingButton listingId={l.id} owner={l.owner} locale={params.locale} label={t.editListing} />
+          <TakeDownButton listingId={l.id} owner={l.owner} locale={params.locale} confirmText={t.takeDownConfirm} label={t.takeDown} />
+        </p>
         {l.photos?.length > 0 ? (
           <img src={l.photos[0]} alt="" style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block' }} />
         ) : (

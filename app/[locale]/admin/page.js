@@ -99,6 +99,16 @@ export default function Admin({ params }) {
     load();
   }
 
+  async function takeDown(id) {
+    if (!window.confirm(t.takeDownConfirm)) return;
+    await fetch('/api/listings/takedown', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    load();
+  }
+
   async function setActivated(username, activated) {
     await fetch('/api/admin/activate', {
       method: 'POST',
@@ -311,6 +321,7 @@ export default function Admin({ params }) {
                 {l.advertised && (
                   <button className="btn btn-secondary" type="button" onClick={() => set(l.id, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.removeAdvertised}</button>
                 )}
+                <button className="btn btn-secondary" type="button" onClick={() => takeDown(l.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
               </div>
             </div>
           </section>

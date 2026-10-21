@@ -9,8 +9,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  const { listingId, sender, text } = await request.json().catch(() => ({}));
-  const msg = await postMessage(listingId, sender, text);
+  const { listingId, sender, text, author } = await request.json().catch(() => ({}));
+  const msg = await postMessage(listingId, sender, text, author);
   if (!msg) return Response.json({ error: 'Invalid message' }, { status: 400 });
   return Response.json({ message: msg });
 }

@@ -22,6 +22,16 @@ export default function ChatBox({ listingId, owner, strings }) {
     if (res.ok) {
       const data = await res.json();
       setMessages(data.messages);
+      // Opening the chat marks the thread read for this user, so the
+      // unread badge clears once the messages have actually been seen.
+      const session = getSession();
+      if (session) {
+        fetch('/api/chat/read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ listingId, username: session.username }),
+        }).catch(() => {});
+      }
     }
   }, [listingId]);
 
@@ -36,10 +46,11 @@ export default function ChatBox({ listingId, owner, strings }) {
     const text = draft.trim();
     if (!text) return;
     setSendError(false);
+    const session = getSession();
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId, sender: isOwner ? 'owner' : 'tenant', text }),
+      body: JSON.stringify({ listingId, sender: isOwner ? 'owner' : 'tenant', text, author: session?.username || null }),
     });
     // A failed send used to clear the draft silently, so a message lost
     // to a restart or a dropped connection looked like it went through.

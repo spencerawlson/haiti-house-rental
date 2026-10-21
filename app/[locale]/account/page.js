@@ -7,6 +7,7 @@ import { LOCALES } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import ThemeToggle from '@/components/ThemeToggle';
 
 // Centris-style Account screen. With a local account, it shows the profile;
 // without one, it offers creation.
@@ -17,6 +18,8 @@ export default function Account({ params }) {
   const [provider, setProvider] = useState('moncash');
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
   const [visits, setVisits] = useState([]);
+  const [threads, setThreads] = useState([]);
+  const [myHomes, setMyHomes] = useState([]);
 
   useEffect(() => {
     getMyAccount().then((a) => {
@@ -26,6 +29,14 @@ export default function Account({ params }) {
         fetch(`/api/visits?username=${encodeURIComponent(a.username)}`)
           .then((r) => r.json())
           .then((d) => setVisits(d.visits || []))
+          .catch(() => {});
+        fetch(`/api/chat/inbox?username=${encodeURIComponent(a.username)}`)
+          .then((r) => r.json())
+          .then((d) => setThreads(d.threads || []))
+          .catch(() => {});
+        fetch(`/api/listings?owner=${encodeURIComponent(a.username)}`)
+          .then((r) => r.json())
+          .then((d) => setMyHomes(d.listings || []))
           .catch(() => {});
       }
     });
@@ -40,6 +51,16 @@ export default function Account({ params }) {
   async function sentTransfer() {
     const data = await markMyTransferSent(provider);
     if (data?.account) setMe(data.account);
+  }
+
+  async function takeDownHome(id) {
+    if (!window.confirm(t.takeDownConfirm)) return;
+    const res = await fetch('/api/listings/takedown', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, username: me?.username }),
+    });
+    if (res.ok) setMyHomes((homes) => homes.filter((h) => h.id !== id));
   }
 
   return (
@@ -116,6 +137,43 @@ export default function Account({ params }) {
             </Link>
           ))}
         </div>
+        <h2 style={{ marginTop: 32 }}>{t.myMessages}</h2>
+        {loaded && me && threads.length === 0 && <p className="muted">{t.noMessages}</p>}
+        <div className="grid">
+          {threads.map((th) => (
+            <Link key={th.listingId} href={`/${params.locale}/listings/${th.listingId}`} className="card" style={{ color: 'inherit' }}>
+              <div className="card-body">
+                <p style={{ margin: '0 0 4px' }}><strong>{th.listingTitle}</strong>{th.unread > 0 && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
+                    {th.unread}
+                  </span>
+                )}</p>
+                <p className="muted" style={{ margin: 0 }}>{th.lastText}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+        {loaded && me && me.role !== 'tenant' && (
+          <>
+            <h2 style={{ marginTop: 32 }}>{t.myListings}</h2>
+            <p style={{ marginTop: -8 }}><Link href={`/${params.locale}/library`}>{t.library} ›</Link></p>
+            {myHomes.length === 0 && <p className="muted">{t.noMyListings}</p>}
+            <div className="grid">
+              {myHomes.map((h) => (
+                <section key={h.id} className="card">
+                  <div className="card-body">
+                    <p style={{ margin: '0 0 4px' }}><Link href={`/${params.locale}/listings/${h.id}`}>{h.title}</Link></p>
+                    <p className="muted" style={{ margin: '0 0 12px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
+                    <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+                      <Link className="btn" href={`/${params.locale}/listings/${h.id}/edit`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.editListing}</Link>
+                      <button className="btn btn-secondary" type="button" onClick={() => takeDownHome(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
+                    </p>
+                  </div>
+                </section>
+              ))}
+            </div>
+          </>
+        )}
         <h2 style={{ marginTop: 32 }}>{t.settings}</h2>
         <div className="card">
           <div className="card-body">
@@ -136,6 +194,8 @@ export default function Account({ params }) {
                 </Link>
               ))}
             </div>
+            <p style={{ margin: '16px 0 8px' }}>{t.theme}</p>
+            <ThemeToggle lightLabel={t.themeLight} darkLabel={t.themeDark} />
           </div>
         </div>
       </main>
