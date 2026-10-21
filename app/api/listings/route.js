@@ -1,4 +1,5 @@
 import { getListings, addListing } from '@/lib/listings';
+import { getServerAccount } from '@/lib/accounts-server';
 
 // Live data: never serve a build-time snapshot of the listings.
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,13 @@ async function geocode(commune) {
 
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
+  // Only an activated landlord account can post. Tenants explore; they
+  // never create listings — enforced here, not just in the form, so a
+  // direct API call cannot bypass it.
+  const owner = data.owner ? getServerAccount(data.owner) : null;
+  if (!owner || owner.role !== 'landlord' || !owner.activated) {
+    return Response.json({ error: 'Only activated landlord accounts can post listings' }, { status: 403 });
+  }
   if (data.commune && typeof data.lat !== 'number') {
     const coords = await geocode(data.commune);
     if (coords) Object.assign(data, coords);

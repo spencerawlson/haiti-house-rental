@@ -6,16 +6,16 @@ import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { ACTIVATION_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
-import { getSession } from '@/lib/account';
+import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 
-// Landlord posting form: details + house photos and videos.
-// v0: uploads go to /api/upload (server disk), then the listing is created
-// via /api/listings. Payment activation is NOT enforced yet — it arrives with
-// landlord accounts (see SPEC.md).
+// Landlord posting form: details + description + house photos and videos.
+// Only an activated landlord account can post — tenants explore, they
+// never see this form, and the API enforces the same rule.
 export default function ListHome({ params }) {
   const t = getDict(params.locale);
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [department, setDepartment] = useState('ouest');
   const [commune, setCommune] = useState('');
   const [priceHTG, setPriceHTG] = useState('');
@@ -33,10 +33,13 @@ export default function ListHome({ params }) {
   const [status, setStatus] = useState('');
   const [createdId, setCreatedId] = useState('');
   const [myUsername, setMyUsername] = useState(null);
+  const [me, setMe] = useState(null);
+  const [meLoaded, setMeLoaded] = useState(false);
 
   useEffect(() => {
     const session = getSession();
     if (session) setMyUsername(session.username);
+    getMyAccount().then((a) => { setMe(a); setMeLoaded(true); });
   }, []);
 
   async function uploadAll(files) {
@@ -62,7 +65,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, owner: myUsername, rentPeriod }),
+        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, owner: myUsername, rentPeriod }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -86,10 +89,46 @@ export default function ListHome({ params }) {
       <p>{t.activationFee}: <strong>{ACTIVATION_FEE_HTG.toLocaleString()} HTG</strong></p>
       <p className="muted">{t.advertisedFee}: <strong>{ADVERTISED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
       {myUsername && <p>{t.postingAs} <strong>@{myUsername}</strong></p>}
+      {meLoaded && !me && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="card-body">
+            <p style={{ margin: '0 0 12px' }}>{t.signInToPost}</p>
+            <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+              <Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link>
+              <Link className="btn btn-secondary" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+            </p>
+          </div>
+        </div>
+      )}
+      {meLoaded && me && me.role === 'tenant' && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="card-body">
+            <p style={{ margin: '0 0 12px' }}>{t.landlordsOnly}</p>
+            <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+              <Link className="btn" href={`/${params.locale}/listings`}>{t.browse}</Link>
+              <Link className="btn btn-secondary" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+            </p>
+          </div>
+        </div>
+      )}
+      {meLoaded && me && me.role === 'landlord' && !me.activated && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="card-body">
+            <p style={{ margin: '0 0 12px' }}>⏳ {t.waitingActivation}</p>
+            <p style={{ margin: 0 }}>
+              <Link className="btn" href={`/${params.locale}/account`}>{t.account}</Link>
+            </p>
+          </div>
+        </div>
+      )}
+      {meLoaded && me && me.role === 'landlord' && me.activated && (
       <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
         <div className="field"><label>{t.titleLabel}</label>
           <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        </div>
+        <div className="field"><label>{t.description}</label>
+          <textarea className="input" value={description} onChange={(e) => setDescription(e.target.value)} rows={4} />
         </div>
         <p style={{ margin: 0 }}>{t.purpose}<br />
           <label style={{ marginRight: 16 }}>
@@ -171,7 +210,7 @@ export default function ListHome({ params }) {
           <p><Link href={`/${params.locale}/listings/${createdId}`}>{t.viewListing}</Link></p>
         )}
         </div>
-      </form>
+      </form>)}
       <p className="muted" style={{ marginTop: 24 }}>{t.activationNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />

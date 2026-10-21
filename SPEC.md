@@ -218,3 +218,14 @@ container `kayayiti-web` on FedServ host port 8097.
   a count of anonymous visitors browsing, refreshing every 30s. A closed
   tab lingers up to 3 minutes; an idle open tab still counts. Approximate
   by design — it is presence, not exact surveillance.
+
+## Landlord vs tenant roles (2026-10-21)
+- Landlords post; tenants explore. The split is now real, not cosmetic:
+  /list shows the posting form only to an activated landlord account;
+  tenants see a "landlords only" notice with Browse + Create landlord
+  account; signed-out visitors see a sign-in notice; inactive landlords
+  see their pending-activation notice. The Account page hides "Post home"
+  for tenants. POST /api/listings enforces the same rule server-side
+  (owner must be an activated landlord, else 403) so a direct API call
+  cannot bypass the form. Landlords now also write a description for each
+  listing (shown on the detail page).

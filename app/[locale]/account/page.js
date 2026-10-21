@@ -96,9 +96,11 @@ export default function Account({ params }) {
           <Link href={`/${params.locale}/near-me`} className="card" style={{ color: 'inherit' }}>
             <div className="card-body">📍 {t.nearMe} <span style={{ float: 'right' }}>›</span></div>
           </Link>
+          {(!me || me.role !== 'tenant') && (
           <Link href={`/${params.locale}/list`} className="card" style={{ color: 'inherit' }}>
             <div className="card-body">＋ {t.postHome} <span style={{ float: 'right' }}>›</span></div>
           </Link>
+          )}
         </div>
         <h2 style={{ marginTop: 32 }}>{t.myVisits}</h2>
         {loaded && me && visits.length === 0 && <p className="muted">{t.noVisits}</p>}
