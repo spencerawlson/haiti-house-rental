@@ -42,6 +42,17 @@
    account activation by verified payment, photo uploads, listing
    moderation, tenant accounts, in-app messaging.
 
+## Chat (owner ↔ tenant)
+
+- Every listing page has a discussion box: a potential tenant writes, the
+  owner replies. v0: one thread per listing, messages in server memory,
+  tenant-side sending live, owner side seeded.
+- v0 limits (must be fixed before real use): messages reset on server
+  restart; threads are per listing, not per tenant; no accounts, so owner
+  replies need landlord accounts + login; no moderation, no notifications.
+  Production: Postgres threads + messages, auth for both sides, moderation
+  and new-message notifications.
+
 ## Honest v0 limits
 
 - Listings in v0 are seed/demo data, not real homes.

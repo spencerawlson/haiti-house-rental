@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { getListing } from '@/lib/listings';
+import ChatBox from '@/components/ChatBox';
 
 export default function ListingDetail({ params }) {
   const t = getDict(params.locale);
@@ -15,6 +16,7 @@ export default function ListingDetail({ params }) {
       <p>{l.bedrooms} {t.bedrooms} · {l.bathrooms} {t.bathrooms}</p>
       <p><strong>{l.priceHTG.toLocaleString()} HTG {t.perMonth}</strong></p>
       <button type="button">{t.contact}</button>
+      <ChatBox listingId={l.id} strings={t} />
       <p style={{ marginTop: 40, color: '#666' }}>{t.demoNote}</p>
     </main>
   );
