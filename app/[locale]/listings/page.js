@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
-import { LISTINGS, filterListings, sortListings } from '@/lib/listings';
+import { LISTINGS, filterListings, sortListings, resolveDepartmentId } from '@/lib/listings';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -35,7 +35,7 @@ export default function Listings({ params, searchParams }) {
             <input className="input" name="q" defaultValue={f.q} placeholder={t.searchPlaceholder} />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div className="field"><label>{t.department}</label>
-                <select className="input" name="department" defaultValue={f.department}>
+                <select className="input" name="department" defaultValue={resolveDepartmentId(f.department)}>
                   <option value="">{t.all}</option>
                   {DEPARTMENTS.map((d) => (
                     <option key={d.id} value={d.id}>{departmentName(d.id, params.locale)}</option>

@@ -200,3 +200,13 @@ container `kayayiti-web` on FedServ host port 8097.
   username + phone number on the account + new password (confirmed). The
   phone check matches with or without +509/spaces. Note: this is v0 — anyone
   who knows a username and its phone number can reset that account.
+
+## Misspelling-tolerant search + landing sign-in (2026-10-21)
+- Search ignores accents, hyphens, apostrophes and spaces, and matches
+  against title + commune (official + Creole spellings) + department (id +
+  all three names). Petionville, Petion-ville, Pétion-Ville, Petyonvil all
+  find Pétion-Ville homes; Ouest, West, Lwès all filter to ouest. Saved
+  searches use the same matcher. New listings canonicalize a typed commune
+  /department to the known spelling on creation (unknown places pass through).
+- Landing page now has a sign-in button (top bar) — returning users had no
+  way back in from the entry page.

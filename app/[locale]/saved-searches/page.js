@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
+import { matchesQuery, resolveDepartmentId } from '@/lib/listings';
 import { readSavedSearches, SAVED_KEY } from '@/components/SaveSearchButton';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -12,9 +13,10 @@ import ListingCard from '@/components/ListingCard';
 // flagged as new.
 function matches(listing, query) {
   const p = new URLSearchParams(query);
-  const q = (p.get('q') || '').trim().toLowerCase();
-  if (q && !(listing.commune.toLowerCase().includes(q) || listing.title.toLowerCase().includes(q))) return false;
-  if (p.get('department') && listing.department !== p.get('department')) return false;
+  const q = p.get('q') || '';
+  if (q && !matchesQuery(listing, q)) return false;
+  const dept = resolveDepartmentId(p.get('department'));
+  if (dept && listing.department !== dept) return false;
   if (p.get('type') && listing.type !== p.get('type')) return false;
   if (p.get('purpose') && listing.purpose !== p.get('purpose')) return false;
   if (p.get('minPrice') && listing.priceHTG < Number(p.get('minPrice'))) return false;

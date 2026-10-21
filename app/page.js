@@ -29,7 +29,10 @@ export default function Landing() {
       <main className="container" style={{ position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <p style={{ fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>Kay <span style={{ color: '#1d4ed8' }}>Ayiti</span></p>
-          <LandingLangSwitch current={lang} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link className="btn btn-secondary" href={`/${lang}/signin`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signIn}</Link>
+            <LandingLangSwitch current={lang} />
+          </div>
         </div>
 
         <section className="hero">
