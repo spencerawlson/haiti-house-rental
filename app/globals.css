@@ -186,7 +186,7 @@ a:hover { text-decoration: underline; }
   border-radius: 16px;
   margin: 0;
 }
-.bubble-tenant {
+.bubble-mine {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(15, 118, 110, 0.82));
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
   backdrop-filter: blur(14px) saturate(1.5);
@@ -196,7 +196,7 @@ a:hover { text-decoration: underline; }
   margin-left: auto;
   border-bottom-right-radius: 4px;
 }
-.bubble-owner { background: #f3f4f6; border-bottom-left-radius: 4px; }
+.bubble-theirs { background: #f3f4f6; border-bottom-left-radius: 4px; }
 .chat-box { display: grid; gap: 10px; }
 
 .gallery { display: flex; flex-wrap: wrap; gap: 12px; }

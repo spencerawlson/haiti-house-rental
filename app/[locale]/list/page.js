@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { ACTIVATION_FEE_HTG, FEATURED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS } from '@/lib/departments';
+import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 
 // Landlord posting form: details + house photos and videos.
@@ -29,6 +30,12 @@ export default function ListHome({ params }) {
   const [videoFiles, setVideoFiles] = useState([]);
   const [status, setStatus] = useState('');
   const [createdId, setCreatedId] = useState('');
+  const [myUsername, setMyUsername] = useState(null);
+
+  useEffect(() => {
+    const session = getSession();
+    if (session) setMyUsername(session.username);
+  }, []);
 
   async function uploadAll(files) {
     const urls = [];
@@ -53,7 +60,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested, type: homeType, areaM2 }),
+        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested, type: homeType, areaM2, owner: myUsername }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -76,6 +83,7 @@ export default function ListHome({ params }) {
       </ol>
       <p>{t.activationFee}: <strong>{ACTIVATION_FEE_HTG.toLocaleString()} HTG</strong></p>
       <p className="muted">{t.featuredFee}: <strong>{FEATURED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
+      {myUsername && <p>{t.postingAs} <strong>@{myUsername}</strong></p>}
       <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
         <div className="field"><label>{t.titleLabel}</label>

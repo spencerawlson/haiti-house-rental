@@ -56,7 +56,7 @@ export default function ListingDetail({ params }) {
         <div style={{ marginTop: 20 }}>
           <button className="btn" type="button">{t.contact}</button>
         </div>
-        <ChatBox listingId={l.id} strings={t} />
+        <ChatBox listingId={l.id} owner={l.owner} strings={t} />
         <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />

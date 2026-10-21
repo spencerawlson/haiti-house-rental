@@ -45,17 +45,18 @@
 ## Chat (owner ↔ tenant)
 
 - Every listing page has a discussion box: a potential tenant writes, the
-  owner replies. v0: one thread per listing, messages in server memory,
-  tenant-side sending live, owner side seeded.
+  owner replies in the same thread. The signed-in account that posted the
+  listing replies as the owner; everyone else writes as the tenant. Your
+  own messages always sit blue on the right, theirs gray on the left,
+  whichever side you are on.
 - v0 limits (must be fixed before real use): messages reset on server
-  restart; threads are per listing, not per tenant; no accounts, so owner
-  replies need landlord accounts + login; no moderation, no notifications.
-  Production: Postgres threads + messages, auth for both sides, moderation
-  and new-message notifications.
+  restart; threads are per listing, not per tenant; no moderation, no
+  notifications. Production: Postgres threads + messages, auth for both
+  sides, moderation and new-message notifications.
 
 ## Pricing (decided 2026-10-21)
 
-- Account activation (one-time, MonCash/NatCash): **1000 HTG**.
+- Account activation (one-time, MonCash/NatCash): **500 HTG**.
 - Featured placement (house shown first, rent or sale): **75 HTG/month**.
 - Admin-handled: nothing money-related is automatic. A landlord's featured
   checkbox is only a REQUEST; the admin approves it on the Admin page
@@ -71,7 +72,7 @@
   phone, email, then location (phone GPS with reverse-geocode, or manual
   department/commune pick). Passwords are SHA-256 hashed in the browser;
   the server stores only hashes, never passwords. Activation is manual:
-  the user sends 1000 HTG by MonCash or NatCash from the phone number on
+  the user sends 500 HTG by MonCash or NatCash from the phone number on
   their account, taps "I sent the transfer", and the admin matches the
   transfer to that number and activates the account from /admin. Server
   accounts with bcrypt, cross-device sign-in, and real payment verification
