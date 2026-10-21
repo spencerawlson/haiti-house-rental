@@ -1,5 +1,8 @@
 # Haiti House Rental App — Product Spec (v0)
 
+Live domain (registered 2026-10-21, not yet pointed at a host):
+**kayayiti.app** (Cloudflare nameservers; no A record yet — deploy wires it up).
+
 ## Decisions (from Spencer, 2026-10-21)
 
 - **Launch city:** Port-au-Prince first. **Coverage:** all 10 departments of Haiti
@@ -8,10 +11,11 @@
   are selectable locations, not later additions.
 - **Two-sided marketplace:** landlords list homes; tenants search and find
   homes. Tenants browse free.
-- **Landlord fee:** a small listing fee, amount TBD — still in discussion with
-  people on the ground. The fee is a **placeholder** (`LISTING_FEE` in
-  `lib/config.js`); it must never ship as a final number until Spencer
-  confirms it.
+- **Landlord fees (decided 2026-10-21):** account activation (one-time,
+  MonCash/NatCash) **500 HTG**; featured placement **75 HTG/month**,
+  admin-approved. Activation is manual: the user transfers from the phone
+  number on their account to the admin-set MonCash (Digicel) / NatCash
+  (Natcom) destination number, and the admin activates.
 - **Payments:** MonCash (Digicel) and NatCash (Natcom) mobile money — NOT
   cash. Flow: landlord pays the fee from their phone number → that phone
   number activates their account → activated account can post listings.
