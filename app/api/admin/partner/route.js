@@ -14,7 +14,7 @@ export async function POST(request) {
     username: data.username,
     passwordHash: data.passwordHash,
     phone: data.phone || '',
-    email: '',
+    email: data.email || '',
     location: data.location || null,
     role: 'landlord',
     partner: true,

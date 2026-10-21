@@ -26,6 +26,7 @@ export default function Admin({ params }) {
   const [partnerUsername, setPartnerUsername] = useState('');
   const [partnerPassword, setPartnerPassword] = useState('');
   const [partnerPhone, setPartnerPhone] = useState('');
+  const [partnerEmail, setPartnerEmail] = useState('');
   const [partnerDepartment, setPartnerDepartment] = useState('ouest');
   const [partnerCommune, setPartnerCommune] = useState('');
   const [partnerMessage, setPartnerMessage] = useState('');
@@ -106,6 +107,7 @@ export default function Admin({ params }) {
         username: partnerUsername.trim(),
         passwordHash: await hashPassword(partnerPassword),
         phone: partnerPhone.trim(),
+        email: partnerEmail.trim(),
         location: { department: partnerDepartment, commune: partnerCommune },
       }),
     });
@@ -122,6 +124,7 @@ export default function Admin({ params }) {
     setPartnerUsername('');
     setPartnerPassword('');
     setPartnerPhone('');
+    setPartnerEmail('');
     setPartnerCommune('');
     load();
   }
@@ -190,6 +193,9 @@ export default function Admin({ params }) {
           </div>
           <div className="field"><label>{t.phoneLabel}</label>
             <input className="input" type="tel" value={partnerPhone} onChange={(e) => setPartnerPhone(e.target.value)} placeholder="+509 ____ ____" />
+          </div>
+          <div className="field"><label>{t.email}</label>
+            <input className="input" type="email" value={partnerEmail} onChange={(e) => setPartnerEmail(e.target.value)} />
           </div>
           <div className="field"><label>{t.department}</label>
             <select className="input" value={partnerDepartment} onChange={(e) => { setPartnerDepartment(e.target.value); setPartnerCommune(''); }}>
