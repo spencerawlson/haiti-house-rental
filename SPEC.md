@@ -188,3 +188,15 @@ container `kayayiti-web` on FedServ host port 8097.
 - The landlord form explains the payment flow but does not move money —
   no payment provider is integrated yet.
 - Prices are in HTG per month. No exchange-rate claims.
+
+## Partner accounts + password reset + account IDs (2026-10-21)
+- Admin Board "Create partner account": creates a landlord account active
+  immediately, free — no fee, no activation queue, never counted in revenue
+  (even if later deactivated/reactivated). Password hashed in browser.
+- Every account has an assigned id (kay-0001, …) shown in the admin roster
+  and on the user's own Account page. Admin Board shows user counts: total,
+  live (activated), pending activation.
+- Password reset (no email needed): sign-in "Forgot your password?" →
+  username + phone number on the account + new password (confirmed). The
+  phone check matches with or without +509/spaces. Note: this is v0 — anyone
+  who knows a username and its phone number can reset that account.

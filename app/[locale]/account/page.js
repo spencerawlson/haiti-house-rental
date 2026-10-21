@@ -51,6 +51,7 @@ export default function Account({ params }) {
             <div className="card-body">
               <h2 style={{ margin: '0 0 8px' }}>{t.myProfile}</h2>
               <p style={{ margin: '0 0 4px' }}><strong>{me.name}</strong> · @{me.username} · {me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
+              {me.id && <p className="muted" style={{ margin: '0 0 4px' }}>{t.accountId}: {me.id}</p>}
               <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone}{me.email ? ` · ${me.email}` : ''}</p>
               {me.location && (
                 <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {me.location.department}</p>

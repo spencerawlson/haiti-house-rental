@@ -46,6 +46,9 @@ export default function SignIn({ params }) {
             </div>
             {error && <p style={{ color: '#dc2626', margin: 0 }}>{error}</p>}
             <button className="btn" type="submit">{t.signIn}</button>
+            <p style={{ margin: 0 }}>
+              <Link href={`/${params.locale}/forgot-password`}>{t.forgotPassword}</Link>
+            </p>
           </div>
         </form>
       </main>
