@@ -1,5 +1,8 @@
 import { createServerAccount, listServerAccounts, getServerAccount } from '@/lib/accounts-server';
 
+// Live data: never serve a build-time snapshot of the accounts.
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const username = searchParams.get('username');

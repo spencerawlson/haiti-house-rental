@@ -1,5 +1,8 @@
 import { getThread, postMessage } from '@/lib/chat';
 
+// Live data: never serve a build-time snapshot of a thread.
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const listingId = new URL(request.url).searchParams.get('listingId') || '';
   return Response.json({ messages: getThread(listingId) });

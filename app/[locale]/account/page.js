@@ -15,12 +15,14 @@ export default function Account({ params }) {
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [provider, setProvider] = useState('moncash');
+  const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
 
   useEffect(() => {
     getMyAccount().then((a) => {
       setMe(a);
       setLoaded(true);
     });
+    fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
   }, []);
 
   function logout() {
@@ -59,6 +61,7 @@ export default function Account({ params }) {
                       <input type="radio" checked={provider === 'natcash'} onChange={() => setProvider('natcash')} /> NatCash
                     </label>
                   </div>
+                  <p style={{ margin: 0 }}>{t.sendTo} <strong>{provider === 'natcash' ? (destination.natcashNumber || t.numberNotSet) : (destination.moncashNumber || t.numberNotSet)}</strong></p>
                   <button className="btn" type="button" onClick={sentTransfer} style={{ minHeight: 40, padding: '8px 16px' }}>{t.transferSent}</button>
                 </div>
               )}

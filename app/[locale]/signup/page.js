@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS } from '@/lib/departments';
@@ -26,7 +26,12 @@ export default function Signup({ params }) {
   const [detected, setDetected] = useState('');
   const [locating, setLocating] = useState(false);
   const [provider, setProvider] = useState('moncash');
+  const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
+  }, []);
 
   function next() {
     setError('');
@@ -178,7 +183,7 @@ export default function Signup({ params }) {
               <p>{t.accountCreated}</p>
               <p>{t.sendTransfer}</p>
               <p style={{ fontSize: '1.2rem' }}>
-                <strong>{ACTIVATION_FEE_HTG} HTG</strong> — {phone}
+                <strong>{ACTIVATION_FEE_HTG} HTG</strong>
               </p>
               <div style={{ display: 'flex', gap: 16 }}>
                 <label>
@@ -188,6 +193,8 @@ export default function Signup({ params }) {
                   <input type="radio" checked={provider === 'natcash'} onChange={() => setProvider('natcash')} /> NatCash
                 </label>
               </div>
+              <p>{t.sendTo} <strong>{provider === 'natcash' ? (destination.natcashNumber || t.numberNotSet) : (destination.moncashNumber || t.numberNotSet)}</strong></p>
+              <p>{t.fromYourNumber} {phone}</p>
               <p className="muted" style={{ margin: 0 }}>{t.transferNote}</p>
               <button className="btn" type="button" onClick={sentTransfer}>{t.transferSent}</button>
             </div>

@@ -1,5 +1,8 @@
 import { getListings, addListing } from '@/lib/listings';
 
+// Live data: never serve a build-time snapshot of the listings.
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   return Response.json({ listings: getListings() });
 }

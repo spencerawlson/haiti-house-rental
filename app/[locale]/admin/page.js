@@ -10,6 +10,9 @@ export default function Admin({ params }) {
   const t = getDict(params.locale);
   const [listings, setListings] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [moncashNumber, setMoncashNumber] = useState('');
+  const [natcashNumber, setNatcashNumber] = useState('');
+  const [numbersSaved, setNumbersSaved] = useState(false);
 
   async function load() {
     const res = await fetch('/api/listings');
@@ -22,9 +25,25 @@ export default function Admin({ params }) {
       const data = await ares.json();
       setAccounts(data.accounts);
     }
+    const sres = await fetch('/api/settings');
+    if (sres.ok) {
+      const data = await sres.json();
+      setMoncashNumber(data.moncashNumber || '');
+      setNatcashNumber(data.natcashNumber || '');
+    }
   }
 
   useEffect(() => { load(); }, []);
+
+  async function saveNumbers(e) {
+    e.preventDefault();
+    await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ moncashNumber, natcashNumber }),
+    });
+    setNumbersSaved(true);
+  }
 
   async function set(id, featured) {
     await fetch('/api/admin/featured', {
@@ -48,7 +67,20 @@ export default function Admin({ params }) {
     <main className="container">
       <h1>{t.adminTitle}</h1>
       <p className="muted">{t.adminNote}</p>
-      <h2>{t.accountsTitle}</h2>
+      <h2>{t.paymentNumbers}</h2>
+      <form className="card" onSubmit={saveNumbers}>
+        <div className="card-body" style={{ display: 'grid', gap: 14 }}>
+          <div className="field"><label>{t.moncashNumber}</label>
+            <input className="input" type="tel" value={moncashNumber} onChange={(e) => setMoncashNumber(e.target.value)} placeholder="+509 ____ ____" />
+          </div>
+          <div className="field"><label>{t.natcashNumber}</label>
+            <input className="input" type="tel" value={natcashNumber} onChange={(e) => setNatcashNumber(e.target.value)} placeholder="+509 ____ ____" />
+          </div>
+          <button className="btn" type="submit" style={{ minHeight: 40, padding: '8px 16px' }}>{t.saveNumbers}</button>
+          {numbersSaved && <p style={{ margin: 0 }}>{t.numbersSaved}</p>}
+        </div>
+      </form>
+      <h2 style={{ marginTop: 32 }}>{t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
       <div className="grid">
         {accounts.map((a) => (

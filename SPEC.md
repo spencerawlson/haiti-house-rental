@@ -68,6 +68,10 @@
   as a total, rent as HTG/month.
 - Property types: house, apartment, land. Land listings carry an area in
   m² instead of bedrooms/bathrooms, and landlords pick the type on the form.
+- Payment destination numbers: the Digicel number for MonCash and the
+  Natcom number for NatCash, set from the Admin Board (never hardcoded).
+  Signup step 3 and the Account page show the number for the provider the
+  user picks, or a "not set yet" note until the admin adds it.
 - Accounts (v0, server store): creation asks full name, username, password,
   phone, email, then location (phone GPS with reverse-geocode, or manual
   department/commune pick). Passwords are SHA-256 hashed in the browser;
