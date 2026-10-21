@@ -2,14 +2,13 @@ import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { LISTINGS } from '@/lib/listings';
 import { DEPARTMENTS } from '@/lib/departments';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 
 export default function LocaleHome({ params }) {
   const t = getDict(params.locale);
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <section className="hero">
           <h1>{t.tagline}</h1>
@@ -19,7 +18,8 @@ export default function LocaleHome({ params }) {
             <button className="btn" type="submit">{t.browse}</button>
           </form>
           <p style={{ marginTop: 16 }}>
-            <Link className="btn btn-secondary" href={`/${params.locale}/near-me`}>📍 {t.nearMe}</Link>
+            <Link className="btn btn-secondary" href={`/${params.locale}/near-me`}>📍 {t.nearMe}</Link>{' '}
+            <Link className="btn btn-secondary" href={`/${params.locale}/list`}>＋ {t.postHome}</Link>
           </p>
         </section>
         <h2>{t.department}</h2>
@@ -36,6 +36,7 @@ export default function LocaleHome({ params }) {
         </div>
         <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }

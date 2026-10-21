@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { distanceKm } from '@/lib/geo';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import ListingMap from '@/components/ListingMap';
 
@@ -49,7 +49,6 @@ export default function NearMe({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <h1>📍 {t.nearMe}</h1>
         {status === 'idle' && (
@@ -95,6 +94,7 @@ export default function NearMe({ params }) {
           </>
         )}
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }

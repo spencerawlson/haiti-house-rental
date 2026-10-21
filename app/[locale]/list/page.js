@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { ACTIVATION_FEE_HTG, FEATURED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS } from '@/lib/departments';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 
 // Landlord posting form: details + house photos and videos.
 // v0: uploads go to /api/upload (server disk), then the listing is created
@@ -66,7 +66,6 @@ export default function ListHome({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
       <Link href={`/${params.locale}`}>{t.back}</Link>
       <h1>{t.landlordTitle}</h1>
@@ -156,6 +155,7 @@ export default function ListHome({ params }) {
       </form>
       <p className="muted" style={{ marginTop: 24 }}>{t.activationNote}</p>
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }

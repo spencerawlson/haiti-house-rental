@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { readSavedSearches, SAVED_KEY } from '@/components/SaveSearchButton';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 
 // Centris-style alerts, without accounts: every saved search re-runs against
@@ -45,7 +45,6 @@ export default function SavedSearches({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <h1>🔔 {t.savedSearches}</h1>
         {searches === null && <p>...</p>}
@@ -77,6 +76,7 @@ export default function SavedSearches({ params }) {
           );
         })}
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }

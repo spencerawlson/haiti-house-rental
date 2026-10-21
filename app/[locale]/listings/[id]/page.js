@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { getListing } from '@/lib/listings';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
 
 export default function ListingDetail({ params }) {
@@ -11,7 +11,6 @@ export default function ListingDetail({ params }) {
   if (!l) notFound();
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <Link href={`/${params.locale}/listings`}>← {t.back}</Link>
         {l.photos?.length > 0 ? (
@@ -60,6 +59,7 @@ export default function ListingDetail({ params }) {
         <ChatBox listingId={l.id} strings={t} />
         <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }

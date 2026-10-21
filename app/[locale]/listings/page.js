@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { LISTINGS, filterListings, sortListings } from '@/lib/listings';
 import { DEPARTMENTS } from '@/lib/departments';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import ListingMap from '@/components/ListingMap';
 import SaveSearchButton from '@/components/SaveSearchButton';
@@ -28,7 +28,6 @@ export default function Listings({ params, searchParams }) {
   const mapHref = (() => { const p = new URLSearchParams(searchParams); p.set('view', 'map'); return `/${params.locale}/listings?${p.toString()}`; })();
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <h1>{t.browse}</h1>
         <form method="get" className="card" style={{ marginBottom: 20 }}>
@@ -102,6 +101,7 @@ export default function Listings({ params, searchParams }) {
         {shown.length === 0 && <p>{t.notFound}</p>}
         <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }

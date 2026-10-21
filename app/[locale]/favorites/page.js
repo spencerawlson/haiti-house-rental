@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { readFavorites } from '@/components/FavoriteButton';
-import Header from '@/components/Header';
+import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 
 // Saved homes, kept in the browser until accounts exist.
@@ -21,7 +21,6 @@ export default function Favorites({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} nearMe={t.nearMe} />
       <main className="container">
         <h1>♥ {t.favorites}</h1>
         {listings === null && <p>...</p>}
@@ -32,6 +31,7 @@ export default function Favorites({ params }) {
           ))}
         </div>
       </main>
+      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
   );
 }
