@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { LOCALES } from '@/lib/config';
+import { departmentName } from '@/lib/departments';
 import { getMyAccount, signOut, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 
 // Centris-style Account screen. With a local account, it shows the profile;
-// without one, it offers creation. No payment calculator — Haiti is a
-// no-mortgage market.
+// without one, it offers creation.
 export default function Account({ params }) {
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
@@ -54,7 +54,7 @@ export default function Account({ params }) {
               {me.id && <p className="muted" style={{ margin: '0 0 4px' }}>{t.accountId}: {me.id}</p>}
               <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone}{me.email ? ` · ${me.email}` : ''}</p>
               {me.location && (
-                <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {me.location.department}</p>
+                <p className="muted" style={{ margin: '0 0 12px' }}>📍 {me.location.commune}, {departmentName(me.location.department, params.locale)}</p>
               )}
               {me.activated ? (
                 <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>

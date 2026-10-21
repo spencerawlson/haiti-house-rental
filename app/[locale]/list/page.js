@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { ACTIVATION_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
-import { DEPARTMENTS } from '@/lib/departments';
+import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 
@@ -113,7 +113,7 @@ export default function ListHome({ params }) {
         <div className="field"><label>{t.department}</label>
           <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
             {DEPARTMENTS.map((d) => (
-              <option key={d.id} value={d.id}>{d.id}</option>
+              <option key={d.id} value={d.id}>{departmentName(d.id, params.locale)}</option>
             ))}
           </select>
         </div>

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
-import { DEPARTMENTS } from '@/lib/departments';
+import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { ACTIVATION_FEE_HTG } from '@/lib/config';
 import { createAccount, markMyTransferSent } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -164,7 +164,7 @@ export default function Signup({ params }) {
               <div className="field"><label>{t.department}</label>
                 <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
                   {DEPARTMENTS.map((d) => (
-                    <option key={d.id} value={d.id}>{d.id}</option>
+                    <option key={d.id} value={d.id}>{departmentName(d.id, params.locale)}</option>
                   ))}
                 </select>
               </div>

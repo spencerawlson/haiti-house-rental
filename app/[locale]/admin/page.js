@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
-import { DEPARTMENTS } from '@/lib/departments';
+import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { hashPassword } from '@/lib/account';
 import BackButton from '@/components/BackButton';
 
@@ -157,7 +157,7 @@ export default function Admin({ params }) {
             <div className="card-body">
               <h3 style={{ margin: '0 0 4px' }}>{a.id ? `${a.id} · ` : ''}{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? ` · 🤝 ${t.partner}` : ''}</h3>
               <p className="muted" style={{ margin: '0 0 4px' }}>
-                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${a.location.commune}, ${a.location.department}` : ''}
+                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${a.location.commune}, ${departmentName(a.location.department, params.locale)}` : ''}
               </p>
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
@@ -194,7 +194,7 @@ export default function Admin({ params }) {
           <div className="field"><label>{t.department}</label>
             <select className="input" value={partnerDepartment} onChange={(e) => { setPartnerDepartment(e.target.value); setPartnerCommune(''); }}>
               {DEPARTMENTS.map((d) => (
-                <option key={d.id} value={d.id}>{d.name || d.id}</option>
+                <option key={d.id} value={d.id}>{departmentName(d.id, params.locale)}</option>
               ))}
             </select>
           </div>

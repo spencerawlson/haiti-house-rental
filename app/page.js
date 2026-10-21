@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
-import { DEPARTMENTS } from '@/lib/departments';
+import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
 
@@ -62,7 +62,7 @@ export default function Landing() {
         <h2 style={{ marginTop: 40 }}>{t.department}</h2>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {DEPARTMENTS.map((d) => (
-            <Link key={d.id} className="chip" href={`/${lang}/listings?department=${d.id}`}>{d.id}</Link>
+            <Link key={d.id} className="chip" href={`/${lang}/listings?department=${d.id}`}>{departmentName(d.id, lang)}</Link>
           ))}
         </div>
 

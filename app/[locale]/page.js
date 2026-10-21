@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { LISTINGS } from '@/lib/listings';
-import { DEPARTMENTS } from '@/lib/departments';
+import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import AdvertisedCarousel from '@/components/AdvertisedCarousel';
@@ -35,7 +35,7 @@ export default function LocaleHome({ params }) {
         )}
         <h2>{t.department}</h2>        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {DEPARTMENTS.map((d) => (
-            <Link key={d.id} className="chip" href={`/${params.locale}/listings?department=${d.id}`}>{d.communes[0]}</Link>
+            <Link key={d.id} className="chip" href={`/${params.locale}/listings?department=${d.id}`}>{departmentName(d.id, params.locale)}</Link>
           ))}
         </div>
         <h2 style={{ marginTop: 36 }}>{t.browse}</h2>
