@@ -21,7 +21,8 @@ export default function ListingDetail({ params }) {
         )}
         <h1 style={{ marginBottom: 4 }}>{l.title}</h1>
         <p className="muted" style={{ marginTop: 0 }}>{l.commune} · {l.type}</p>
-        <p className="price">{l.priceHTG.toLocaleString()} HTG <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{t.perMonth}</span></p>
+        {l.featured && <p><span className="badge">★ {t.featured}</span></p>}
+        <p className="price">{l.priceHTG.toLocaleString()} HTG {l.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{t.perMonth}</span>}</p>
         <div className="card" style={{ marginTop: 16 }}>
           <div className="card-body" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
             <span><strong>{l.bedrooms}</strong> {t.bedrooms}</span>

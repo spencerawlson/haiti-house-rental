@@ -13,8 +13,9 @@ export default function ListingCard({ listing, locale, t }) {
         )}
         <div className="card-body">
           <p className="price" style={{ margin: '0 0 4px' }}>
-            {listing.priceHTG.toLocaleString()} HTG <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{t.perMonth}</span>
+            {listing.priceHTG.toLocaleString()} HTG {listing.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{t.perMonth}</span>}
           </p>
+          {listing.featured && <p style={{ margin: '0 0 4px' }}><span className="badge">★ {t.featured}</span></p>}
           <h3 style={{ margin: '0 0 4px' }}>{listing.title}</h3>
           <p className="muted" style={{ margin: 0 }}>
             {listing.commune} · {listing.bedrooms} {t.bedrooms} · {listing.bathrooms} {t.bathrooms}

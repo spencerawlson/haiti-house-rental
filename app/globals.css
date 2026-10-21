@@ -101,6 +101,15 @@ a:hover { text-decoration: underline; }
   padding: 12px;
 }
 .price { font-size: 1.3rem; font-weight: 800; }
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
 .muted { color: var(--muted); }
 .grid { display: grid; gap: 16px; }
 @media (min-width: 640px) {

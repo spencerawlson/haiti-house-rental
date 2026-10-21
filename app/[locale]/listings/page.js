@@ -19,6 +19,7 @@ export default function Listings({ params, searchParams }) {
     maxPrice: searchParams.maxPrice || '',
     minBeds: searchParams.minBeds || '',
     minBaths: searchParams.minBaths || '',
+    purpose: searchParams.purpose || '',
   };
   const shown = sortListings(filterListings(LISTINGS, f), searchParams.sort || '');
   const view = searchParams.view === 'map' ? 'map' : 'list';
@@ -47,6 +48,13 @@ export default function Listings({ params, searchParams }) {
                   <option value="">{t.all}</option>
                   <option value="house">{t.house}</option>
                   <option value="apartment">{t.apartment}</option>
+                </select>
+              </div>
+              <div className="field"><label>{t.purpose}</label>
+                <select className="input" name="purpose" defaultValue={f.purpose}>
+                  <option value="">{t.all}</option>
+                  <option value="rent">{t.forRent}</option>
+                  <option value="sale">{t.forSale}</option>
                 </select>
               </div>
               <div className="field"><label>{t.minPrice} (HTG)</label>

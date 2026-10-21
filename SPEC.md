@@ -53,6 +53,19 @@
   Production: Postgres threads + messages, auth for both sides, moderation
   and new-message notifications.
 
+## Pricing (decided 2026-10-21)
+
+- Account activation (one-time, MonCash/NatCash): **1000 HTG**.
+- Featured placement (house shown first, rent or sale): **75 HTG/month**.
+- Admin-handled: nothing money-related is automatic. A landlord's featured
+  checkbox is only a REQUEST; the admin approves it on the Admin page
+  (`/[locale]/admin`), and only approved homes get the badge and sort first.
+  Same for activation: the landlord pays, the admin activates the account.
+  Payment collection and account approvals are still manual — the app records
+  the prices and the requests, it does not move money yet.
+- Listings are for rent OR for purchase (purpose field); sale prices show
+  as a total, rent as HTG/month.
+
 ## Search (Centris-style)
 
 - Search bar on the home page and the listings page (matches commune or

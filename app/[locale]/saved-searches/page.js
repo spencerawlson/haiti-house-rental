@@ -16,6 +16,7 @@ function matches(listing, query) {
   if (q && !(listing.commune.toLowerCase().includes(q) || listing.title.toLowerCase().includes(q))) return false;
   if (p.get('department') && listing.department !== p.get('department')) return false;
   if (p.get('type') && listing.type !== p.get('type')) return false;
+  if (p.get('purpose') && listing.purpose !== p.get('purpose')) return false;
   if (p.get('minPrice') && listing.priceHTG < Number(p.get('minPrice'))) return false;
   if (p.get('maxPrice') && listing.priceHTG > Number(p.get('maxPrice'))) return false;
   if (p.get('minBeds') && listing.bedrooms < Number(p.get('minBeds'))) return false;

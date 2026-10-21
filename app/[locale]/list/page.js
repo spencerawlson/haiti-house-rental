@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LISTING_FEE_LABEL, PAYMENT_PROVIDERS } from '@/lib/config';
+import { ACTIVATION_FEE_HTG, FEATURED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS } from '@/lib/departments';
 import Header from '@/components/Header';
 
@@ -17,6 +17,8 @@ export default function ListHome({ params }) {
   const [department, setDepartment] = useState('ouest');
   const [commune, setCommune] = useState('');
   const [priceHTG, setPriceHTG] = useState('');
+  const [purpose, setPurpose] = useState('rent');
+  const [featuredRequested, setFeaturedRequested] = useState(false);
   const [bedrooms, setBedrooms] = useState(2);
   const [bathrooms, setBathrooms] = useState(1);
   const [phone, setPhone] = useState('');
@@ -49,7 +51,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos }),
+        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -71,12 +73,21 @@ export default function ListHome({ params }) {
         <li>{t.landlordStep2}</li>
         <li>{t.landlordStep3}</li>
       </ol>
-      <p>{t.feeLabel}: <strong>{LISTING_FEE_LABEL}</strong> — {t.feeTbd}</p>
+      <p>{t.activationFee}: <strong>{ACTIVATION_FEE_HTG.toLocaleString()} HTG</strong></p>
+      <p className="muted">{t.featuredFee}: <strong>{FEATURED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
       <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
         <div className="field"><label>{t.titleLabel}</label>
           <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </div>
+        <p style={{ margin: 0 }}>{t.purpose}<br />
+          <label style={{ marginRight: 16 }}>
+            <input type="radio" name="purpose" value="rent" checked={purpose === 'rent'} onChange={() => setPurpose('rent')} /> {t.forRent}
+          </label>
+          <label>
+            <input type="radio" name="purpose" value="sale" checked={purpose === 'sale'} onChange={() => setPurpose('sale')} /> {t.forSale}
+          </label>
+        </p>
         <div className="field"><label>{t.department}</label>
           <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
             {DEPARTMENTS.map((d) => (
@@ -87,7 +98,7 @@ export default function ListHome({ params }) {
         <div className="field"><label>{t.commune}</label>
           <input className="input" value={commune} onChange={(e) => setCommune(e.target.value)} required />
         </div>
-        <div className="field"><label>{t.priceLabel} (HTG {t.perMonth})</label>
+        <div className="field"><label>{t.priceLabel} (HTG{purpose === 'rent' ? ` ${t.perMonth}` : ''})</label>
           <input className="input" type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -114,6 +125,9 @@ export default function ListHome({ params }) {
         <div className="field"><label>{t.videosLabel}</label>
           <input type="file" accept="video/*" multiple onChange={(e) => setVideoFiles([...e.target.files])} />
         </div>
+        <label>
+          <input type="checkbox" checked={featuredRequested} onChange={(e) => setFeaturedRequested(e.target.checked)} /> {t.featureRequest}
+        </label>
         <button className="btn" type="submit">{t.publish}</button>
         {status && <p>{status}</p>}
         {createdId && (
