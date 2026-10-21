@@ -11,7 +11,7 @@ export default function ListingDetail({ params }) {
   if (!l) notFound();
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} />
       <main className="container">
         <Link href={`/${params.locale}/listings`}>← {t.back}</Link>
         {l.photos?.length > 0 ? (
@@ -21,8 +21,15 @@ export default function ListingDetail({ params }) {
         )}
         <h1 style={{ marginBottom: 4 }}>{l.title}</h1>
         <p className="muted" style={{ marginTop: 0 }}>{l.commune} · {l.type}</p>
-        <p>{l.bedrooms} {t.bedrooms} · {l.bathrooms} {t.bathrooms}</p>
         <p className="price">{l.priceHTG.toLocaleString()} HTG <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{t.perMonth}</span></p>
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="card-body" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            <span><strong>{l.bedrooms}</strong> {t.bedrooms}</span>
+            <span><strong>{l.bathrooms}</strong> {t.bathrooms}</span>
+            <span><strong>{l.type === 'house' ? t.house : t.apartment}</strong></span>
+            <span className="muted">{l.department}</span>
+          </div>
+        </div>
         {l.photos?.length > 1 && (
           <div className="gallery">
             {l.photos.slice(1).map((src) => (

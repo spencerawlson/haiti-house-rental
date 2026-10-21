@@ -9,11 +9,15 @@ export default function LocaleHome({ params }) {
   const t = getDict(params.locale);
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} />
       <main className="container">
         <section className="hero">
           <h1>{t.tagline}</h1>
           <p>{t.browse} — Port-au-Prince, Okap, Jakmèl, ak tout Ayiti.</p>
+          <form method="get" action={`/${params.locale}/listings`} style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+            <input className="input" name="q" placeholder={t.searchPlaceholder} style={{ flex: 1 }} />
+            <button className="btn" type="submit">{t.browse}</button>
+          </form>
         </section>
         <h2>{t.department}</h2>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

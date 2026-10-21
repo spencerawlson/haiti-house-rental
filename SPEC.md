@@ -53,6 +53,17 @@
   Production: Postgres threads + messages, auth for both sides, moderation
   and new-message notifications.
 
+## Search (Centris-style)
+
+- Search bar on the home page and the listings page (matches commune or
+  title, Centris-style).
+- Filters: department, property type (house/apartment), price min/max,
+  min bedrooms, min bathrooms. Sort: newest, price low→high, high→low.
+  Filters live in the URL, so a filtered search is shareable.
+- Favorites: heart on every card, saved in the browser (localStorage) until
+  accounts exist; a Favorites page lists them. No map yet — that comes with
+  real listing coordinates.
+
 ## Photos and videos
 
 - Landlords attach house photos and videos on the posting form
