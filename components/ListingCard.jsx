@@ -18,7 +18,9 @@ export default function ListingCard({ listing, locale, t }) {
           {listing.featured && <p style={{ margin: '0 0 4px' }}><span className="badge">★ {t.featured}</span></p>}
           <h3 style={{ margin: '0 0 4px' }}>{listing.title}</h3>
           <p className="muted" style={{ margin: 0 }}>
-            {listing.commune} · {listing.bedrooms} {t.bedrooms} · {listing.bathrooms} {t.bathrooms}
+            {listing.commune} · {listing.type === 'land'
+              ? (listing.areaM2 ? `${listing.areaM2.toLocaleString()} m²` : t.land)
+              : `${listing.bedrooms} ${t.bedrooms} · ${listing.bathrooms} ${t.bathrooms}`}
             {listing.photos?.length > 0 && ` · ${listing.photos.length} 📷`}
             {listing.videos?.length > 0 && ` · ${listing.videos.length} 🎬`}
           </p>

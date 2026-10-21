@@ -48,6 +48,7 @@ export default function Listings({ params, searchParams }) {
                   <option value="">{t.all}</option>
                   <option value="house">{t.house}</option>
                   <option value="apartment">{t.apartment}</option>
+                  <option value="land">{t.land}</option>
                 </select>
               </div>
               <div className="field"><label>{t.purpose}</label>

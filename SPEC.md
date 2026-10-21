@@ -65,6 +65,8 @@
   the prices and the requests, it does not move money yet.
 - Listings are for rent OR for purchase (purpose field); sale prices show
   as a total, rent as HTG/month.
+- Property types: house, apartment, land. Land listings carry an area in
+  m² instead of bedrooms/bathrooms, and landlords pick the type on the form.
 
 ## Search (Centris-style)
 

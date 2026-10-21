@@ -20,14 +20,20 @@ export default function ListingDetail({ params }) {
           <div className="house-art" style={{ borderRadius: 16, marginTop: 16, height: 200 }}>{l.commune}</div>
         )}
         <h1 style={{ marginBottom: 4 }}>{l.title}</h1>
-        <p className="muted" style={{ marginTop: 0 }}>{l.commune} · {l.type}</p>
+        <p className="muted" style={{ marginTop: 0 }}>{l.commune} · {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</p>
         {l.featured && <p><span className="badge">★ {t.featured}</span></p>}
         <p className="price">{l.priceHTG.toLocaleString()} HTG {l.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{t.perMonth}</span>}</p>
         <div className="card" style={{ marginTop: 16 }}>
           <div className="card-body" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <span><strong>{l.bedrooms}</strong> {t.bedrooms}</span>
-            <span><strong>{l.bathrooms}</strong> {t.bathrooms}</span>
-            <span><strong>{l.type === 'house' ? t.house : t.apartment}</strong></span>
+            {l.type === 'land' ? (
+              <span><strong>{l.areaM2 ? `${l.areaM2.toLocaleString()} m²` : t.land}</strong></span>
+            ) : (
+              <>
+                <span><strong>{l.bedrooms}</strong> {t.bedrooms}</span>
+                <span><strong>{l.bathrooms}</strong> {t.bathrooms}</span>
+              </>
+            )}
+            <span><strong>{l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</strong></span>
             <span className="muted">{l.department}</span>
           </div>
         </div>

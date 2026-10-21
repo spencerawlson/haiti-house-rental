@@ -18,6 +18,8 @@ export default function ListHome({ params }) {
   const [commune, setCommune] = useState('');
   const [priceHTG, setPriceHTG] = useState('');
   const [purpose, setPurpose] = useState('rent');
+  const [homeType, setHomeType] = useState('house');
+  const [areaM2, setAreaM2] = useState('');
   const [featuredRequested, setFeaturedRequested] = useState(false);
   const [bedrooms, setBedrooms] = useState(2);
   const [bathrooms, setBathrooms] = useState(1);
@@ -51,7 +53,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested }),
+        body: JSON.stringify({ title, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, featuredRequested, type: homeType, areaM2 }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -88,6 +90,17 @@ export default function ListHome({ params }) {
             <input type="radio" name="purpose" value="sale" checked={purpose === 'sale'} onChange={() => setPurpose('sale')} /> {t.forSale}
           </label>
         </p>
+        <p style={{ margin: 0 }}>{t.propertyType}<br />
+          <label style={{ marginRight: 16 }}>
+            <input type="radio" name="hometype" value="house" checked={homeType === 'house'} onChange={() => setHomeType('house')} /> {t.house}
+          </label>
+          <label style={{ marginRight: 16 }}>
+            <input type="radio" name="hometype" value="apartment" checked={homeType === 'apartment'} onChange={() => setHomeType('apartment')} /> {t.apartment}
+          </label>
+          <label>
+            <input type="radio" name="hometype" value="land" checked={homeType === 'land'} onChange={() => setHomeType('land')} /> {t.land}
+          </label>
+        </p>
         <div className="field"><label>{t.department}</label>
           <select className="input" value={department} onChange={(e) => setDepartment(e.target.value)}>
             {DEPARTMENTS.map((d) => (
@@ -101,14 +114,20 @@ export default function ListHome({ params }) {
         <div className="field"><label>{t.priceLabel} (HTG{purpose === 'rent' ? ` ${t.perMonth}` : ''})</label>
           <input className="input" type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div className="field"><label>{t.bedrooms}</label>
-          <input className="input" type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
-        </div>
-        <div className="field"><label>{t.bathrooms}</label>
-          <input className="input" type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
-        </div>
-        </div>
+        {homeType === 'land' ? (
+          <div className="field"><label>{t.areaM2}</label>
+            <input className="input" type="number" value={areaM2} onChange={(e) => setAreaM2(e.target.value)} required />
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="field"><label>{t.bedrooms}</label>
+            <input className="input" type="number" value={bedrooms} onChange={(e) => setBedrooms(e.target.value)} />
+          </div>
+          <div className="field"><label>{t.bathrooms}</label>
+            <input className="input" type="number" value={bathrooms} onChange={(e) => setBathrooms(e.target.value)} />
+          </div>
+          </div>
+        )}
         <div className="field"><label>{t.phoneLabel}</label>
           <input className="input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+509 ____ ____" />
         </div>
