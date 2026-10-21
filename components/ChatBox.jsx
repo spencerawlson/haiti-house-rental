@@ -9,6 +9,7 @@ import { getSession } from '@/lib/account';
 export default function ChatBox({ listingId, owner, strings }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
+  const [sendError, setSendError] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
@@ -34,12 +35,20 @@ export default function ChatBox({ listingId, owner, strings }) {
     e.preventDefault();
     const text = draft.trim();
     if (!text) return;
-    setDraft('');
-    await fetch('/api/chat', {
+    setSendError(false);
+    const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ listingId, sender: isOwner ? 'owner' : 'tenant', text }),
     });
+    // A failed send used to clear the draft silently, so a message lost
+    // to a restart or a dropped connection looked like it went through.
+    // Now the draft stays and the failure shows.
+    if (!res.ok) {
+      setSendError(true);
+      return;
+    }
+    setDraft('');
     load();
   }
 
@@ -73,6 +82,7 @@ export default function ChatBox({ listingId, owner, strings }) {
           />
           <button className="btn" type="submit">{strings.send}</button>
         </form>
+        {sendError && <p style={{ margin: '8px 0 0', color: '#b91c1c' }}>{strings.chatSendError}</p>}
       </div>
     </section>
   );

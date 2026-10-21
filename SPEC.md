@@ -239,3 +239,18 @@ container `kayayiti-web` on FedServ host port 8097.
   Presence ("Live now") intentionally stays in memory — a restart clearing
   "who is online" is correct behavior. Uploaded photos/videos live on disk
   in the uploads volume, as before.
+
+## Upload serving + real chat (2026-10-21)
+- Uploaded photos/videos are served by app/uploads/[file]/route.js,
+  which reads the same disk directory the upload route writes to.
+  Next's static handler does not serve files added to public/uploads at
+  runtime in the standalone server — uploads returned success but their
+  URLs 404'd on live, so pictures never displayed. The route fixes old
+  and new /uploads/<name> URLs alike (no re-upload needed); traversal
+  and unknown extensions 404.
+- Chat threads contain only real messages now. The old demo greeting
+  (a fake tenant/owner exchange seeded into every thread) is removed:
+  new threads start empty, and a one-time boot cleanup deletes stored
+  seed rows (exact -m1/-m2 ids, which real messages can never carry).
+  The send box no longer clears the draft on failure — a failed send
+  shows an error and keeps the text.
