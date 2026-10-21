@@ -36,6 +36,13 @@ container `kayayiti-web` on FedServ host port 8097.
   language codes (KR/FR/EN, space-separated, no backslash): KR picked
   shows FR EN, FR picked shows KR EN, EN picked shows KR FR. Phones
   show nothing on top.
+- Mobile apps (Capacitor, one codebase, two apps): Android + iOS,
+  appId `com.kayayiti.app`, remote-URL mode loading https://kayayiti.app
+  (same pattern as the Farelune app). Icon in `resources/icon.png`,
+  CI builds Android AAB/APK in `.github/workflows/build-mobile.yml`;
+  iOS builds once Apple signing secrets + Team ID exist. Details in
+  `MOBILE.md`. Design direction (2026-10-21): less rigid, Farelune-comfortable
+  — rounded Nunito type, pill buttons, rounder/softer cards, warmer text.
 
 ## Decisions (from Spencer, 2026-10-21)
 

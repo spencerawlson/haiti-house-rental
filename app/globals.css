@@ -2,14 +2,14 @@
 :root {
   --bg: #faf8f5;
   --card: #ffffff;
-  --ink: #111827;
-  --muted: #6b7280;
+  --ink: #1e293b;
+  --muted: #78716c;
   --line: #e7e2dc;
   --primary: #1d4ed8;
   --primary-dark: #1e40af;
   --accent: #0f766e;
-  --radius: 16px;
-  --shadow: 0 1px 3px rgba(17, 24, 39, 0.08), 0 4px 16px rgba(17, 24, 39, 0.06);
+  --radius: 20px;
+  --shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 10px 28px rgba(17, 24, 39, 0.07);
 }
 
 * { box-sizing: border-box; }
@@ -18,10 +18,15 @@ html { background: var(--bg); }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
   background: transparent;
   color: var(--ink);
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+h1, h2, h3 {
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 /* Lively Farelune-style sky: bright blue sky melting into turquoise
@@ -114,11 +119,11 @@ a:hover { text-decoration: underline; }
   align-items: center;
   justify-content: center;
   min-height: 48px;
-  padding: 12px 22px;
-  border-radius: 12px;
+  padding: 12px 24px;
+  border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(15, 118, 110, 0.82));
   -webkit-backdrop-filter: blur(14px) saturate(1.5);
@@ -128,7 +133,9 @@ a:hover { text-decoration: underline; }
     inset 0 -1px 0 rgba(255, 255, 255, 0.1),
     0 8px 24px rgba(29, 78, 216, 0.28);
   color: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.btn:active { transform: scale(0.97); }
 .btn:hover {
   background: linear-gradient(135deg, rgba(30, 64, 175, 0.92), rgba(13, 94, 88, 0.88));
   text-decoration: none;
@@ -156,8 +163,9 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.card-body { padding: 16px; }
+.card-body { padding: 18px; }
 
 .house-art {
   height: 160px;

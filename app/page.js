@@ -72,6 +72,9 @@ export default function Landing() {
           <div className="card"><div className="card-body"><strong>2. {t.scheduleVisit}</strong></div></div>
           <div className="card"><div className="card-body"><strong>3. {t.howStep3}</strong></div></div>
         </div>
+        <p className="muted" style={{ marginTop: 32 }}>
+          <Link href={`/${lang}/privacy`}>{t.privacy}</Link>
+        </p>
       </main>
     </>
   );
