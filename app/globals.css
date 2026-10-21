@@ -17,7 +17,10 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg);
+  /* Blend of turquoise and off-white, off-white prevailing: a soft
+     turquoise wash at the top melting into the off-white base. */
+  background: linear-gradient(180deg, #bfeee6 0%, #faf8f5 38%);
+  background-attachment: fixed;
   color: var(--ink);
   line-height: 1.5;
 }
