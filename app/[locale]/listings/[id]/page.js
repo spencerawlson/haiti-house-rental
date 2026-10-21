@@ -1,15 +1,18 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
-import { getListing, rentPeriodLabel } from '@/lib/listings';
+import { getListing } from '@/lib/listings-server';
+import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
 import VisitScheduler from '@/components/VisitScheduler';
 
-export default function ListingDetail({ params }) {
+export const dynamic = 'force-dynamic';
+
+export default async function ListingDetail({ params }) {
   const t = getDict(params.locale);
-  const l = getListing(params.id);
+  const l = await getListing(params.id);
   if (!l) notFound();
   return (
     <>

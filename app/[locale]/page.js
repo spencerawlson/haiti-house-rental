@@ -1,13 +1,16 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
-import { LISTINGS } from '@/lib/listings';
+import { getListings } from '@/lib/listings-server';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import AdvertisedCarousel from '@/components/AdvertisedCarousel';
 
-export default function LocaleHome({ params }) {
+export const dynamic = 'force-dynamic';
+
+export default async function LocaleHome({ params }) {
   const t = getDict(params.locale);
+  const LISTINGS = await getListings();
   return (
     <>
       <main className="container">

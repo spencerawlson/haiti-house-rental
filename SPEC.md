@@ -104,10 +104,10 @@ container `kayayiti-web` on FedServ host port 8097.
   listing replies as the owner; everyone else writes as the tenant. Your
   own messages always sit blue on the right, theirs gray on the left,
   whichever side you are on.
-- v0 limits (must be fixed before real use): messages reset on server
-  restart; threads are per listing, not per tenant; no moderation, no
-  notifications. Production: Postgres threads + messages, auth for both
-  sides, moderation and new-message notifications.
+- v0 limits (must be fixed before real use): threads are per listing,
+  not per tenant; no moderation, no notifications. Messages survive
+  restarts since the Oct 2026 Postgres migration. Production: auth for
+  both sides, moderation and new-message notifications.
 
 ## Pricing (decided 2026-10-21)
 
@@ -146,8 +146,9 @@ container `kayayiti-web` on FedServ host port 8097.
   their account, taps "I sent the transfer", and the admin matches the
   transfer to that number and activates the account from /admin. Server
   accounts with bcrypt, cross-device sign-in, and real payment verification
-  arrive with the backend. Store is in-memory for now (resets on restart),
-  like listings and chat.
+  arrive with the backend. Since the Oct 2026 Postgres migration, accounts
+  survive restarts and rebuilds (they used to live in container memory —
+  a restart wiped them, which cost a real account on Oct 21).
 
 ## Search (Centris-style)
 
@@ -229,3 +230,12 @@ container `kayayiti-web` on FedServ host port 8097.
   (owner must be an activated landlord, else 403) so a direct API call
   cannot bypass the form. Landlords now also write a description for each
   listing (shown on the detail page).
+
+## Postgres migration (2026-10-21)
+- All server data lives in Postgres now (container `kayayiti-db`, volume
+  `kayayiti-pgdata`): accounts, listings, chats, visits, revenue, payment
+  numbers. Tables are created on first boot; the 7 demo listings seed only
+  when the listings table is empty. Restarts and rebuilds keep everything.
+  Presence ("Live now") intentionally stays in memory — a restart clearing
+  "who is online" is correct behavior. Uploaded photos/videos live on disk
+  in the uploads volume, as before.

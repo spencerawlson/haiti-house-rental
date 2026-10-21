@@ -1,4 +1,22 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: kayayiti-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kayayiti
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kayayiti}
+      POSTGRES_DB: kayayiti
+    volumes:
+      - kayayiti-pgdata:/var/lib/postgresql/data
+    # No ports published: the database is only reachable from the app
+    # container on the compose network, never from the internet or LAN.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kayayiti -d kayayiti"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
   kayayiti:
     build: .
     container_name: kayayiti-web
@@ -9,8 +27,16 @@ services:
       # Set a strong password before launch. Without it, the admin area
       # stays closed (fail closed) and nobody can administer the app.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      # The app creates its tables on first boot and seeds the 7 demo
+      # listings only when the listings table is empty — restarts and
+      # rebuilds never wipe real data.
+      - DATABASE_URL=postgres://kayayiti:${POSTGRES_PASSWORD:-kayayiti}@db:5432/kayayiti
+    depends_on:
+      db:
+        condition: service_healthy
     volumes:
       - kayayiti-uploads:/app/public/uploads
 
 volumes:
   kayayiti-uploads:
+  kayayiti-pgdata:

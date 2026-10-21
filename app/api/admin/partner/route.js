@@ -9,7 +9,7 @@ export async function POST(request) {
   if (!data.username || !data.passwordHash) {
     return Response.json({ error: 'Username and password are required' }, { status: 400 });
   }
-  const account = createServerAccount({
+  const account = await createServerAccount({
     name: data.name || data.username,
     username: data.username,
     passwordHash: data.passwordHash,

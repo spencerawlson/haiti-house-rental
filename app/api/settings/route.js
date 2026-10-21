@@ -6,5 +6,5 @@ export const dynamic = 'force-dynamic';
 // Public: signup and account screens need the destination numbers to show
 // users where to send the registration fee.
 export async function GET() {
-  return Response.json(getSettings());
+  return Response.json(await getSettings());
 }

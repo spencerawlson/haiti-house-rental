@@ -6,8 +6,8 @@ import { logActivation } from '@/lib/revenue-server';
 // account logs 1000 HTG of revenue (once per account, tenants excluded).
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
-  const account = setAccountActivated(data.username, data.activated);
+  const account = await setAccountActivated(data.username, data.activated);
   if (!account) return Response.json({ error: 'Not found' }, { status: 404 });
-  if (data.activated === true) logActivation(account);
+  if (data.activated === true) await logActivation(account);
   return Response.json({ account });
 }

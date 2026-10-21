@@ -7,8 +7,8 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const listingId = searchParams.get('listingId');
   const username = searchParams.get('username');
-  if (listingId) return Response.json({ visits: listVisitsForListing(listingId) });
-  if (username) return Response.json({ visits: listVisitsForUser(username) });
+  if (listingId) return Response.json({ visits: await listVisitsForListing(listingId) });
+  if (username) return Response.json({ visits: await listVisitsForUser(username) });
   return Response.json({ visits: [] });
 }
 
@@ -17,7 +17,7 @@ export async function POST(request) {
   if (!data.listingId || !data.tenant || !data.date || !data.time) {
     return Response.json({ error: 'Missing fields' }, { status: 400 });
   }
-  const visit = createVisit(data);
+  const visit = await createVisit(data);
   if (!visit) return Response.json({ error: 'Listing not found' }, { status: 404 });
   return Response.json({ visit });
 }

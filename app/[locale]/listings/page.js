@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
-import { LISTINGS, filterListings, sortListings, resolveDepartmentId } from '@/lib/listings';
+import { getListings } from '@/lib/listings-server';
+import { filterListings, sortListings, resolveDepartmentId } from '@/lib/listings';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -9,8 +10,11 @@ import SaveSearchButton from '@/components/SaveSearchButton';
 
 // Centris-style search: text search + department + type + price range +
 // rooms, with sort. A plain GET form keeps every filter shareable by URL.
-export default function Listings({ params, searchParams }) {
+export const dynamic = 'force-dynamic';
+
+export default async function Listings({ params, searchParams }) {
   const t = getDict(params.locale);
+  const LISTINGS = await getListings();
   const f = {
     q: searchParams.q || '',
     department: searchParams.department || '',

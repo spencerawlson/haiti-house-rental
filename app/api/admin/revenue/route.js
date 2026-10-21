@@ -6,6 +6,6 @@ import { getRevenue } from '@/lib/revenue-server';
 // their activation dates were never recorded.
 export const dynamic = 'force-dynamic';
 
-export function GET() {
-  return Response.json(getRevenue());
+export async function GET() {
+  return Response.json(await getRevenue());
 }

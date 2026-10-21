@@ -5,5 +5,5 @@ import { setSettings } from '@/lib/settings-server';
 // v0: no auth on this route — gate the admin area before launch.
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
-  return Response.json(setSettings(data));
+  return Response.json(await setSettings(data));
 }

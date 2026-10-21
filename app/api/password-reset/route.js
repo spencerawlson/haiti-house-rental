@@ -10,7 +10,7 @@ export async function POST(request) {
   if (!data.username || !data.phone || !data.passwordHash) {
     return Response.json({ error: 'Username, phone and new password are required' }, { status: 400 });
   }
-  const account = resetPassword(data.username, data.phone, data.passwordHash);
+  const account = await resetPassword(data.username, data.phone, data.passwordHash);
   if (!account) return Response.json({ error: 'No account matches that username and phone' }, { status: 404 });
   return Response.json({ ok: true });
 }
