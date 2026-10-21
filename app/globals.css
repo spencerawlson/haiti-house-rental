@@ -37,8 +37,10 @@ a:hover { text-decoration: underline; }
   left: 0;
   right: 0;
   display: flex;
-  background: var(--card);
-  border-top: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
   padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
   z-index: 50;
 }
@@ -51,7 +53,14 @@ a:hover { text-decoration: underline; }
   padding: 6px 2px;
   border-radius: 12px;
 }
-.tabbar a.active { background: #dbeafe; color: #1e40af; font-weight: 700; }
+.tabbar a.active {
+  background: linear-gradient(135deg, rgba(219, 234, 254, 0.75), rgba(191, 238, 230, 0.75));
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #1e40af;
+  font-weight: 700;
+}
 .tabbar .tab-icon { font-size: 1.35rem; display: block; }
 
 .header {
@@ -74,6 +83,8 @@ a:hover { text-decoration: underline; }
 .hero h1 { font-size: 2rem; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
 .hero p { color: var(--muted); margin: 0; font-size: 1.05rem; }
 
+/* Liquid glass: dark surfaces are translucent, blurred, edge-lit —
+   never flat solids. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -81,14 +92,23 @@ a:hover { text-decoration: underline; }
   min-height: 48px;
   padding: 12px 22px;
   border-radius: 12px;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  background: var(--primary);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(15, 118, 110, 0.82));
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1),
+    0 8px 24px rgba(29, 78, 216, 0.28);
   color: #fff;
 }
-.btn:hover { background: var(--primary-dark); text-decoration: none; }
+.btn:hover {
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.92), rgba(13, 94, 88, 0.88));
+  text-decoration: none;
+}
 .btn-secondary {
   background: var(--card);
   color: var(--ink);
@@ -120,7 +140,13 @@ a:hover { text-decoration: underline; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1d4ed8, #0f766e);
+  background:
+    radial-gradient(120% 90% at 18% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+    linear-gradient(115deg, rgba(255, 255, 255, 0.22) 0%, transparent 42%),
+    linear-gradient(135deg, rgba(37, 99, 235, 0.92), rgba(15, 118, 110, 0.9));
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
   color: #fff;
   font-weight: 800;
   font-size: 1.1rem;
@@ -160,7 +186,16 @@ a:hover { text-decoration: underline; }
   border-radius: 16px;
   margin: 0;
 }
-.bubble-tenant { background: var(--primary); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
+.bubble-tenant {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.88), rgba(15, 118, 110, 0.82));
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #fff;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+}
 .bubble-owner { background: #f3f4f6; border-bottom-left-radius: 4px; }
 .chat-box { display: grid; gap: 10px; }
 
