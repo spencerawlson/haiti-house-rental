@@ -49,7 +49,7 @@ export default function Account({ params }) {
               {me.activated ? (
                 <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>
               ) : me.transferSent ? (
-                <p>⏳ {t.waitingActivation} ({t.transferFrom} {me.phone} {t.viaProvider} {me.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'})</p>
+                <p>⏳ {t.waitingActivation}</p>
               ) : (
                 <div style={{ display: 'grid', gap: 10 }}>
                   <p style={{ margin: 0 }}>{t.accountPending} {t.sendTransfer}</p>
