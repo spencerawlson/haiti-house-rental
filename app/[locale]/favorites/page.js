@@ -21,7 +21,7 @@ export default function Favorites({ params }) {
 
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
       <main className="container">
         <h1>♥ {t.favorites}</h1>
         {listings === null && <p>...</p>}

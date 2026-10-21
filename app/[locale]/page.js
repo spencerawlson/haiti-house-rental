@@ -9,7 +9,7 @@ export default function LocaleHome({ params }) {
   const t = getDict(params.locale);
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
       <main className="container">
         <section className="hero">
           <h1>{t.tagline}</h1>

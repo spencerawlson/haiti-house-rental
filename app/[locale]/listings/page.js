@@ -4,6 +4,8 @@ import { LISTINGS, filterListings, sortListings } from '@/lib/listings';
 import { DEPARTMENTS } from '@/lib/departments';
 import Header from '@/components/Header';
 import ListingCard from '@/components/ListingCard';
+import ListingMap from '@/components/ListingMap';
+import SaveSearchButton from '@/components/SaveSearchButton';
 
 // Centris-style search: text search + department + type + price range +
 // rooms, with sort. A plain GET form keeps every filter shareable by URL.
@@ -19,9 +21,13 @@ export default function Listings({ params, searchParams }) {
     minBaths: searchParams.minBaths || '',
   };
   const shown = sortListings(filterListings(LISTINGS, f), searchParams.sort || '');
+  const view = searchParams.view === 'map' ? 'map' : 'list';
+  const qs = new URLSearchParams(searchParams);
+  const listHref = (() => { const p = new URLSearchParams(searchParams); p.delete('view'); const s = p.toString(); return `/${params.locale}/listings${s ? `?${s}` : ''}`; })();
+  const mapHref = (() => { const p = new URLSearchParams(searchParams); p.set('view', 'map'); return `/${params.locale}/listings?${p.toString()}`; })();
   return (
     <>
-      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} />
+      <Header locale={params.locale} browse={t.browse} listHome={t.listHome} favorites={t.favorites} savedSearches={t.savedSearches} />
       <main className="container">
         <h1>{t.browse}</h1>
         <form method="get" className="card" style={{ marginBottom: 20 }}>
@@ -70,11 +76,20 @@ export default function Listings({ params, searchParams }) {
           </div>
         </form>
         <p className="muted"><strong>{shown.length}</strong> {t.resultsFound}</p>
-        <div className="grid grid-2">
-          {shown.map((l) => (
-            <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
-          ))}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <Link className="btn btn-secondary" href={listHref}>{t.listView}</Link>
+          <Link className="btn btn-secondary" href={mapHref}>{t.mapView}</Link>
+          <SaveSearchButton savedLabel={t.saveSearch} />
         </div>
+        {view === 'map' ? (
+          <ListingMap listings={shown} locale={params.locale} perMonth={t.perMonth} />
+        ) : (
+          <div className="grid grid-2">
+            {shown.map((l) => (
+              <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
+            ))}
+          </div>
+        )}
         {shown.length === 0 && <p>{t.notFound}</p>}
         <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>

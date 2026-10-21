@@ -61,8 +61,15 @@
   min bedrooms, min bathrooms. Sort: newest, price low→high, high→low.
   Filters live in the URL, so a filtered search is shareable.
 - Favorites: heart on every card, saved in the browser (localStorage) until
-  accounts exist; a Favorites page lists them. No map yet — that comes with
-  real listing coordinates.
+  accounts exist; a Favorites page lists them.
+- Map view: List/Map toggle on the listings page; Leaflet + OpenStreetMap
+  pins (free, no key). Seed listings carry approximate commune-center
+  coordinates; new listings are geocoded at creation via Nominatim
+  (failure = list view only, never a failed post).
+- Saved-search alerts: "Save this search" stores the filter in the browser;
+  the Alerts page re-runs each saved search against live listings and flags
+  listings created after the search was saved as new. Email/push alerts need
+  accounts — that's the upgrade path, not a missing piece of the pattern.
 
 ## Photos and videos
 
