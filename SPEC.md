@@ -25,9 +25,11 @@ container `kayayiti-web` on FedServ host port 8097.
   bar on the landing; the app lives behind it. Who pays what is spelled
   out per audience in two cards (never one shared line — that confused
   landlords and tenants): tenants free, no fee, no activation; landlords
-  one-time 500 HTG activation via MonCash/NatCash. Bottom gallery: four
-  pale Haiti illustrations (mountains, beach, house, palms) in
-  `public/images/`.
+  one-time 500 HTG activation via MonCash/NatCash. Background carousel:
+  four pale Haiti illustrations (mountains, beach, house, palms) in
+  public/images play one after another behind the landing content
+  (28s cycle, crossfading, pale white wash over them); all info boxes
+  sit on top.
 
 ## Decisions (from Spencer, 2026-10-21)
 
