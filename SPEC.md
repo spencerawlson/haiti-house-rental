@@ -1,0 +1,50 @@
+# Haiti House Rental App — Product Spec (v0)
+
+## Decisions (from Spencer, 2026-10-21)
+
+- **Launch city:** Port-au-Prince first. **Coverage:** all 10 departments of Haiti
+  from day one (Ouest, Nord, Nord-Est, Nord-Ouest, Artibonite, Centre, Sud,
+  Sud-Est, Grand'Anse, Nippes) — Cap-Haïtien, Jacmel and every other commune
+  are selectable locations, not later additions.
+- **Two-sided marketplace:** landlords list homes; tenants search and find
+  homes. Tenants browse free.
+- **Landlord fee:** a small listing fee, amount TBD — still in discussion with
+  people on the ground. The fee is a **placeholder** (`LISTING_FEE` in
+  `lib/config.js`); it must never ship as a final number until Spencer
+  confirms it.
+- **Payments:** MonCash (Digicel) and NatCash (Natcom) mobile money — NOT
+  cash. Flow: landlord pays the fee from their phone number → that phone
+  number activates their account → activated account can post listings.
+- **Languages:** Haitian Creole, French, and English — all three from launch
+  (expats renting in Haiti included).
+- **Platform order:** web first, mobile app after (Capacitor-style, same
+  pattern as Farelune).
+- **Ownership:** assumed Spencer's unless he says otherwise (business-vs-
+  client question still open).
+
+## Data model (v0)
+
+- **Listing:** id, title, description, type (house | apartment | land),
+  department, commune, priceHTG per month, bedrooms, bathrooms, amenities[],
+  photos[], landlordPhone (masked until contact), status (draft | active).
+- **Landlord account:** phone number (primary identity), provider (moncash |
+  natcash), feePaid (bool), activated (bool).
+- **Department list:** all 10 departments with sample communes; Port-au-Prince
+  communes (Pétion-Ville, Delmas, Kenscoff, Carrefour, Tabarre) seeded first.
+
+## User flows (v0 → next)
+
+1. Tenant: pick language → pick department/commune → browse listings →
+   open listing → contact landlord.
+2. Landlord: enter phone number → pick MonCash or NatCash → pay fee
+   (placeholder amount) → account activated → post listing with photos.
+3. Next steps (not in v0): real MonCash/NatCash payment integration,
+   account activation by verified payment, photo uploads, listing
+   moderation, tenant accounts, in-app messaging.
+
+## Honest v0 limits
+
+- Listings in v0 are seed/demo data, not real homes.
+- The landlord form explains the payment flow but does not move money —
+  no payment provider is integrated yet.
+- Prices are in HTG per month. No exchange-rate claims.
