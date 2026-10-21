@@ -119,7 +119,16 @@ export default function Account({ params }) {
             <p style={{ margin: '0 0 8px' }}>{t.language}</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {LOCALES.map((l) => (
-                <Link key={l} className={l === params.locale ? 'btn' : 'btn btn-secondary'} href={`/${l}/account`} style={{ minHeight: 40, padding: '8px 16px' }}>
+                <Link
+                  key={l}
+                  className={l === params.locale ? 'btn' : 'btn btn-secondary'}
+                  href={`/${l}/account`}
+                  style={{ minHeight: 40, padding: '8px 16px' }}
+                  onClick={() => {
+                    document.cookie = `kay_locale=${l}; path=/; max-age=31536000`;
+                    try { localStorage.setItem('kay_locale', l); } catch {}
+                  }}
+                >
                   {l === 'ht' ? 'Kreyòl' : l === 'fr' ? 'Français' : 'English'}
                 </Link>
               ))}

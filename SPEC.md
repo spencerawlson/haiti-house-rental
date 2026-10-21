@@ -29,7 +29,9 @@ container `kayayiti-web` on FedServ host port 8097.
   four pale Haiti illustrations (mountains, beach, house, palms) in
   public/images play one after another behind the landing content
   (28s cycle, crossfading, pale white wash over them); all info boxes
-  sit on top.
+  sit on top. Language is chosen in Account -> Settings only (never
+  on the landing top right); the choice is remembered in the
+  kay_locale cookie, which the landing reads (default Creole).
 
 ## Decisions (from Spencer, 2026-10-21)
 

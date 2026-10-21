@@ -1,16 +1,15 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS } from '@/lib/departments';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
 
-// Landing page: the entry before the full app. The four Haiti images play
-// one after another as the page BACKGROUND (a slow crossfading carousel),
-// with every info box on top of them under a pale white wash so the text
-// stays readable. No tab bar here — the app lives behind these doors.
-// Who pays what is spelled out per audience, never in one shared line:
-// tenants are free, landlords pay the one-time activation.
-export default function Landing({ searchParams }) {
-  const lang = LOCALES.includes(searchParams?.lang) ? searchParams.lang : 'ht';
+// Landing page: the entry before the full app. The top right stays clean —
+// no language links here. Language is chosen once, in Account → Settings,
+// and remembered in the kay_locale cookie, which this page reads.
+export default function Landing() {
+  const saved = cookies().get('kay_locale')?.value;
+  const lang = LOCALES.includes(saved) ? saved : 'ht';
   const t = getDict(lang);
   const backgrounds = [
     '/images/landing-mountain.jpg',
@@ -27,14 +26,7 @@ export default function Landing({ searchParams }) {
         <div className="landing-wash" />
       </div>
       <main className="container" style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>Kay <span style={{ color: '#1d4ed8' }}>Ayiti</span></p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Link href="/?lang=ht">Kreyòl</Link>
-            <Link href="/?lang=fr">Français</Link>
-            <Link href="/?lang=en">English</Link>
-          </div>
-        </div>
+        <p style={{ fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>Kay <span style={{ color: '#1d4ed8' }}>Ayiti</span></p>
 
         <section className="hero">
           <h1>{t.landingHero}</h1>
