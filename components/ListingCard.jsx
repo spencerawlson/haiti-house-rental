@@ -3,34 +3,46 @@ import FavoriteButton from './FavoriteButton';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
 
+// Listing card (design: docs/design/app-showcase.png, screen 4): photo
+// with the heart on top, title, place, blue price with its rent period,
+// then a small row of rooms / wifi / parking.
 export default function ListingCard({ listing, locale, t }) {
+  const d = listing.details || {};
   return (
-    <article className="card" style={{ position: 'relative' }}>
+    <article className="lcard">
       <FavoriteButton listingId={listing.id} />
-      <Link href={`/${locale}/listings/${listing.id}`} style={{ color: 'inherit' }}>
+      <Link href={`/${locale}/listings/${listing.id}`}>
         {listing.photos?.length > 0 ? (
-          <img src={listing.photos[0]} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+          <img className="lcard-photo" src={listing.photos[0]} alt="" loading="lazy" decoding="async" />
         ) : (
-          <div className="house-art">{communeName(listing.commune, locale)}</div>
+          <div className="lcard-art">{communeName(listing.commune, locale)}</div>
         )}
-        <div className="card-body">
-          <p className="price" style={{ margin: '0 0 4px' }}>
-            {listing.priceHTG.toLocaleString()} HTG {listing.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{rentPeriodLabel(listing.rentPeriod, t)}</span>}
+        <div className="lcard-body">
+          <h3 className="lcard-title">{listing.title}</h3>
+          <p className="lcard-place">{communeName(listing.commune, locale)}</p>
+          <p className="lcard-price">
+            {listing.priceHTG.toLocaleString()} HTG
+            {listing.purpose === 'rent' && <small> {rentPeriodLabel(listing.rentPeriod, t)}</small>}
           </p>
-          {(listing.advertised || listing.verified) && (
-            <p style={{ margin: '0 0 4px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div className="icon-row">
+            {listing.type === 'land' ? (
+              <span>📐 {listing.areaM2 ? `${listing.areaM2.toLocaleString()} m²` : t.land}</span>
+            ) : (
+              <>
+                <span title={t.bedrooms}>🛏 {listing.bedrooms}</span>
+                <span title={t.bathrooms}>🛁 {listing.bathrooms}</span>
+              </>
+            )}
+            {(d.internet === 'included' || d.internet === 'available') && <span>📶 WiFi</span>}
+            {d.power24 && <span>⚡ 24/24</span>}
+            {d.parking > 0 && <span>🚗 {d.parking}</span>}
+          </div>
+          {(listing.verified || listing.advertised) && (
+            <div className="lcard-badges">
               {listing.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
               {listing.advertised && <span className="badge">📣 {t.advertised}</span>}
-            </p>
+            </div>
           )}
-          <h3 style={{ margin: '0 0 4px' }}>{listing.title}</h3>
-          <p className="muted" style={{ margin: 0 }}>
-            {communeName(listing.commune, locale)} · {listing.type === 'land'
-              ? (listing.areaM2 ? `${listing.areaM2.toLocaleString()} m²` : t.land)
-              : `${listing.bedrooms} ${t.bedrooms} · ${listing.bathrooms} ${t.bathrooms}`}
-            {listing.photos?.length > 0 && ` · ${listing.photos.length} 📷`}
-            {listing.videos?.length > 0 && ` · ${listing.videos.length} 🎬`}
-          </p>
         </div>
       </Link>
     </article>

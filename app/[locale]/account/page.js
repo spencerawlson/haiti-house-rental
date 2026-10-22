@@ -3,18 +3,40 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LOCALES } from '@/lib/config';
+import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
-import { ACTIVATION_FEE_HTG } from '@/lib/config';
-import PaymentForm, { PaymentStatus } from '@/components/PaymentForm';
+import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import ThemeToggle from '@/components/ThemeToggle';
 
-// Centris-style Account screen. With a local account, it shows the profile;
-// without one, it offers creation.
+// Account (design: docs/design/app-showcase.png — screen 12 profile menu,
+// and for landlords the screen 11 dashboard tiles). Details live on their
+// own pages (chats, visits, favorites, library, payments); this page is
+// the hub. Signed out, it offers sign-in / account creation.
+function initials(name) {
+  return String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
+}
+
+function MenuRow({ href, icon, label, badge, onClick }) {
+  const inner = (
+    <>
+      <span className="menu-icon" aria-hidden="true">{icon}</span>
+      <span style={{ flex: 1 }}>{label}</span>
+      {badge > 0 && <span className="count-badge">{badge}</span>}
+      <span className="muted" aria-hidden="true">›</span>
+    </>
+  );
+  return onClick ? (
+    <button type="button" className="menu-row" onClick={onClick}>{inner}</button>
+  ) : (
+    <Link href={href} className="menu-row">{inner}</Link>
+  );
+}
+
 export default function Account({ params }) {
   const t = getDict(params.locale);
+  const base = `/${params.locale}`;
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [payments, setPayments] = useState([]);
@@ -27,25 +49,12 @@ export default function Account({ params }) {
     getMyAccount().then((a) => {
       setMe(a);
       setLoaded(true);
-      if (a) {
-        fetch('/api/visits')
-          .then((r) => r.json())
-          .then((d) => setVisits(d.visits || []))
-          .catch(() => {});
-        fetch('/api/chat/inbox')
-          .then((r) => r.json())
-          .then((d) => setThreads(d.threads || []))
-          .catch(() => {});
-        if (a.role !== 'tenant') {
-          fetch('/api/payments')
-            .then((r) => r.json())
-            .then((d) => setPayments(d.payments || []))
-            .catch(() => {});
-        }
-        fetch(`/api/listings?owner=${encodeURIComponent(a.username)}`)
-          .then((r) => r.json())
-          .then((d) => setMyHomes(d.listings || []))
-          .catch(() => {});
+      if (!a) return;
+      fetch('/api/visits').then((r) => r.json()).then((d) => setVisits(d.visits || [])).catch(() => {});
+      fetch('/api/chat/inbox').then((r) => r.json()).then((d) => setThreads(d.threads || [])).catch(() => {});
+      if (a.role !== 'tenant') {
+        fetch('/api/payments').then((r) => r.json()).then((d) => setPayments(d.payments || [])).catch(() => {});
+        fetch(`/api/listings?owner=${encodeURIComponent(a.username)}`).then((r) => r.json()).then((d) => setMyHomes(d.listings || [])).catch(() => {});
       }
     });
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
@@ -56,146 +65,88 @@ export default function Account({ params }) {
     setMe(null);
   }
 
-
-  async function takeDownHome(id) {
-    if (!window.confirm(t.takeDownConfirm)) return;
-    const res = await fetch('/api/listings/takedown', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    if (res.ok) setMyHomes((homes) => homes.filter((h) => h.id !== id));
-  }
-
-  async function deleteThread(th) {
-    if (!window.confirm(t.deleteChatConfirm)) return;
-    await fetch('/api/chat/hide', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId: th.listingId, tenant: th.tenant }),
-    });
-    setThreads((prev) => prev.filter((x) => x.key !== th.key));
-  }
+  const isLandlord = !!me && me.role !== 'tenant';
+  const unread = threads.reduce((sum, th) => sum + th.unread, 0);
+  const upcomingVisits = visits.filter((v) => ['proposed', 'confirmed'].includes(v.status)).length;
+  const pendingPayments = payments.filter((p) => p.status === 'pending').length;
+  const activationPending = payments.some((p) => p.kind === 'activation' && p.status === 'pending');
 
   return (
     <>
       <main className="container">
-        <h1>{t.account}</h1>
-        {loaded && me && (
-          <section className="card" style={{ marginBottom: 24 }}>
-            <div className="card-body">
-              <h2 style={{ margin: '0 0 8px' }}>{t.myProfile}</h2>
-              <p style={{ margin: '0 0 4px' }}><strong>{me.name}</strong> · @{me.username} · {me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
-              {me.id && <p className="muted" style={{ margin: '0 0 4px' }}>{t.accountId}: {me.id}</p>}
-              <p className="muted" style={{ margin: '0 0 4px' }}>{me.phone}{me.email ? ` · ${me.email}` : ''}</p>
-              {me.location && (
-                <p className="muted" style={{ margin: '0 0 12px' }}>📍 {communeName(me.location.commune, params.locale)}, {departmentName(me.location.department, params.locale)}</p>
-              )}
-              {me.activated ? (
-                <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>
-              ) : (
-                <div style={{ display: 'grid', gap: 10 }}>
-                  <p style={{ margin: 0 }}>{t.accountPending} {t.sendTransfer}</p>
-                  {payments.some((p) => p.kind === 'activation' && p.status === 'pending') ? (
-                    <p style={{ margin: 0 }}>⏳ {t.waitingActivation}</p>
-                  ) : (
-                    <PaymentForm kind="activation" amountHTG={ACTIVATION_FEE_HTG} destination={destination} strings={t} onSubmitted={(p) => setPayments((prev) => [p, ...prev])} />
-                  )}
-                </div>
-              )}
-              {payments.length > 0 && (
-                <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
-                  <h3 style={{ margin: 0 }}>{t.myPayments}</h3>
-                  {payments.map((p) => <PaymentStatus key={p.id} payment={p} strings={t} locale={params.locale} />)}
-                </div>
-              )}
-              <button className="btn btn-secondary" type="button" onClick={logout} style={{ minHeight: 40, padding: '8px 16px', marginTop: 12 }}>{t.signOut}</button>
+        <h1 className="page-title">{t.myProfile}</h1>
+
+        {loaded && !me && (
+          <section className="card" style={{ marginBottom: 20 }}>
+            <div className="card-body" style={{ display: 'grid', gap: 12 }}>
+              <p style={{ margin: 0 }}>{t.signInToPost}</p>
+              <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+                <Link className="btn" href={`${base}/signin`}>{t.signIn}</Link>
+                <Link className="btn btn-secondary" href={`${base}/signup`}>{t.createAccount}</Link>
+              </p>
             </div>
           </section>
         )}
-        {loaded && !me && (
-          <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Link className="btn" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
-            <Link className="btn btn-secondary" href={`/${params.locale}/signin`}>{t.signIn}</Link>
-          </p>
-        )}
-        <h2>{t.myActivity}</h2>
-        <div className="grid">
-          <Link href={`/${params.locale}/saved-searches`} className="card" style={{ color: 'inherit' }}>
-            <div className="card-body">🔔 {t.savedSearches} <span style={{ float: 'right' }}>›</span></div>
-          </Link>
-          <Link href={`/${params.locale}/favorites`} className="card" style={{ color: 'inherit' }}>
-            <div className="card-body">♥ {t.favorites} <span style={{ float: 'right' }}>›</span></div>
-          </Link>
-          <Link href={`/${params.locale}/near-me`} className="card" style={{ color: 'inherit' }}>
-            <div className="card-body">📍 {t.nearMe} <span style={{ float: 'right' }}>›</span></div>
-          </Link>
-          {(!me || me.role !== 'tenant') && (
-          <Link href={`/${params.locale}/list`} className="card" style={{ color: 'inherit' }}>
-            <div className="card-body">＋ {t.postHome} <span style={{ float: 'right' }}>›</span></div>
-          </Link>
-          )}
-        </div>
-        <h2 style={{ marginTop: 32 }}>{t.myVisits}</h2>
-        {loaded && me && visits.length === 0 && <p className="muted">{t.noVisits}</p>}
-        <div className="grid">
-          {visits.map((v) => (
-            <Link key={v.id} href={`/${params.locale}/listings/${v.listingId}`} className="card" style={{ color: 'inherit' }}>
-              <div className="card-body">
-                <p style={{ margin: '0 0 4px' }}><strong>{v.listingTitle}</strong></p>
-                <p className="muted" style={{ margin: 0 }}>
-                  {v.date} · {v.time} — {v.status === 'confirmed' ? t.visitConfirmed : v.status === 'declined' ? t.visitDeclined : t.visitProposed}
-                </p>
-              </div>
-            </Link>
-          ))}
-        </div>
-        <h2 style={{ marginTop: 32 }}>{t.myMessages}</h2>
-        {loaded && me && threads.length === 0 && <p className="muted">{t.noMessages}</p>}
-        <div className="grid">
-          {threads.map((th) => (
-            <section key={th.key} className="card">
-              <div className="card-body">
-                <p style={{ margin: '0 0 2px' }}>
-                  <Link href={`/${params.locale}/chats?listingId=${encodeURIComponent(th.listingId)}${th.isOwner ? `&tenant=${encodeURIComponent(th.tenant)}` : ''}`}>{th.otherName || th.listingTitle}</Link>
-                  {th.unread > 0 && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
-                      {th.unread}
-                    </span>
-                  )}
-                </p>
-                {th.otherName && <p className="muted" style={{ margin: '0 0 4px' }}>{th.listingTitle}</p>}
-                <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
-                <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
-              </div>
-            </section>
-          ))}
-        </div>
-        {loaded && me && me.role !== 'tenant' && (
-          <>
-            <h2 style={{ marginTop: 32 }}>{t.myListings}</h2>
-            <p style={{ marginTop: -8 }}><Link href={`/${params.locale}/library`}>{t.library} ›</Link></p>
-            {myHomes.length === 0 && <p className="muted">{t.noMyListings}</p>}
-            <div className="grid">
-              {myHomes.map((h) => (
-                <section key={h.id} className="card">
-                  <div className="card-body">
-                    <p style={{ margin: '0 0 4px' }}><Link href={`/${params.locale}/listings/${h.id}`}>{h.title}</Link></p>
-                    <p className="muted" style={{ margin: '0 0 12px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
-                    <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
-                      <Link className="btn" href={`/${params.locale}/listings/${h.id}/edit`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.editListing}</Link>
-                      <button className="btn btn-secondary" type="button" onClick={() => takeDownHome(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
-                    </p>
-                  </div>
-                </section>
-              ))}
+
+        {loaded && me && (
+          <section className="profile-head">
+            <span className="avatar" aria-hidden="true">{initials(me.name)}</span>
+            <div style={{ minWidth: 0 }}>
+              <h2 style={{ margin: 0 }}>{me.name}</h2>
+              <p style={{ margin: '2px 0 0', color: 'var(--primary)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
+              <p className="muted" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
+                @{me.username}{me.id ? ` · ${me.id}` : ''}
+              </p>
+              <p className="muted" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
+                {me.phone}{me.email ? ` · ${me.email}` : ''}
+                {me.location ? ` · 📍 ${communeName(me.location.commune, params.locale)}, ${departmentName(me.location.department, params.locale)}` : ''}
+              </p>
             </div>
+          </section>
+        )}
+
+        {isLandlord && !me.activated && (
+          <section className="card" style={{ marginBottom: 20 }}>
+            <div className="card-body" style={{ display: 'grid', gap: 10 }}>
+              <p style={{ margin: 0 }}><strong>{t.accountPending}</strong> {t.sendTransfer}</p>
+              {activationPending ? (
+                <p style={{ margin: 0 }}>⏳ {t.waitingActivation}</p>
+              ) : (
+                <PaymentForm kind="activation" amountHTG={ACTIVATION_FEE_HTG} destination={destination} strings={t} onSubmitted={(p) => setPayments((prev) => [p, ...prev])} />
+              )}
+            </div>
+          </section>
+        )}
+
+        {isLandlord && (
+          <>
+            <h2 style={{ margin: '8px 0 12px' }}>{t.landlordDashboard}</h2>
+            <div className="stat-tiles">
+              <Link href={`${base}/library`} className="stat-tile tone-blue"><span className="stat-icon">🏠</span><strong>{myHomes.length}</strong><span>{t.myListings}</span></Link>
+              <Link href={`${base}/chats`} className="stat-tile tone-green"><span className="stat-icon">💬</span><strong>{unread}</strong><span>{t.dashNewMessages}</span></Link>
+              <Link href={`${base}/visits`} className="stat-tile tone-purple"><span className="stat-icon">📅</span><strong>{upcomingVisits}</strong><span>{t.dashVisits}</span></Link>
+              <Link href={`${base}/payments`} className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{pendingPayments}</strong><span>{t.dashPendingPayments}</span></Link>
+            </div>
+            {me.activated && (
+              <p style={{ margin: '14px 0 0' }}><Link className="btn" href={`${base}/list`} style={{ width: '100%' }}>＋ {t.addNewHome}</Link></p>
+            )}
           </>
         )}
-        <h2 style={{ marginTop: 32 }}>{t.settings}</h2>
-        <div className="card">
+
+        <nav className="menu card" style={{ marginTop: 20 }}>
+          {me && <MenuRow href={`${base}/chats`} icon="💬" label={t.myMessages} badge={unread} />}
+          {me && <MenuRow href={`${base}/visits`} icon="📅" label={t.myVisits} badge={0} />}
+          <MenuRow href={`${base}/favorites`} icon="♡" label={t.favorites} />
+          <MenuRow href={`${base}/saved-searches`} icon="🔔" label={t.savedSearches} />
+          <MenuRow href={`${base}/near-me`} icon="📍" label={t.nearMe} />
+          {isLandlord && <MenuRow href={`${base}/library`} icon="🏠" label={t.library} />}
+          {isLandlord && <MenuRow href={`${base}/payments`} icon="💳" label={t.myPayments} badge={0} />}
+          {loaded && !me && <MenuRow href={`${base}/list`} icon="＋" label={t.postHome} />}
+        </nav>
+
+        <section className="card" style={{ marginTop: 20 }}>
           <div className="card-body">
-            <p style={{ margin: '0 0 8px' }}>{t.language}</p>
+            <p style={{ margin: '0 0 8px', fontWeight: 700 }}>🌐 {t.language}</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {LOCALES.map((l) => (
                 <Link
@@ -212,12 +163,18 @@ export default function Account({ params }) {
                 </Link>
               ))}
             </div>
-            <p style={{ margin: '16px 0 8px' }}>{t.theme}</p>
+            <p style={{ margin: '16px 0 8px', fontWeight: 700 }}>🌓 {t.theme}</p>
             <ThemeToggle lightLabel={t.themeLight} darkLabel={t.themeDark} />
           </div>
-        </div>
+        </section>
+
+        {me && (
+          <nav className="menu card" style={{ marginTop: 20 }}>
+            <MenuRow icon="↪" label={t.signOut} onClick={logout} />
+          </nav>
+        )}
       </main>
-      <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
+      <TabBar locale={params.locale} t={t} />
     </>
   );
 }
