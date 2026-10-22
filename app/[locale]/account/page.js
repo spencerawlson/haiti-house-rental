@@ -63,6 +63,16 @@ export default function Account({ params }) {
     if (res.ok) setMyHomes((homes) => homes.filter((h) => h.id !== id));
   }
 
+  async function deleteThread(id) {
+    if (!window.confirm(t.deleteChatConfirm)) return;
+    await fetch('/api/chat/hide', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId: id, username: me?.username }),
+    });
+    setThreads((prev) => prev.filter((th) => th.listingId !== id));
+  }
+
   return (
     <>
       <main className="container">
@@ -141,16 +151,20 @@ export default function Account({ params }) {
         {loaded && me && threads.length === 0 && <p className="muted">{t.noMessages}</p>}
         <div className="grid">
           {threads.map((th) => (
-            <Link key={th.listingId} href={`/${params.locale}/listings/${th.listingId}`} className="card" style={{ color: 'inherit' }}>
+            <section key={th.listingId} className="card">
               <div className="card-body">
-                <p style={{ margin: '0 0 4px' }}><strong>{th.listingTitle}</strong>{th.unread > 0 && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
-                    {th.unread}
-                  </span>
-                )}</p>
-                <p className="muted" style={{ margin: 0 }}>{th.lastText}</p>
+                <p style={{ margin: '0 0 4px' }}>
+                  <Link href={`/${params.locale}/chats?listingId=${th.listingId}`}>{th.listingTitle}</Link>
+                  {th.unread > 0 && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
+                      {th.unread}
+                    </span>
+                  )}
+                </p>
+                <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
+                <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
               </div>
-            </Link>
+            </section>
           ))}
         </div>
         {loaded && me && me.role !== 'tenant' && (

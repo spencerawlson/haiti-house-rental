@@ -283,3 +283,21 @@ container `kayayiti-web` on FedServ host port 8097.
 - Known v0 limit (same as the rest of the app): landlord actions trust
   the username the browser reports for the signed-in user — there is no
   server session yet. Hardening that is a separate step if wanted.
+
+## Per-side chat delete, dedicated chats spot, photo zoom (2026-10-21)
+- Delete on your side only: hiding a thread (chat_hidden) removes it
+  from that user's inbox and unread counts, but the other side keeps
+  it. A message from either side after the hide brings the thread
+  back — hiding is not erasing. Delete buttons live on the chats list
+  and in Account -> Messages.
+- Chats have a dedicated spot: /[locale]/chats shows the thread list
+  and opens a conversation there. The listing page's Contact button
+  links to /chats?listingId=... (it used to be a dead button), and the
+  embedded chat box is gone from listing pages. Account -> Messages
+  links point to the chats spot too.
+- Tab bar: Chat (💬) sits between Favori and Eksplore, and it carries
+  the unread-message badge now (moved off the Account tab).
+- Photo zoom: tapping any photo on a listing detail page opens a
+  full-screen lightbox — pinch to zoom on touch, scroll to zoom with a
+  mouse, + / − / Reset buttons, drag to pan while zoomed, double-tap
+  toggles 2×, Escape closes, arrows move between photos.

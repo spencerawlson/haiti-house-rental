@@ -6,11 +6,11 @@ import { useEffect, useState } from 'react';
 import { getSession } from '@/lib/account';
 
 // Centris-style bottom tab bar. Active tab gets the light-blue pill.
-// The Account tab carries the unread-message count: when a tenant writes
+// The Chat tab carries the unread-message count: when a tenant writes
 // about one of your homes (or a landlord replies to you), the badge tells
 // you without opening every listing.
 // No payment calculator tab: Haiti is a no-mortgage market.
-export default function TabBar({ locale, browse, favorites, explore, account }) {
+export default function TabBar({ locale, browse, favorites, explore, account, chat = 'Chat' }) {
   const pathname = usePathname() || '';
   const [unread, setUnread] = useState(0);
   useEffect(() => {
@@ -30,12 +30,14 @@ export default function TabBar({ locale, browse, favorites, explore, account }) 
   const active =
     pathname === `${base}/account` ? 'account'
     : pathname === `${base}/favorites` ? 'favorites'
+    : pathname === `${base}/chats` ? 'chat'
     : pathname.startsWith(`${base}/listings`) ? 'search'
     : pathname === base || pathname === `${base}/` ? 'explore'
     : '';
   const tabs = [
     { key: 'search', href: `${base}/listings`, icon: '🔍', label: browse },
     { key: 'favorites', href: `${base}/favorites`, icon: '♥', label: favorites },
+    { key: 'chat', href: `${base}/chats`, icon: '💬', label: chat },
     { key: 'explore', href: base, icon: '🧭', label: explore },
     { key: 'account', href: `${base}/account`, icon: '👤', label: account },
   ];
@@ -45,7 +47,7 @@ export default function TabBar({ locale, browse, favorites, explore, account }) 
         <Link key={tab.key} href={tab.href} className={active === tab.key ? 'active' : ''}>
           <span className="tab-icon">{tab.icon}</span>
           {tab.label}
-          {tab.key === 'account' && unread > 0 && (
+          {tab.key === 'chat' && unread > 0 && (
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 4 }}>
               {unread}
             </span>

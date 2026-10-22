@@ -5,8 +5,8 @@ import { getListing } from '@/lib/listings-server';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
-import ChatBox from '@/components/ChatBox';
 import TakeDownButton from '@/components/TakeDownButton';
+import ListingPhotos from '@/components/ListingPhotos';
 import EditListingButton from '@/components/EditListingButton';
 import VisitScheduler from '@/components/VisitScheduler';
 
@@ -24,11 +24,7 @@ export default async function ListingDetail({ params }) {
           <EditListingButton listingId={l.id} owner={l.owner} locale={params.locale} label={t.editListing} />
           <TakeDownButton listingId={l.id} owner={l.owner} locale={params.locale} confirmText={t.takeDownConfirm} label={t.takeDown} />
         </p>
-        {l.photos?.length > 0 ? (
-          <img src={l.photos[0]} alt="" style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block' }} />
-        ) : (
-          <div className="house-art" style={{ borderRadius: 16, marginTop: 16, height: 200 }}>{communeName(l.commune, params.locale)}</div>
-        )}
+        <ListingPhotos photos={l.photos || []} placeholder={communeName(l.commune, params.locale)} />
         <h1 style={{ marginBottom: 4 }}>{l.title}</h1>
         <p className="muted" style={{ marginTop: 0 }}>{communeName(l.commune, params.locale)} · {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</p>
         {l.description && <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{l.description}</p>}
@@ -48,13 +44,6 @@ export default async function ListingDetail({ params }) {
             <span className="muted">{l.department}</span>
           </div>
         </div>
-        {l.photos?.length > 1 && (
-          <div className="gallery">
-            {l.photos.slice(1).map((src) => (
-              <img key={src} src={src} alt="" />
-            ))}
-          </div>
-        )}
         {l.videos?.length > 0 && (
           <div>
             <h2>{t.videosLabel}</h2>
@@ -66,9 +55,8 @@ export default async function ListingDetail({ params }) {
           </div>
         )}
         <div style={{ marginTop: 20 }}>
-          <button className="btn" type="button">{t.contact}</button>
+          <Link className="btn" href={`/${params.locale}/chats?listingId=${l.id}`}>{t.contact}</Link>
         </div>
-        <ChatBox listingId={l.id} owner={l.owner} strings={t} />
         <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
