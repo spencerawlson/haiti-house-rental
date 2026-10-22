@@ -8,10 +8,12 @@ export async function resolve(specifier, context, next) {
   if (spec.startsWith('@/')) spec = pathToFileURL(path.join(ROOT, spec.slice(2))).href;
   const relative = spec.startsWith('.') || spec.startsWith('file:');
   if (relative && !/\.(m?js|json|jsx)$/.test(spec)) {
-    try {
-      return await next(`${spec}.js`, context);
-    } catch {
-      // fall through to the original specifier
+    for (const candidate of [`${spec}.js`, `${spec}/index.js`]) {
+      try {
+        return await next(candidate, context);
+      } catch {
+        // try the next form, then the original specifier
+      }
     }
   }
   return next(spec, context);

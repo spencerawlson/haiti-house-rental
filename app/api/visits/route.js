@@ -1,6 +1,7 @@
 import { createVisit, listVisitsForListing, listVisitsForUser } from '@/lib/visits-server';
 import { getListing } from '@/lib/listings-server';
 import { getSessionAccount, unauthorized } from '@/lib/session-server';
+import { notify } from '@/lib/notify-server';
 
 // Live data: never serve a build-time snapshot.
 export const dynamic = 'force-dynamic';
@@ -36,5 +37,6 @@ export async function POST(request) {
   if (result.error === 'not_found') return Response.json({ error: 'Listing not found' }, { status: 404 });
   if (result.error === 'already_requested') return Response.json({ error: result.error }, { status: 409 });
   if (result.error) return Response.json({ error: result.error }, { status: 400 });
+  notify(listing?.owner, 'visit_proposed', { name: String(me.name || '').split(/\s+/)[0], title: result.visit.listingTitle, date: result.visit.date, time: result.visit.time }, { link: `/ht/listings/${encodeURIComponent(result.visit.listingId)}` });
   return Response.json({ visit: result.visit });
 }

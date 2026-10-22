@@ -3,6 +3,7 @@ import { resolveThread } from '@/lib/chat-auth';
 import { ensureConversation, getConversation } from '@/lib/conversations-server';
 import { getSessionAccount, unauthorized } from '@/lib/session-server';
 import { rateLimit, tooMany } from '@/lib/rate-limit';
+import { notify } from '@/lib/notify-server';
 
 // Live data: never serve a build-time snapshot of a thread.
 export const dynamic = 'force-dynamic';
@@ -50,5 +51,12 @@ export async function POST(request) {
     author: me.username,
   });
   if (!msg) return Response.json({ error: 'Invalid message' }, { status: 400 });
+  // Tell the other side (SMS/email only — the Messages tab counts chats),
+  // at most once per conversation every 15 minutes.
+  const recipient = thread.isOwner ? thread.tenant : thread.listing.owner;
+  const link = `/ht/chats?listingId=${encodeURIComponent(thread.listing.id)}${thread.isOwner ? '' : `&tenant=${encodeURIComponent(thread.tenant)}`}`;
+  notify(recipient, 'chat', { name: String(me.name || '').split(/\s+/)[0], title: thread.listing.title, text: msg.text.slice(0, 80) }, {
+    link, inApp: false, throttleKey: `${thread.listing.id}|${thread.tenant}`,
+  });
   return Response.json({ message: msg });
 }

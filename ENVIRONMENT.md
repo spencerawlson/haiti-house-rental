@@ -32,3 +32,15 @@ Tests (`npm test`, never against production):
 |----------|-------|
 | `BASE_URL` | URL of a running app with a throwaway database. |
 | `ADMIN_PASSWORD` | The same value that app was started with. |
+
+Notifications (optional; with none set, only the in-app inbox works and nothing is spent):
+
+| Variable | Channel | Notes |
+|----------|---------|-------|
+| `TWILIO_ACCOUNT_SID` | SMS / WhatsApp | Always needed (starts with `AC`), from the Twilio console. |
+| `TWILIO_API_KEY_SID`, `TWILIO_API_KEY_SECRET` | SMS / WhatsApp | **Recommended**: an API key (`SK…`) and its secret, which can be revoked on its own. |
+| `TWILIO_AUTH_TOKEN` | SMS / WhatsApp | Alternative to the API key: the account's main Auth Token. |
+| `TWILIO_SMS_FROM` | SMS | A Twilio number that can text Haiti (+509). |
+| `TWILIO_WHATSAPP_FROM` | WhatsApp | A WhatsApp-enabled sender, e.g. `+14155238886` (sandbox). WhatsApp only delivers free text inside a 24 h conversation; otherwise an approved template is required. Used instead of SMS when set. |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Email | e.g. `EMAIL_FROM="Kay Ayiti <no-reply@kayayiti.app>"`, from a domain verified in Resend. |
+| `PUBLIC_BASE_URL` | all | Link base in messages (default `https://kayayiti.app`). |

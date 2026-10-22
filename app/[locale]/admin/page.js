@@ -20,6 +20,7 @@ export default function Admin({ params }) {
   const [payments, setPayments] = useState([]);
   const [paySummary, setPaySummary] = useState(null);
   const [auditEntries, setAuditEntries] = useState([]);
+  const [channels, setChannels] = useState(null);
   const [reportThreads, setReportThreads] = useState({});
   const [revenue, setRevenue] = useState({ entries: [], totalHTG: 0 });
   const [rates, setRates] = useState(null);
@@ -71,6 +72,8 @@ export default function Admin({ params }) {
       setPayments(data.payments || []);
       setPaySummary(data.summary);
     }
+    const chres = await fetch('/api/admin/notify-status');
+    if (chres.ok) setChannels(await chres.json());
     const audres = await fetch('/api/admin/audit');
     if (audres.ok) setAuditEntries((await audres.json()).entries || []);
     const repres = await fetch('/api/admin/reports');
@@ -275,6 +278,9 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           {numbersSaved && <p style={{ margin: 0 }}>{t.numbersSaved}</p>}
         </div>
       </form>
+      {channels && (
+        <p className="muted" style={{ marginTop: 24 }}>🔔 {t.notifyChannels}: SMS {channels.sms ? `✓ ${t.channelOn}` : t.channelOff} · WhatsApp {channels.whatsapp ? `✓ ${t.channelOn}` : t.channelOff} · Email {channels.email ? `✓ ${t.channelOn}` : t.channelOff}</p>
+      )}
       <h2 style={{ marginTop: 32 }}>💳 {t.paymentsTitle} ({payments.length})</h2>
       {paySummary && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>

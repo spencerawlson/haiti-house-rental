@@ -45,3 +45,19 @@ test('sanitizeDetails keeps only known keys and values', () => {
   assert.equal(out.conditions.length, 1000);
   assert.equal(sanitizeDetails(null) && Object.keys(sanitizeDetails(null)).length, 0);
 });
+
+test('Haitian phone numbers become E.164 for SMS', async () => {
+  const { toE164 } = await import('../lib/notify-server.js');
+  assert.equal(toE164('3217 1628'), '+50932171628');
+  assert.equal(toE164('+509 32 17 1628'), '+50932171628');
+  assert.equal(toE164('50932171628'), '+50932171628');
+  assert.equal(toE164('12'), null);
+});
+
+test('notifications render in the account language', async () => {
+  const { render } = await import('../lib/notify-server.js');
+  const params = { name: 'Ana', title: 'Kay ak lakou', date: '2026-11-02', time: '10:00' };
+  assert.equal(render('visit_proposed', params, 'ht'), 'Ana mande vizite "Kay ak lakou" 2026-11-02 a 10:00.');
+  assert.match(render('visit_proposed', params, 'fr'), /^Ana demande à visiter « Kay ak lakou »/);
+  assert.match(render('visit_proposed', params, 'en'), /^Ana asked to visit "Kay ak lakou"/);
+});

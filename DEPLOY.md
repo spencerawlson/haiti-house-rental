@@ -19,7 +19,9 @@
 mkdir -p /opt/kayayiti && cd /opt/kayayiti
 git clone https://github.com/spencerawlson/haiti-house-rental.git
 cd haiti-house-rental
-export ADMIN_PASSWORD='a-strong-password-you-choose'
+# Settings live in a .env file next to docker-compose.yml (create it once):
+cp .env.example .env && chmod 600 .env
+nano .env        # set ADMIN_PASSWORD, POSTGRES_PASSWORD, optional Twilio keys
 docker compose up -d --build
 curl -s http://localhost:8097/ht | head -c 200
 ```

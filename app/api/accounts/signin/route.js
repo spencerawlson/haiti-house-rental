@@ -1,4 +1,4 @@
-import { verifyAccount } from '@/lib/accounts-server';
+import { verifyAccount, setAccountLocale } from '@/lib/accounts-server';
 import { createSession } from '@/lib/session-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 
@@ -12,5 +12,6 @@ export async function POST(request) {
   }
   const account = await verifyAccount(data.username, data.passwordHash);
   if (!account) return Response.json({ error: 'Invalid login' }, { status: 401 });
+  await setAccountLocale(account.username, request.cookies.get('kay_locale')?.value);
   return Response.json({ account }, { headers: { 'Set-Cookie': await createSession(account.username) } });
 }

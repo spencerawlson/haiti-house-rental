@@ -39,6 +39,16 @@ services:
       - MIGRATE_DOWN_TO=${MIGRATE_DOWN_TO:-}
       # Demo listings stay hidden unless this is "true" (previews only).
       - SHOW_DEMO_LISTINGS=${SHOW_DEMO_LISTINGS:-}
+      # Notifications (optional, see ENVIRONMENT.md). Unset = in-app only.
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_API_KEY_SID=${TWILIO_API_KEY_SID:-}
+      - TWILIO_API_KEY_SECRET=${TWILIO_API_KEY_SECRET:-}
+      - TWILIO_SMS_FROM=${TWILIO_SMS_FROM:-}
+      - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM:-}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://kayayiti.app}
     depends_on:
       db:
         condition: service_healthy

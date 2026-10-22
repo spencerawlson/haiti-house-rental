@@ -1,4 +1,4 @@
-import { createServerAccount, listServerAccounts, getPublicProfile } from '@/lib/accounts-server';
+import { createServerAccount, listServerAccounts, getPublicProfile, setAccountLocale } from '@/lib/accounts-server';
 import { createSession } from '@/lib/session-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 
@@ -44,5 +44,6 @@ export async function POST(request) {
     partner: false,
   });
   if (!account) return Response.json({ error: 'Username taken' }, { status: 409 });
+  await setAccountLocale(account.username, request.cookies.get('kay_locale')?.value);
   return Response.json({ account }, { headers: { 'Set-Cookie': await createSession(account.username) } });
 }
