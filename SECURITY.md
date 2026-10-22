@@ -90,6 +90,7 @@ A nonce-based CSP is still to do.
 | Submit a payment reference | Landlord (activation: own account; advertising: own active listing) |
 | Confirm / reject a payment | Admin only; a payment can be confirmed once |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
+| Per-account engagement figures (last seen, logins, average session, visits) | Admin only. Merged into the admin-gated `GET /api/accounts` list, never into `pub()`, so they cannot reach a public profile or `/api/accounts/me`. Tested. |
 | Public profile lookup | Anyone — username, name, role only |
 
 ## Chat privacy
@@ -150,6 +151,11 @@ React escapes by default. The one raw-HTML sink, Leaflet popups in
 - Rate limits live in one process. Move them to Postgres or Redis if the
   app ever runs as more than one container.
 - SMS/WhatsApp self-serve recovery codes, once a sending channel exists.
+- `login_events` records a behavioural history (when each account signs
+  in, how long it stays). It is append-only, admin-only, and never
+  consulted for authorization — a failure to write one can never lock
+  anybody out. It is still personal data: if a retention policy is ever
+  adopted, this table needs a cutoff, because nothing prunes it today.
 - Listing view counts come from a browser-supplied visitor id, so a
   determined person could inflate the count on their own listing. It is a
   vanity metric nobody is billed on, and a per-IP ceiling caps the volume;

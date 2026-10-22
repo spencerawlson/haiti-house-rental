@@ -184,6 +184,16 @@ Original scope:
   chat and no visit requests, and the 48-hour deletion countdown is
   **owner-only** — `soldAt`/`deletesAt` are attached in
   `getListingsForOwner()` and never appear in a public response.
+- **Admin Board account figures** (migration `0008`): every account card
+  now shows last seen, number of logins, average session length, and
+  property-visit appointments (total and still-open), with a green dot
+  for a session open right now. Presence was in-memory only — a Map that
+  prunes after 10 minutes and resets on restart — and session rows are
+  deleted on sign-out, so none of this could be answered before. A new
+  append-only `login_events` table records it, tied to its session by
+  `token_hash` so signing out on one phone does not close the record of a
+  session still open on another. Session validation is untouched.
+  The board says plainly that the figures start from the day they shipped.
 - **Fixed:** the "Mete kay ou" button on the home page's just-launched
   card sent a signed-in landlord to the signup page to make a second
   account. It now goes to `/list`, which already handles all four cases

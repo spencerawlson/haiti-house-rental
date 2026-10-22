@@ -64,6 +64,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | migrations | legacy run-once data steps (used inside the 0001 baseline) |
 | schema_migrations | applied migration versions (Phase 6) |
 | audit_log | admin/security actions: actor, action, target, details |
+| login_events | one row per sign-in (tied to its session by `token_hash`): `at`, `last_seen_at`, `ended_at`. Feeds the Admin Board's per-account figures. Append-only; never consulted for authorization |
 
 The schema is managed by versioned migrations in `lib/migrations/`. The
 runner (`lib/migrate.js`) applies pending ones at the first query, in
@@ -79,6 +80,8 @@ them in `schema_migrations`.
 - `0006 sold_leased` adds `listings.sold_at` and its index.
 - `0007 conversation_survives` adds `conversations.listing_title` and
   `closed_at`, so a tenant keeps a thread after the home is deleted.
+- `0008 login_events` adds the login-history table behind the Admin
+  Board's account figures (last seen, logins, average session).
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing
