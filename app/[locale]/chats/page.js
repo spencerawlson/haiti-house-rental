@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -13,7 +13,8 @@ import ChatBox from '@/components/ChatBox';
 // ?listingId=, so chats no longer live at the bottom of listing pages.
 // Threads are one listing + one tenant: an owner's inbox links carry
 // &tenant= to open that tenant's conversation.
-export default function Chats({ params }) {
+export default function Chats(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);

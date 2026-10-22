@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { signIn } from '@/lib/account';
@@ -10,7 +10,8 @@ import BackButton from '@/components/BackButton';
 
 // Sign-in for returning users, on any device. Username + password; the
 // password is hashed in the browser before it leaves the device.
-export default function SignIn({ params }) {
+export default function SignIn(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
   const [username, setUsername] = useState('');

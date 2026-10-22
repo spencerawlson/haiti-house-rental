@@ -27,6 +27,9 @@ lib/password.js       scrypt hashing
 lib/rate-limit.js     in-memory limiter
 lib/chat-auth.js      who is owner/tenant on a thread
 lib/listing-details.js allowed detail fields + sanitizer (client-safe)
+lib/listings-server.js sweepSoldListings() — deletes sold/leased homes
+                      whose 48 h are up. No scheduler in this app: it runs
+                      from the listing read paths, throttled.
 lib/image-compress.js browser-side photo shrink before upload
 lib/account.js        browser helpers (sign-in, signup, session hint)
 lib/dictionaries.js   all UI strings in three languages
@@ -48,7 +51,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 |-------|-------|
 | accounts | users; `password_hash` = scrypt over the browser SHA-256; `avatar_url` = optional profile photo (an `/uploads/` path this server wrote) |
 | sessions | `sha256(token)`, username, expiry |
-| listings | listings; `status` is active or removed (never deleted); `details` JSONB (sanitized); `verified` (admin only) |
+| listings | listings; `status` is active, removed, sold or leased; `sold_at` starts the 48 h auto-deletion; `details` JSONB (sanitized); `verified` (admin only); `views` (owner-only count). The owner can delete one for good — row, photos, chats and visits all go (`/api/listings/delete`) |
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
 | chat_reads, chat_hidden | per-user, per-thread markers |
 | visits | visit requests; `proposed_by`, `history` (JSONB, append-only) |
@@ -72,6 +75,8 @@ them in `schema_migrations`.
   so they never re-run.
 - `0002 audit_log` adds the audit table.
 - `0004 profile_photo` adds `accounts.avatar_url`.
+- `0005 listing_views` adds `listings.views`.
+- `0006 sold_leased` adds `listings.sold_at` and its index.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

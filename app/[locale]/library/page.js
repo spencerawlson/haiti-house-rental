@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -10,11 +10,22 @@ import { ADVERTISED_FEE_HTG_MONTH } from '@/lib/config';
 
 const AD_MONTHS = [1, 3, 6, 12];
 
+// How long a sold/leased home has before it is deleted. Hours while
+// there is more than one left, otherwise minutes, so the last stretch
+// does not just read "0 h".
+function hoursLeft(deletesAt) {
+  const ms = deletesAt - Date.now();
+  if (ms <= 0) return '0 min';
+  const hours = Math.floor(ms / 3600000);
+  return hours >= 1 ? `${hours} h` : `${Math.max(1, Math.round(ms / 60000))} min`;
+}
+
 // A landlord's library: every home they ever posted, live and taken
 // down, newest first. Live homes can be viewed, edited or taken down;
 // taken-down homes can be put back online. Tenants see an empty library
 // (they post nothing); signed-out visitors are pointed to sign-in.
-export default function Library({ params }) {
+export default function Library(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -22,6 +33,7 @@ export default function Library({ params }) {
   const [adOpen, setAdOpen] = useState(null);
   const [pendingAds, setPendingAds] = useState({});
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
+  const [error, setError] = useState('');
 
   function load(username) {
     fetch(`/api/listings?owner=${encodeURIComponent(username)}&all=1`)
@@ -63,6 +75,40 @@ export default function Library({ params }) {
     if (res.ok) load(me.username);
   }
 
+  // Sold / leased: out of search now, deleted for good in 48 hours. That
+  // window is the undo — `restore` cancels it.
+  async function markSold(id, status) {
+    if (!window.confirm(status === 'sold' ? t.markSoldConfirm : t.markLeasedConfirm)) return;
+    setError('');
+    const res = await fetch('/api/listings/sold', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    });
+    if (res.ok) load(me.username);
+    else setError(t.deleteListingFailed);
+  }
+
+  // Delete for good: the row and its photos leave the server, and so do
+  // the conversations and visits about this home. Irreversible, so the
+  // confirm text spells out what goes with it.
+  async function remove(id) {
+    if (!window.confirm(t.deleteListingConfirm)) return;
+    setError('');
+    const res = await fetch('/api/listings/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      load(me.username);
+      return;
+    }
+    // 409 = a payment for this home is still pending review.
+    const data = await res.json().catch(() => ({}));
+    setError(data.error === 'payment_pending' ? t.deleteListingPending : t.deleteListingFailed);
+  }
+
   return (
     <>
       <main className="container">
@@ -74,6 +120,7 @@ export default function Library({ params }) {
             <Link className="btn btn-secondary" href={`/${params.locale}/signin`}>{t.signIn}</Link>
           </p>
         )}
+        {error && <p style={{ color: '#dc2626', margin: '0 0 12px', fontWeight: 700 }} role="alert">{error}</p>}
         {loaded && me && homes.length === 0 && <p className="muted">{t.noMyListings}</p>}
         <div className="grid">
           {homes.map((h) => (
@@ -86,11 +133,19 @@ export default function Library({ params }) {
               <div className="card-body">
                 <p style={{ margin: '0 0 4px' }}><strong>{h.title}</strong></p>
                 <p className="muted" style={{ margin: '0 0 4px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
+                <p className="muted" style={{ margin: '0 0 4px' }}>👁 <strong>{(h.views || 0).toLocaleString()}</strong> {t.viewsLabel}</p>
                 <p style={{ margin: '0 0 12px' }}>
-                  {h.status === 'active' ? (
-                    <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>
-                  ) : (
-                    <span className="muted">{t.statusRemoved}</span>
+                  {h.status === 'active' && <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>}
+                  {h.status === 'removed' && <span className="muted">{t.statusRemoved}</span>}
+                  {(h.status === 'sold' || h.status === 'leased') && (
+                    <>
+                      <span style={{ color: '#dc2626', fontWeight: 700 }}>
+                        {h.status === 'sold' ? `🏷 ${t.statusSold}` : `🏷 ${t.statusLeased}`}
+                      </span>
+                      {h.deletesAt && (
+                        <span className="muted"> · ⏳ {t.deletesIn} {hoursLeft(h.deletesAt)}</span>
+                      )}
+                    </>
                   )}
                 </p>
                 {h.status === 'active' && h.advertised && (
@@ -125,11 +180,17 @@ export default function Library({ params }) {
                       <Link className="btn" href={`/${params.locale}/listings/${h.id}`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.viewListing}</Link>
                       <Link className="btn btn-secondary" href={`/${params.locale}/listings/${h.id}/edit`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.editListing}</Link>
                       <button className="btn btn-secondary" type="button" onClick={() => takeDown(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
+                      <button className="btn btn-secondary" type="button" onClick={() => markSold(h.id, h.purpose === 'sale' ? 'sold' : 'leased')} style={{ minHeight: 40, padding: '8px 16px' }}>
+                        🏷 {h.purpose === 'sale' ? t.markSold : t.markLeased}
+                      </button>
                     </>
                   )}
                   {h.status !== 'active' && (
-                    <button className="btn" type="button" onClick={() => restore(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.restore}</button>
+                    <button className="btn" type="button" onClick={() => restore(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>
+                      {h.status === 'removed' ? t.restore : t.undoSold}
+                    </button>
                   )}
+                  <button className="btn btn-danger" type="button" onClick={() => remove(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.deleteListing}</button>
                 </p>
               </div>
             </section>

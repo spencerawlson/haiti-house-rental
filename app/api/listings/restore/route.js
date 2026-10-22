@@ -3,13 +3,15 @@ import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
 import { audit } from '@/lib/audit';
 
-// Put a taken-down listing back online: the listing owner, or the admin.
+// Put a listing back online: the listing owner, or the admin. Also the
+// undo for a sold/leased tag — restoring inside the 48-hour window
+// cancels the pending auto-deletion (setListingActive clears sold_at).
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
   const listing = await getListing(data.id);
-  if (!listing || listing.status !== 'removed') {
+  if (!listing || !['removed', 'sold', 'leased'].includes(listing.status)) {
     return Response.json({ error: 'Listing not found' }, { status: 404 });
   }
   const admin = await isAdminCookie(request.cookies.get('kay_admin')?.value);

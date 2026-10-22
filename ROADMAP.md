@@ -1,10 +1,17 @@
 # Kay Ayiti — Roadmap
 
 Small, reviewable phases, one pull request each. Security and privacy
-come first. No phase deletes users, listings, chats, visits, uploads or
-payment history, and none changes pricing (tenants free; activation
-1000 HTG one-time; advertising 75 HTG/month; MonCash/NatCash; admin
-approval).
+come first. No phase deletes users or payment history, and none changes
+pricing (tenants free; activation 1000 HTG one-time; advertising
+75 HTG/month; MonCash/NatCash; admin approval).
+
+Changed in Phase 9: listings are no longer kept forever. A landlord can
+delete their own home for good — or tag it sold/leased, which deletes it
+automatically after 48 hours — and that also removes its photos from disk
+and the conversations and visits about it. It is the one irreversible
+action in the app. Payments and reports about a deleted listing are
+still kept — money is a ledger, and a moderation trail that a landlord
+could erase by deleting the listing would be no trail at all.
 
 ## Phase 1 — Sessions, authorization, private chats ✅ (this PR)
 
@@ -117,3 +124,42 @@ Original scope:
   - fire-and-forget, so a failing provider never breaks the app
   - migration `0003` adds the inbox and each account's language
 - `.env` is kept out of git and Docker images, and there's a `.env.example` to copy.
+
+## Phase 9 — Landlord control & profiles ✅
+
+- Profile photos: the initials circle on Account is now the file picker
+  (`/api/accounts/avatar`, any signed-in account — tenants have a profile
+  too and are never "activated"). Images only, 8 MB, 10 changes an hour,
+  shrunk in the browser first. The stored value is always a path this
+  server wrote, never a URL from the client. Migration `0004`.
+- The upload format allowlist and magic-byte check moved to
+  `lib/upload-file.js` so the two upload doors share one copy.
+- **Delete a listing for good** (`/api/listings/delete`): the row leaves
+  the database and its photos leave the disk. "Take down" only hid a
+  home, so unwanted listings piled up in the library with no way to
+  clear them. Deleting also removes that home's conversations, read
+  markers, visits — for the tenant as well as the landlord. It refuses
+  while a payment for that home is still pending review, because
+  confirming it afterwards would extend advertising on a home that no
+  longer exists. A photo shared with another listing is left on disk.
+- **Sold / leased** (`/api/listings/sold`): the landlord tags a home when
+  the deal is done. It leaves search immediately — nobody should spend
+  mobile data opening a home that is gone — and is deleted for good 48
+  hours later (migration `0006`, `sold_at`). Those 48 hours are also the
+  undo window: "put back online" clears the tag and cancels the deletion.
+  Re-tagging (sold -> leased) does not restart the clock. A home with a
+  payment still awaiting review is kept until that is settled. There is
+  no scheduler in this app, so the sweep runs from the listing read
+  paths, throttled — meaning a home is deleted on the first page view
+  after its deadline, never before it.
+- **View counts**: the landlord sees how many people opened each home
+  (`👁 N` in the library). Counted once per viewer per half hour, never
+  the owner, by the anonymous `kay-visitor` id rather than by IP —
+  Haitian carriers share one address between many subscribers, so
+  counting by IP would merge strangers. Never shown publicly. Migration
+  `0005`.
+- `tests/avatar.test.mjs`, `tests/listings-manage.test.mjs` and
+  `tests/sold-leased.test.mjs` (60 regression tests in total). The
+  auto-deletion delay comes from `SOLD_DELETE_AFTER_MS` so the suite can
+  use seconds instead of two days; CI sets it, and the sweep test skips
+  when it is unset rather than passing without checking anything.

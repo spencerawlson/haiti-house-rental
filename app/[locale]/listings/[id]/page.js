@@ -12,6 +12,7 @@ import VisitScheduler from '@/components/VisitScheduler';
 import ReportListingButton from '@/components/ReportListingButton';
 import ListingFacts from '@/components/ListingFacts';
 import FavoriteButton from '@/components/FavoriteButton';
+import ViewPing from '@/components/ViewPing';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,8 @@ export const dynamic = 'force-dynamic';
 // photo with back + favorite, a sheet with title, place, blue price, the
 // rooms row, fact tiles, description, then visits — and a sticky
 // "Contact the owner" button.
-export default async function ListingDetail({ params }) {
+export default async function ListingDetail(props) {
+  const params = await props.params;
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const l = await getListing(params.id);
@@ -28,6 +30,7 @@ export default async function ListingDetail({ params }) {
   return (
     <>
       <main className="container">
+        <ViewPing listingId={l.id} />
         <div className="detail-hero">
           <Link href={`${base}/listings`} className="hero-btn" style={{ left: 14 }} aria-label={t.back}>←</Link>
           <FavoriteButton listingId={l.id} />

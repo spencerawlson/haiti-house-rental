@@ -14,7 +14,9 @@ import SaveSearchButton from '@/components/SaveSearchButton';
 // price-pin map. A plain GET form keeps every filter shareable by URL.
 export const dynamic = 'force-dynamic';
 
-export default async function Listings({ params, searchParams }) {
+export default async function Listings(props) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const LISTINGS = await getListings();

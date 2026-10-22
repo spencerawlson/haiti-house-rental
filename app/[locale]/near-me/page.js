@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { distanceKm } from '@/lib/geo';
 import TabBar from '@/components/TabBar';
@@ -10,7 +10,8 @@ import ListingMap from '@/components/ListingMap';
 // "Near me": no typing. The visitor taps one button, the phone asks for
 // location permission, and homes sort nearest-first by real distance.
 // Listings without coordinates can't be placed, so they don't appear here.
-export default function NearMe({ params }) {
+export default function NearMe(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [status, setStatus] = useState('idle'); // idle | locating | done | denied | unsupported
   const [user, setUser] = useState(null);
