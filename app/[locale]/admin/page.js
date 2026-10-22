@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
@@ -11,7 +11,8 @@ import BackButton from '@/components/BackButton';
 // convert it. Nothing here is automatic — a landlord's advertising
 // checkbox is only a request until the admin approves, and revenue is
 // logged only when the admin activates an account.
-export default function Admin({ params }) {
+export default function Admin(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [listings, setListings] = useState([]);
   const [accounts, setAccounts] = useState([]);

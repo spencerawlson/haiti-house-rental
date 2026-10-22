@@ -6,7 +6,8 @@
 // swap TILE_URL for a tile provider with a key (MapTiler, Stadia) — one line.
 const TILE_URL = 'https://tile.openstreetmap.org';
 
-export async function GET(_request, { params }) {
+export async function GET(_request, props) {
+  const params = await props.params;
   const { z, x, y } = params;
   if (!/^\d+$/.test(z) || !/^\d+$/.test(x) || !/^\d+$/.test(y)) {
     return new Response('Bad tile', { status: 400 });

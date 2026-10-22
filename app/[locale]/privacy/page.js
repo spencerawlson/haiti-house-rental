@@ -43,7 +43,8 @@ const TEXT = {
   },
 };
 
-export default function Privacy({ params }) {
+export default async function Privacy(props) {
+  const params = await props.params;
   const t = TEXT[params.locale] || TEXT.ht;
   const d = getDict(params.locale);
   return (

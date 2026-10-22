@@ -20,7 +20,8 @@ export const dynamic = 'force-dynamic';
 // photo with back + favorite, a sheet with title, place, blue price, the
 // rooms row, fact tiles, description, then visits — and a sticky
 // "Contact the owner" button.
-export default async function ListingDetail({ params }) {
+export default async function ListingDetail(props) {
+  const params = await props.params;
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const l = await getListing(params.id);

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
@@ -31,7 +31,8 @@ function MenuRow({ href, icon, label, badge, onClick }) {
   );
 }
 
-export default function Account({ params }) {
+export default function Account(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const [me, setMe] = useState(null);

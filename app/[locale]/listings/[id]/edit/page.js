@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
@@ -16,7 +16,8 @@ import { compressImage } from '@/lib/image-compress';
 // newly picked files are uploaded on save and appended. Only the listing
 // owner sees this form — anyone else gets a notice, and the API enforces
 // the same rule.
-export default function EditListing({ params }) {
+export default function EditListing(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
   const [listing, setListing] = useState(null);

@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  // Trace files from this folder only (another lockfile higher up on a
+  // dev machine made Next guess the wrong root for the standalone build).
+  outputFileTracingRoot: __dirname,
   // Baseline security headers (Phase 1b). No CSP yet: the inline theme
   // script and Leaflet need a nonce-based policy, planned separately.
   async headers() {

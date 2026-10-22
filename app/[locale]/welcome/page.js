@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { ACTIVATION_FEE_HTG } from '@/lib/config';
@@ -11,7 +11,8 @@ import { ACTIVATION_FEE_HTG } from '@/lib/config';
 // list your own home — with dots, a next arrow and Skip. Ends in the app.
 const ART = ['/images/landing-house.jpg', '/images/landing-palms.jpg', '/images/landing-beach.jpg'];
 
-export default function Welcome({ params }) {
+export default function Welcome(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
   const [i, setI] = useState(0);

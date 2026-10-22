@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -10,7 +10,8 @@ import BackButton from '@/components/BackButton';
 // My visits — every visit where I am the tenant or the listing owner,
 // upcoming first. Actions (confirm, reschedule, cancel) stay on the
 // listing page, next to the calendar.
-export default function Visits({ params }) {
+export default function Visits(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);

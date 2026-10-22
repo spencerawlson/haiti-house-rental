@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
@@ -16,7 +16,8 @@ import BackButton from '@/components/BackButton';
 // page), landlord (1,000 HTG once, continues here) or administrator.
 // Step 1: full name, username, password, phone, email.
 // Step 2: location — phone GPS (reverse-geocoded) or manual pick.
-export default function Signup({ params }) {
+export default function Signup(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
   const [step, setStep] = useState(0);

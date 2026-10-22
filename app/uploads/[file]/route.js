@@ -21,7 +21,8 @@ const TYPES = {
   '.webm': 'video/webm',
 };
 
-export async function GET(request, { params }) {
+export async function GET(request, props) {
+  const params = await props.params;
   const file = path.basename(params.file || '');
   const ext = path.extname(file).toLowerCase();
   const type = TYPES[ext];

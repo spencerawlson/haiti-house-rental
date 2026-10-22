@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { hashPassword } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -11,7 +11,8 @@ import BackButton from '@/components/BackButton';
 // they are and gives a one-time reset code (24h), and the user sets a new
 // password here with username + code. No email needed — many accounts
 // have none. (Username + phone alone used to be enough: unsafe.)
-export default function ForgotPassword({ params }) {
+export default function ForgotPassword(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [username, setUsername] = useState('');
   const [code, setCode] = useState('');
