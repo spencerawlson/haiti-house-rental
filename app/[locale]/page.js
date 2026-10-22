@@ -74,6 +74,15 @@ export default async function LocaleHome({ params }) {
           <h2>{t.newestHomes}</h2>
           <Link href={`${base}/listings`}>{t.seeAll}</Link>
         </div>
+        {LISTINGS.length < 4 && (
+          <section className="card" style={{ marginBottom: 14, background: 'var(--primary-soft)' }}>
+            <div className="card-body" style={{ display: 'grid', gap: 8 }}>
+              <strong>🌱 {t.earlyTitle}</strong>
+              <span className="muted">{t.earlyText}</span>
+              <Link className="btn" href={`${base}/signup?role=landlord`}>＋ {t.postHome}</Link>
+            </div>
+          </section>
+        )}
         <div className="listing-grid">
           {LISTINGS.slice(0, 6).map((l) => (
             <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />

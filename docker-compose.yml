@@ -37,11 +37,32 @@ services:
       - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
       - MIGRATE_DOWN_TO=${MIGRATE_DOWN_TO:-}
+      # Demo listings stay hidden unless this is "true" (previews only).
+      - SHOW_DEMO_LISTINGS=${SHOW_DEMO_LISTINGS:-}
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - kayayiti-uploads:/app/public/uploads
+
+  # Automatic backups (scripts/backup-loop.sh): one at start, then every
+  # 24 h — database dump + uploads archive into ./backups (or BACKUP_DIR),
+  # kept BACKUP_KEEP_DAYS days. Read-only access to the uploads volume.
+  backup:
+    image: postgres:16-alpine
+    container_name: kayayiti-backup
+    restart: unless-stopped
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-kayayiti}
+      KEEP_DAYS: ${BACKUP_KEEP_DAYS:-14}
+    volumes:
+      - kayayiti-uploads:/uploads:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+      - ./scripts/backup-loop.sh:/backup-loop.sh:ro
+    entrypoint: ["/bin/sh", "/backup-loop.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   kayayiti-uploads:

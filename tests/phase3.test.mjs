@@ -61,3 +61,13 @@ test('search shows the newest real listing first by default', { skip }, async ()
   const lastReal = api.data.listings.map((l) => !l.seed).lastIndexOf(true);
   if (firstSeed !== -1) assert.ok(lastReal < firstSeed);
 });
+
+test('demo listings are hidden from search and by direct link', async () => {
+  const { SEED_LISTINGS } = await import('../lib/seed-listings.js');
+  const api = await (await fetch(`${BASE}/api/listings`)).json();
+  assert.ok(!api.listings.some((l) => l.seed), 'no demo listing in search');
+  const direct = await fetch(`${BASE}/api/listings?id=${encodeURIComponent(SEED_LISTINGS[0].id)}`);
+  assert.equal(direct.status, 404);
+  const page = await fetch(`${BASE}/en/listings/${encodeURIComponent(SEED_LISTINGS[0].id)}`);
+  assert.equal(page.status, 404);
+});

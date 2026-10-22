@@ -116,6 +116,13 @@ container `kayayiti-web` on FedServ host port 8097.
   or tenant comes from the server session (see SECURITY.md). Still
   missing: moderation, block/report, out-of-app notifications.
 
+## Demo listings (decided 2026-10-22)
+
+- The 7 seeded demo listings are hidden from the public: they looked
+  like real homes. The rows stay in the database; `SHOW_DEMO_LISTINGS=true`
+  shows them for previews. While fewer than 4 real homes exist, the home
+  page shows a "just launched — list your home" card instead.
+
 ## Pricing (decided 2026-10-21)
 
 - Account activation (one-time, MonCash/NatCash): **1000 HTG**.

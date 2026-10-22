@@ -153,10 +153,20 @@ reviews, verifications, takedowns, reset codes, reading a reported
 conversation, payment-number changes) are also kept in the `audit_log`
 table and shown on the Admin Board under "Activity log".
 
-### Backups
-`scripts/backup.sh` dumps the database and archives the uploads into
-`/var/backups/kayayiti`, keeps 14 days, and fails loudly on an empty dump.
-Run it nightly from cron on the host:
+### Backups (automatic)
+The `backup` service in `docker-compose.yml` starts with the stack. It
+backs up once at start (so every deploy gets a fresh backup), then every
+24 hours, into `./backups` next to the compose file (`BACKUP_DIR`), and
+keeps 14 days (`BACKUP_KEEP_DAYS`). Each run writes a database dump and an
+uploads archive and logs `backup.ok`. Check it:
+
+```sh
+docker logs kayayiti-backup --tail 3
+ls -lh backups/
+```
+
+`scripts/backup.sh` does the same by hand, e.g. before an upgrade. Or run
+it from host cron instead of the service:
 
 ```sh
 0 3 * * * /path/to/haiti-house-rental/scripts/backup.sh >> /var/log/kayayiti-backup.log 2>&1
