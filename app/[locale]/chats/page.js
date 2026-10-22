@@ -77,9 +77,9 @@ export default function Chats({ params }) {
             {threads.map((th) => (
               <section key={th.listingId} className="card">
                 <div className="card-body">
-                  <p style={{ margin: '0 0 4px' }}>
+                  <p style={{ margin: '0 0 2px' }}>
                     <button type="button" onClick={() => setSelectedId(th.listingId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', fontWeight: 700, color: 'var(--primary)', textAlign: 'left' }}>
-                      {th.listingTitle}
+                      {th.otherName || th.listingTitle}
                     </button>
                     {th.unread > 0 && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
@@ -87,6 +87,7 @@ export default function Chats({ params }) {
                       </span>
                     )}
                   </p>
+                  {th.otherName && <p className="muted" style={{ margin: '0 0 4px' }}>{th.listingTitle}</p>}
                   <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
                   <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
                 </div>
@@ -100,7 +101,10 @@ export default function Chats({ params }) {
             {!listing && <p className="muted">{t.notFound}</p>}
             {listing && (
               <>
-                <h2 style={{ margin: '0 0 4px' }}>{listing.title}</h2>
+                <h2 style={{ margin: '0 0 4px' }}>{threads.find((th) => th.listingId === selectedId)?.otherName || listing.title}</h2>
+                {threads.find((th) => th.listingId === selectedId)?.otherName && (
+                  <p className="muted" style={{ margin: '0 0 12px' }}>{listing.title}</p>
+                )}
                 <ChatBox listingId={listing.id} owner={listing.owner} strings={t} />
               </>
             )}

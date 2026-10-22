@@ -153,14 +153,15 @@ export default function Account({ params }) {
           {threads.map((th) => (
             <section key={th.listingId} className="card">
               <div className="card-body">
-                <p style={{ margin: '0 0 4px' }}>
-                  <Link href={`/${params.locale}/chats?listingId=${th.listingId}`}>{th.listingTitle}</Link>
+                <p style={{ margin: '0 0 2px' }}>
+                  <Link href={`/${params.locale}/chats?listingId=${th.listingId}`}>{th.otherName || th.listingTitle}</Link>
                   {th.unread > 0 && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
                       {th.unread}
                     </span>
                   )}
                 </p>
+                {th.otherName && <p className="muted" style={{ margin: '0 0 4px' }}>{th.listingTitle}</p>}
                 <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
                 <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
               </div>

@@ -301,3 +301,13 @@ container `kayayiti-web` on FedServ host port 8097.
   full-screen lightbox — pinch to zoom on touch, scroll to zoom with a
   mouse, + / − / Reset buttons, drag to pan while zoomed, double-tap
   toggles 2×, Escape closes, arrows move between photos.
+
+## Chats list by person (2026-10-21)
+- The chats list leads with the other person's first name, taken from
+  their account when they are registered: a landlord sees the tenant's
+  first name (the most recent registered tenant author in that
+  listing's thread), a tenant sees the landlord's first name, and the
+  listing title sits below as context. Anonymous writers have no
+  account, so their threads fall back to the listing title. Tapping a
+  name opens the conversation, whose header shows the same name.
+  Account -> Messages uses the same display.
