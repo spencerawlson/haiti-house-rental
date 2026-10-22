@@ -31,6 +31,12 @@ services:
       # listings only when the listings table is empty — restarts and
       # rebuilds never wipe real data.
       - DATABASE_URL=postgres://kayayiti:${POSTGRES_PASSWORD:-kayayiti}@db:5432/kayayiti
+      # Optional (see ENVIRONMENT.md): extra key for admin sessions, extra
+      # allowed origins for the CSRF guard, and a one-off migration
+      # rollback target. Leave empty normally.
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:-}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-}
+      - MIGRATE_DOWN_TO=${MIGRATE_DOWN_TO:-}
     depends_on:
       db:
         condition: service_healthy

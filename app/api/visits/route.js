@@ -32,7 +32,9 @@ export async function POST(request) {
   if (listing?.owner && listing.owner === me.username) {
     return Response.json({ error: 'Owners cannot request visits to their own home' }, { status: 400 });
   }
-  const visit = await createVisit({ listingId: data.listingId, tenant: me.username, date: String(data.date), time: String(data.time), message: String(data.message || '').slice(0, 1000) });
-  if (!visit) return Response.json({ error: 'Listing not found' }, { status: 404 });
-  return Response.json({ visit });
+  const result = await createVisit({ listingId: data.listingId, tenant: me.username, date: String(data.date), time: String(data.time), message: String(data.message || '').slice(0, 1000) });
+  if (result.error === 'not_found') return Response.json({ error: 'Listing not found' }, { status: 404 });
+  if (result.error === 'already_requested') return Response.json({ error: result.error }, { status: 409 });
+  if (result.error) return Response.json({ error: result.error }, { status: 400 });
+  return Response.json({ visit: result.visit });
 }

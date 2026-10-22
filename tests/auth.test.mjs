@@ -1,41 +1,16 @@
 // Authentication + authorization regression tests (Phase 1).
 // Run against a running app with a THROWAWAY database — never production:
 //
-//   BASE_URL=http://host:port ADMIN_PASSWORD=... node --test tests/
+//   BASE_URL=http://host:port ADMIN_PASSWORD=... npm test
 //
 // Every test here is an attack that worked before Phase 1: acting as
 // another user by naming them in a request body, reading other people's
 // chats/visits/phones, skipping the activation fee, guessing passwords.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { BASE, ADMIN_PASSWORD, sha, client, haitiDate } from './helpers.mjs';
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const run = Date.now().toString(36);
-const sha = (s) => createHash('sha256').update(s).digest('hex');
-
-// Minimal cookie-jar client: one per simulated person.
-function client() {
-  let cookies = {};
-  return async function call(path, { method = 'GET', body, form } = {}) {
-    const headers = {};
-    if (body) headers['Content-Type'] = 'application/json';
-    const jar = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
-    if (jar) headers.Cookie = jar;
-    const res = await fetch(BASE + path, { method, headers, body: form || (body ? JSON.stringify(body) : undefined), redirect: 'manual' });
-    for (const c of res.headers.getSetCookie?.() || []) {
-      const [pair] = c.split(';');
-      const i = pair.indexOf('=');
-      const name = pair.slice(0, i);
-      const value = pair.slice(i + 1);
-      if (value) cookies[name] = value; else delete cookies[name];
-    }
-    let data = null;
-    try { data = await res.json(); } catch {}
-    return { status: res.status, data };
-  };
-}
 
 const users = {
   landlord: { name: 'Lan Lord', username: `land_${run}`, password: 'pw-landlord-1', phone: '+509 3000 0001', role: 'landlord' },
@@ -140,8 +115,8 @@ test('chats are private per tenant', { skip: !ADMIN_PASSWORD && 'needs a listing
 });
 
 test('visits are private and only the owner decides', { skip: !ADMIN_PASSWORD && 'needs a listing' }, async () => {
-  assert.equal((await as.anon('/api/visits', { method: 'POST', body: { listingId, date: '2099-01-01', time: '10:00' } })).status, 401);
-  const v = await as.t1('/api/visits', { method: 'POST', body: { listingId, tenant: users.t2.username, date: '2099-01-01', time: '10:00' } });
+  assert.equal((await as.anon('/api/visits', { method: 'POST', body: { listingId, date: haitiDate(3), time: '10:00' } })).status, 401);
+  const v = await as.t1('/api/visits', { method: 'POST', body: { listingId, tenant: users.t2.username, date: haitiDate(3), time: '10:00' } });
   assert.equal(v.status, 200);
   assert.equal(v.data.visit.tenant, users.t1.username);
   assert.deepEqual((await as.t2(`/api/visits?listingId=${listingId}`)).data.visits, []);
@@ -171,14 +146,64 @@ test('transfer flag applies to the session account, not a named one', async () =
   assert.equal(r.data.account.username, users.t2.username);
 });
 
-test('password reset signs out every device', async () => {
+test('phone number alone no longer resets a password', async () => {
+  const r = await as.anon('/api/password-reset', { method: 'POST', body: { username: users.t2.username, phone: '30000003', passwordHash: sha('x') } });
+  assert.equal(r.status, 400);
+  assert.equal((await as.anon('/api/admin/reset-code', { method: 'POST', body: { username: users.t2.username } })).status, 401);
+});
+
+test('admin reset code: single use, and the reset signs out every device', { skip: !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD' }, async () => {
   const other = client();
   await other('/api/accounts/signin', { method: 'POST', body: { username: users.t2.username, passwordHash: sha(users.t2.password) } });
   assert.equal((await other('/api/accounts/me')).status, 200);
-  const r = await as.anon('/api/password-reset', { method: 'POST', body: { username: users.t2.username, phone: '30000003', passwordHash: sha('new-pw') } });
-  assert.equal(r.status, 200);
+  const issued = await as.admin('/api/admin/reset-code', { method: 'POST', body: { username: users.t2.username } });
+  assert.equal(issued.status, 200);
+  assert.match(issued.data.code, /^[A-Z2-9]{5}-[A-Z2-9]{5}$/);
+  assert.equal((await as.anon('/api/password-reset', { method: 'POST', body: { username: users.t2.username, code: 'WRONG-CODE0', passwordHash: sha('new-pw') } })).status, 400);
+  // Codes are typed by hand: lower case and no dash still work.
+  const typed = issued.data.code.toLowerCase().replace('-', '');
+  assert.equal((await as.anon('/api/password-reset', { method: 'POST', body: { username: users.t2.username, code: typed, passwordHash: sha('new-pw') } })).status, 200);
+  assert.equal((await as.anon('/api/password-reset', { method: 'POST', body: { username: users.t2.username, code: typed, passwordHash: sha('again') } })).status, 400);
   assert.equal((await other('/api/accounts/me')).status, 401);
   assert.equal((await as.t2('/api/accounts/me')).status, 401);
+  const c = client();
+  assert.equal((await c('/api/accounts/signin', { method: 'POST', body: { username: users.t2.username, passwordHash: sha('new-pw') } })).status, 200);
+});
+
+test('admin cookie: the old static SHA-256 value and forged tokens are refused', { skip: !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD' }, async () => {
+  const tryCookie = async (value) => (await fetch(`${BASE}/api/admin/revenue`, { headers: { Cookie: `kay_admin=${value}` } })).status;
+  assert.equal(await tryCookie(sha(ADMIN_PASSWORD)), 401);
+  assert.equal(await tryCookie(`${Date.now() + 1e9}.abcd.${'0'.repeat(64)}`), 401);
+  assert.equal((await as.admin('/api/admin/revenue')).status, 200);
+});
+
+test('cross-site POSTs are refused', async () => {
+  const res = await fetch(`${BASE}/api/accounts/signin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
+    body: JSON.stringify({ username: users.t1.username, passwordHash: sha(users.t1.password) }),
+  });
+  assert.equal(res.status, 403);
+  const same = await fetch(`${BASE}/api/accounts/signin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: new URL(BASE).origin },
+    body: JSON.stringify({ username: users.t1.username, passwordHash: sha(users.t1.password) }),
+  });
+  assert.equal(same.status, 200);
+});
+
+test('upload content must match its extension', { skip: !ADMIN_PASSWORD && 'needs an activated landlord' }, async () => {
+  const send = (bytes, type, name) => {
+    const f = new FormData();
+    f.append('file', new Blob([bytes], { type }), name);
+    return as.landlord('/api/upload', { method: 'POST', form: f });
+  };
+  assert.equal((await send('<html><script>alert(1)</script>', 'image/jpeg', 'fake.jpg')).status, 400);
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);
+  const ok = await send(png, 'image/png', 'real.png');
+  assert.equal(ok.status, 200);
+  const served = await fetch(BASE + ok.data.url);
+  assert.equal(served.headers.get('x-content-type-options'), 'nosniff');
 });
 
 test('sign-out ends the session server-side', async () => {

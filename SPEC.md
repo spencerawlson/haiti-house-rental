@@ -36,6 +36,12 @@ container `kayayiti-web` on FedServ host port 8097.
   language codes (KR/FR/EN, space-separated, no backslash): KR picked
   shows FR EN, FR picked shows KR EN, EN picked shows KR FR. Phones
   show nothing on top.
+- First visit only (no language saved yet, e.g. first launch of the app):
+  the screen-1 splash from docs/design/app-showcase.png asks for the
+  language (Kreyòl / Français / English), saves it in kay_locale, and
+  continues to a three-slide onboarding (/[locale]/welcome, screen 2).
+  Every later visit follows the rule above: language in Account →
+  Settings only.
 - Mobile apps (Capacitor, one codebase, two apps): Android + iOS,
   appId `com.kayayiti.app`, remote-URL mode loading https://kayayiti.app
   (same pattern as the Farelune app). Icon in `resources/icon.png`,

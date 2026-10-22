@@ -6,17 +6,21 @@ import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
 import { ACTIVATION_FEE_HTG } from '@/lib/config';
-import { createAccount, markMyTransferSent } from '@/lib/account';
+import { createAccount } from '@/lib/account';
+import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
 
 // Account creation, in Spencer's order: identity first, then location.
+// Step 0 (design screen 3): choose a role — tenant (free, own signup
+// page), landlord (1,000 HTG once, continues here) or administrator.
 // Step 1: full name, username, password, phone, email.
 // Step 2: location — phone GPS (reverse-geocoded) or manual pick.
 export default function Signup({ params }) {
   const t = getDict(params.locale);
   const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
+  const [role, setRole] = useState('landlord');
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -27,13 +31,20 @@ export default function Signup({ params }) {
   const [coords, setCoords] = useState(null);
   const [detected, setDetected] = useState('');
   const [locating, setLocating] = useState(false);
-  const [provider, setProvider] = useState('moncash');
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
+    // Deep links that already chose (e.g. "Post a home") skip the chooser.
+    if (new URLSearchParams(window.location.search).get('role') === 'landlord') setStep(1);
   }, []);
+
+  function chooseRole() {
+    if (role === 'tenant') router.push(`/${params.locale}/tenant-signup`);
+    else if (role === 'admin') router.push(`/${params.locale}/admin-login`);
+    else setStep(1);
+  }
 
   function next() {
     setError('');
@@ -113,10 +124,6 @@ export default function Signup({ params }) {
     setStep(3);
   }
 
-  async function sentTransfer() {
-    await markMyTransferSent(provider);
-    router.push(`/${params.locale}/account`);
-  }
 
   const communes = DEPARTMENTS.find((d) => d.id === department)?.communes || [];
 
@@ -128,6 +135,29 @@ export default function Signup({ params }) {
         <p>
           <Link href={`/${params.locale}/tenants`}>{t.tenantLink}</Link>
         </p>
+        {step === 0 && (
+          <div style={{ display: 'grid', gap: 16 }}>
+            <p style={{ margin: 0, fontWeight: 700, textAlign: 'center' }}>{t.chooseRole}</p>
+            <div className="role-cards" role="radiogroup" aria-label={t.chooseRole}>
+              {[
+                { id: 'tenant', icon: '👤', title: t.roleTenant, sub: t.roleTenantSub, extra: t.free },
+                { id: 'landlord', icon: '🏠', title: t.roleLandlord, sub: t.roleLandlordSub, extra: `${ACTIVATION_FEE_HTG.toLocaleString()} HTG ${t.oneTime}` },
+                { id: 'admin', icon: '🛡️', title: t.roleAdmin, sub: '', extra: '' },
+              ].map((r) => (
+                <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={`role-card${role === r.id ? ' selected' : ''}`} onClick={() => setRole(r.id)}>
+                  <span className="role-icon" aria-hidden="true">{r.icon}</span>
+                  <span style={{ display: 'grid' }}>
+                    <strong>{r.title}</strong>
+                    {r.sub && <span className="muted" style={{ fontSize: '0.88rem' }}>{r.sub}</span>}
+                    {r.extra && <span className="muted" style={{ fontSize: '0.88rem' }}>{r.extra}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <button className="btn" type="button" onClick={chooseRole}>{t.continueBtn}</button>
+            <p style={{ textAlign: 'center', margin: 0 }}>{t.haveAccount} <Link href={`/${params.locale}/signin`} style={{ fontWeight: 800 }}>{t.signIn}</Link></p>
+          </div>
+        )}
         {step === 1 && (
           <form className="card" onSubmit={(e) => { e.preventDefault(); next(); }}>
             <div className="card-body" style={{ display: 'grid', gap: 14 }}>
@@ -188,21 +218,10 @@ export default function Signup({ params }) {
               <h2 style={{ margin: 0 }}>{t.activationStep}</h2>
               <p>{t.accountCreated}</p>
               <p>{t.sendTransfer}</p>
-              <p style={{ fontSize: '1.2rem' }}>
-                <strong>{ACTIVATION_FEE_HTG} HTG</strong>
-              </p>
-              <div style={{ display: 'flex', gap: 16 }}>
-                <label>
-                  <input type="radio" checked={provider === 'moncash'} onChange={() => setProvider('moncash')} /> MonCash
-                </label>
-                <label>
-                  <input type="radio" checked={provider === 'natcash'} onChange={() => setProvider('natcash')} /> NatCash
-                </label>
-              </div>
-              <p>{t.sendTo} <strong>{provider === 'natcash' ? (destination.natcashNumber || t.numberNotSet) : (destination.moncashNumber || t.numberNotSet)}</strong></p>
-              <p>{t.fromYourNumber} {phone}</p>
+              <p className="muted" style={{ margin: 0 }}>{t.fromYourNumber} {phone}</p>
+              <PaymentForm kind="activation" amountHTG={ACTIVATION_FEE_HTG} destination={destination} strings={t} onSubmitted={() => router.push(`/${params.locale}/account`)} />
               <p className="muted" style={{ margin: 0 }}>{t.transferNote}</p>
-              <button className="btn" type="button" onClick={sentTransfer}>{t.transferSent}</button>
+              <Link href={`/${params.locale}/account`}>{t.payLater} ›</Link>
             </div>
           </div>
         )}

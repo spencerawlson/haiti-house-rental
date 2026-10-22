@@ -1,6 +1,7 @@
 import { getListing, setListingRemoved } from '@/lib/listings-server';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
+import { audit } from '@/lib/audit';
 
 // Take down a listing: the listing owner (by session), or the admin (via
 // the admin cookie), hides it from home, search and detail pages. The row
@@ -19,5 +20,6 @@ export async function POST(request) {
     return Response.json({ error: 'Not allowed' }, { status: 403 });
   }
   const removed = await setListingRemoved(data.id);
+  await audit(admin ? 'admin' : me.username, 'listing.takedown', data.id);
   return Response.json({ listing: removed });
 }

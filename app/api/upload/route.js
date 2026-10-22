@@ -17,6 +17,33 @@ const MAX_VIDEO = 100 * 1024 * 1024;
 const IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
 const VIDEO_EXTS = ['.mp4', '.mov', '.webm'];
 
+// Content check (Phase 1b): the file's first bytes must match its
+// extension, so an HTML/script file renamed to .jpg is refused.
+function matchesMagic(buf, ext) {
+  const ascii = (start, end) => buf.subarray(start, end).toString('latin1');
+  switch (ext) {
+    case '.jpg':
+    case '.jpeg':
+      return buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+    case '.png':
+      return buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    case '.gif':
+      return ascii(0, 6) === 'GIF87a' || ascii(0, 6) === 'GIF89a';
+    case '.webp':
+      return ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP';
+    case '.avif':
+      return ascii(4, 8) === 'ftyp' && ['avif', 'avis', 'mif1', 'msf1'].includes(ascii(8, 12));
+    case '.mp4':
+    case '.mov':
+      // ISO base media: ftyp box (most files), or a QuickTime atom first.
+      return ['ftyp', 'moov', 'mdat', 'wide', 'free', 'skip'].includes(ascii(4, 8));
+    case '.webm':
+      return buf[0] === 0x1a && buf[1] === 0x45 && buf[2] === 0xdf && buf[3] === 0xa3;
+    default:
+      return false;
+  }
+}
+
 export async function POST(request) {
   const me = await getSessionAccount(request);
   if (!me || me.role !== 'landlord' || !me.activated) {
@@ -42,10 +69,13 @@ export async function POST(request) {
   if (file.size > limit) {
     return Response.json({ error: 'File too large' }, { status: 400 });
   }
+  const buf = Buffer.from(await file.arrayBuffer());
+  if (!matchesMagic(buf, ext)) {
+    return Response.json({ error: 'File content does not match its type' }, { status: 400 });
+  }
   const dir = path.join(process.cwd(), 'public', 'uploads');
   await mkdir(dir, { recursive: true });
   const name = `${Date.now()}-${randomUUID()}${ext}`;
-  const buf = Buffer.from(await file.arrayBuffer());
   await writeFile(path.join(dir, name), buf);
   return Response.json({ url: `/uploads/${name}`, kind: isImage ? 'photo' : 'video' });
 }

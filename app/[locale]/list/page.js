@@ -8,6 +8,8 @@ import { ACTIVATION_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from 
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import ListingDetailsFields from '@/components/ListingDetailsFields';
+import { compressImage } from '@/lib/image-compress';
 
 // Landlord posting form: details + description + house photos and videos.
 // Only an activated landlord account can post — tenants explore, they
@@ -24,6 +26,7 @@ export default function ListHome({ params }) {
   const [homeType, setHomeType] = useState('house');
   const [areaM2, setAreaM2] = useState('');
   const [advertisedRequested, setAdvertisedRequested] = useState(false);
+  const [details, setDetails] = useState({});
   const [bedrooms, setBedrooms] = useState(2);
   const [bathrooms, setBathrooms] = useState(1);
   const [phone, setPhone] = useState('');
@@ -46,7 +49,7 @@ export default function ListHome({ params }) {
     const urls = [];
     for (const file of files) {
       const form = new FormData();
-      form.append('file', file);
+      form.append('file', await compressImage(file));
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
@@ -65,7 +68,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod }),
+        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();
@@ -95,7 +98,7 @@ export default function ListHome({ params }) {
             <p style={{ margin: '0 0 12px' }}>{t.signInToPost}</p>
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link>
-              <Link className="btn btn-secondary" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+              <Link className="btn btn-secondary" href={`/${params.locale}/signup?role=landlord`}>{t.createAccount}</Link>
             </p>
           </div>
         </div>
@@ -106,7 +109,7 @@ export default function ListHome({ params }) {
             <p style={{ margin: '0 0 12px' }}>{t.landlordsOnly}</p>
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <Link className="btn" href={`/${params.locale}/listings`}>{t.browse}</Link>
-              <Link className="btn btn-secondary" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+              <Link className="btn btn-secondary" href={`/${params.locale}/signup?role=landlord`}>{t.createAccount}</Link>
             </p>
           </div>
         </div>
@@ -195,6 +198,7 @@ export default function ListHome({ params }) {
             </label>
           ))}
         </p>
+        <ListingDetailsFields value={details} onChange={setDetails} t={t} />
         <div className="field"><label>{t.photosLabel}</label>
           <input type="file" accept="image/*" multiple onChange={(e) => setPhotoFiles([...e.target.files])} />
         </div>

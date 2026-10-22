@@ -1,0 +1,54 @@
+name: Web CI
+
+# Build the web app and run the auth/authorization regression tests
+# against a throwaway Postgres — never production.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kayayiti
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: kayayiti
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U kayayiti -d kayayiti"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      DATABASE_URL: postgres://kayayiti:ci-only@localhost:5432/kayayiti
+      ADMIN_PASSWORD: ci-admin-password
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Known vulnerabilities in production dependencies. Reported on every
+      # run; it fails the job only for high/critical advisories.
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - run: npm run build
+      - name: Start app
+        run: |
+          node .next/standalone/server.js > server.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/api/health && break; sleep 2; done
+        env:
+          PORT: 3000
+          HOSTNAME: 127.0.0.1
+      - name: Regression tests
+        run: npm test
+        env:
+          BASE_URL: http://localhost:3000
+      - name: Server log
+        if: failure()
+        run: cat server.log
