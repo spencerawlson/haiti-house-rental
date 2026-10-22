@@ -104,10 +104,11 @@ container `kayayiti-web` on FedServ host port 8097.
   listing replies as the owner; everyone else writes as the tenant. Your
   own messages always sit blue on the right, theirs gray on the left,
   whichever side you are on.
-- v0 limits (must be fixed before real use): threads are per listing,
-  not per tenant; no moderation, no notifications. Messages survive
-  restarts since the Oct 2026 Postgres migration. Production: auth for
-  both sides, moderation and new-message notifications.
+- Threads are private (Phase 1, Oct 2026): one thread per listing +
+  tenant, so tenants never see each other's messages; the owner sees one
+  thread per tenant. Writing needs a signed-in account, and who is owner
+  or tenant comes from the server session (see SECURITY.md). Still
+  missing: moderation, block/report, out-of-app notifications.
 
 ## Pricing (decided 2026-10-21)
 

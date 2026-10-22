@@ -26,11 +26,11 @@ export default function Account({ params }) {
       setMe(a);
       setLoaded(true);
       if (a) {
-        fetch(`/api/visits?username=${encodeURIComponent(a.username)}`)
+        fetch('/api/visits')
           .then((r) => r.json())
           .then((d) => setVisits(d.visits || []))
           .catch(() => {});
-        fetch(`/api/chat/inbox?username=${encodeURIComponent(a.username)}`)
+        fetch('/api/chat/inbox')
           .then((r) => r.json())
           .then((d) => setThreads(d.threads || []))
           .catch(() => {});
@@ -43,8 +43,8 @@ export default function Account({ params }) {
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
   }, []);
 
-  function logout() {
-    signOut();
+  async function logout() {
+    await signOut();
     setMe(null);
   }
 
@@ -58,19 +58,19 @@ export default function Account({ params }) {
     const res = await fetch('/api/listings/takedown', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, username: me?.username }),
+      body: JSON.stringify({ id }),
     });
     if (res.ok) setMyHomes((homes) => homes.filter((h) => h.id !== id));
   }
 
-  async function deleteThread(id) {
+  async function deleteThread(th) {
     if (!window.confirm(t.deleteChatConfirm)) return;
     await fetch('/api/chat/hide', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId: id, username: me?.username }),
+      body: JSON.stringify({ listingId: th.listingId, tenant: th.tenant }),
     });
-    setThreads((prev) => prev.filter((th) => th.listingId !== id));
+    setThreads((prev) => prev.filter((x) => x.key !== th.key));
   }
 
   return (
@@ -151,10 +151,10 @@ export default function Account({ params }) {
         {loaded && me && threads.length === 0 && <p className="muted">{t.noMessages}</p>}
         <div className="grid">
           {threads.map((th) => (
-            <section key={th.listingId} className="card">
+            <section key={th.key} className="card">
               <div className="card-body">
                 <p style={{ margin: '0 0 2px' }}>
-                  <Link href={`/${params.locale}/chats?listingId=${th.listingId}`}>{th.otherName || th.listingTitle}</Link>
+                  <Link href={`/${params.locale}/chats?listingId=${encodeURIComponent(th.listingId)}${th.isOwner ? `&tenant=${encodeURIComponent(th.tenant)}` : ''}`}>{th.otherName || th.listingTitle}</Link>
                   {th.unread > 0 && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 20, height: 20, padding: '0 5px', borderRadius: 999, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 800, marginLeft: 8 }}>
                       {th.unread}
@@ -163,7 +163,7 @@ export default function Account({ params }) {
                 </p>
                 {th.otherName && <p className="muted" style={{ margin: '0 0 4px' }}>{th.listingTitle}</p>}
                 <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
-                <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
               </div>
             </section>
           ))}

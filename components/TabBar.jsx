@@ -18,7 +18,7 @@ export default function TabBar({ locale, browse, favorites, explore, account, ch
       const session = getSession();
       if (!session) return;
       try {
-        const res = await fetch(`/api/chat/unread?username=${encodeURIComponent(session.username)}`);
+        const res = await fetch('/api/chat/unread');
         if (res.ok) setUnread((await res.json()).total || 0);
       } catch {}
     }

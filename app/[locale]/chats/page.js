@@ -11,16 +11,19 @@ import ChatBox from '@/components/ChatBox';
 // per-side delete) is here, and tapping a thread opens the conversation
 // here too — the listing page's Contact button lands here with
 // ?listingId=, so chats no longer live at the bottom of listing pages.
+// Threads are one listing + one tenant: an owner's inbox links carry
+// &tenant= to open that tenant's conversation.
 export default function Chats({ params }) {
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [threads, setThreads] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedTenant, setSelectedTenant] = useState(null);
   const [listing, setListing] = useState(null);
 
-  function loadThreads(username) {
-    fetch(`/api/chat/inbox?username=${encodeURIComponent(username)}`)
+  function loadThreads() {
+    fetch('/api/chat/inbox')
       .then((r) => r.json())
       .then((d) => setThreads(d.threads || []))
       .catch(() => {});
@@ -30,9 +33,10 @@ export default function Chats({ params }) {
     const session = getSession();
     setMe(session);
     setLoaded(true);
-    if (session) loadThreads(session.username);
-    const q = new URLSearchParams(window.location.search).get('listingId');
-    if (q) setSelectedId(q);
+    if (session) loadThreads();
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('listingId')) setSelectedId(q.get('listingId'));
+    if (q.has('tenant')) setSelectedTenant(q.get('tenant'));
   }, []);
 
   useEffect(() => {
@@ -46,20 +50,30 @@ export default function Chats({ params }) {
       .catch(() => setListing(null));
   }, [selectedId]);
 
-  async function deleteThread(id) {
+  async function deleteThread(th) {
     if (!window.confirm(t.deleteChatConfirm)) return;
     await fetch('/api/chat/hide', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId: id, username: me?.username }),
+      body: JSON.stringify({ listingId: th.listingId, tenant: th.tenant }),
     });
-    setThreads((prev) => prev.filter((th) => th.listingId !== id));
+    setThreads((prev) => prev.filter((x) => x.key !== th.key));
+  }
+
+  function openThread(th) {
+    setSelectedId(th.listingId);
+    setSelectedTenant(th.isOwner ? th.tenant : null);
   }
 
   function backToList() {
     setSelectedId(null);
-    if (me) loadThreads(me.username);
+    setSelectedTenant(null);
+    if (me) loadThreads();
   }
+
+  const selectedThread = threads.find(
+    (th) => th.listingId === selectedId && (selectedTenant === null ? !th.isOwner : th.isOwner && th.tenant === selectedTenant),
+  );
 
   return (
     <>
@@ -75,10 +89,10 @@ export default function Chats({ params }) {
         {loaded && !selectedId && (
           <div className="grid">
             {threads.map((th) => (
-              <section key={th.listingId} className="card">
+              <section key={th.key} className="card">
                 <div className="card-body">
                   <p style={{ margin: '0 0 2px' }}>
-                    <button type="button" onClick={() => setSelectedId(th.listingId)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', fontWeight: 700, color: 'var(--primary)', textAlign: 'left' }}>
+                    <button type="button" onClick={() => openThread(th)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', fontWeight: 700, color: 'var(--primary)', textAlign: 'left' }}>
                       {th.otherName || th.listingTitle}
                     </button>
                     {th.unread > 0 && (
@@ -89,7 +103,7 @@ export default function Chats({ params }) {
                   </p>
                   {th.otherName && <p className="muted" style={{ margin: '0 0 4px' }}>{th.listingTitle}</p>}
                   <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
-                  <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
+                  <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
                 </div>
               </section>
             ))}
@@ -101,11 +115,11 @@ export default function Chats({ params }) {
             {!listing && <p className="muted">{t.notFound}</p>}
             {listing && (
               <>
-                <h2 style={{ margin: '0 0 4px' }}>{threads.find((th) => th.listingId === selectedId)?.otherName || listing.title}</h2>
-                {threads.find((th) => th.listingId === selectedId)?.otherName && (
+                <h2 style={{ margin: '0 0 4px' }}>{selectedThread?.otherName || listing.title}</h2>
+                {selectedThread?.otherName && (
                   <p className="muted" style={{ margin: '0 0 12px' }}>{listing.title}</p>
                 )}
-                <ChatBox listingId={listing.id} owner={listing.owner} strings={t} />
+                <ChatBox listingId={listing.id} tenant={selectedTenant} strings={t} locale={params.locale} />
               </>
             )}
           </>

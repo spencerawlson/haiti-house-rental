@@ -1,16 +1,44 @@
-import { getThread, postMessage } from '@/lib/chat';
+import { getThread, postMessage, threadExists } from '@/lib/chat';
+import { resolveThread } from '@/lib/chat-auth';
+import { getSessionAccount, unauthorized } from '@/lib/session-server';
+import { rateLimit, tooMany } from '@/lib/rate-limit';
 
 // Live data: never serve a build-time snapshot of a thread.
 export const dynamic = 'force-dynamic';
 
+// A thread is one listing + one tenant. Tenants read their own; the owner
+// reads the tenant thread named by ?tenant=.
 export async function GET(request) {
-  const listingId = new URL(request.url).searchParams.get('listingId') || '';
-  return Response.json({ messages: await getThread(listingId) });
+  const me = await getSessionAccount(request);
+  if (!me) return unauthorized();
+  const params = new URL(request.url).searchParams;
+  const thread = await resolveThread(me, params.get('listingId') || '', params.get('tenant'));
+  if (!thread) return Response.json({ error: 'Listing not found' }, { status: 404 });
+  const messages = thread.tenant === null ? [] : await getThread(thread.listing.id, thread.tenant);
+  return Response.json({ messages, isOwner: thread.isOwner, tenant: thread.tenant });
 }
 
 export async function POST(request) {
-  const { listingId, sender, text, author } = await request.json().catch(() => ({}));
-  const msg = await postMessage(listingId, sender, text, author);
+  const me = await getSessionAccount(request);
+  if (!me) return unauthorized();
+  if (!rateLimit(`chat:${me.username}`, 30, 60 * 1000)) return tooMany();
+  const { listingId, text, tenant } = await request.json().catch(() => ({}));
+  const thread = await resolveThread(me, listingId, tenant);
+  if (!thread || thread.listing.status !== 'active') {
+    return Response.json({ error: 'Listing not found' }, { status: 404 });
+  }
+  // The owner only replies inside an existing tenant thread, to a real
+  // account (the anonymous legacy thread has nobody to read a reply).
+  if (thread.isOwner && (!thread.tenant || !(await threadExists(thread.listing.id, thread.tenant)))) {
+    return Response.json({ error: 'No such conversation' }, { status: 400 });
+  }
+  const msg = await postMessage({
+    listingId: thread.listing.id,
+    sender: thread.isOwner ? 'owner' : 'tenant',
+    tenant: thread.tenant,
+    text,
+    author: me.username,
+  });
   if (!msg) return Response.json({ error: 'Invalid message' }, { status: 400 });
   return Response.json({ message: msg });
 }
