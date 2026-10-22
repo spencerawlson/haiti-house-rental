@@ -47,7 +47,6 @@ export default async function LocaleHome({ params }) {
             <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
           ))}
         </div>
-        <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>

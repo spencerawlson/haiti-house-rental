@@ -70,7 +70,6 @@ export default async function ListingDetail({ params }) {
         </div>
         <ChatBox listingId={l.id} owner={l.owner} strings={t} />
         <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
-        <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>

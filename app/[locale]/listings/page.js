@@ -103,7 +103,6 @@ export default async function Listings({ params, searchParams }) {
           </div>
         )}
         {shown.length === 0 && <p>{t.notFound}</p>}
-        <p className="muted" style={{ marginTop: 32 }}>{t.demoNote}</p>
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>
