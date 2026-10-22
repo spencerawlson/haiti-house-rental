@@ -88,7 +88,18 @@ Landing, search and filters, cards, detail pages, landlord, tenant and
 admin dashboards, chat, appointments, auth screens. Keep the Nunito/pill
 identity and full Kreyòl/Français/English coverage.
 
-## Phase 6 — Reliability & operations
+## Phase 6 — Reliability & operations ✅
+
+- Versioned migrations in `lib/migrations/`, recorded in `schema_migrations`. Each runs in a transaction under an advisory lock. Roll back with `MIGRATE_DOWN_TO`. The baseline `0001` adopts existing databases unchanged.
+- `0002 audit_log`: every admin/security action is recorded and shown on the Admin Board.
+- Structured JSON logs (`lib/log.js`).
+- `/api/health` is a real readiness check: database up and no pending migrations.
+- Docker: runs as the non-root `node` user (the entrypoint fixes upload ownership), with a `HEALTHCHECK` and `HOSTNAME` pinned.
+- `scripts/backup.sh` and `scripts/restore.sh`, with the runbook in DEPLOY.md.
+- `ENVIRONMENT.md` documents every variable.
+- CI runs `npm audit --omit=dev --audit-level=high`.
+
+Original scope:
 
 - Versioned, reversible migration files replacing ad-hoc `initDb()` steps.
 - Health and readiness checks; basic structured logging.

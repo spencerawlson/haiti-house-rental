@@ -19,6 +19,7 @@ export default function Admin({ params }) {
   const [reports, setReports] = useState([]);
   const [payments, setPayments] = useState([]);
   const [paySummary, setPaySummary] = useState(null);
+  const [auditEntries, setAuditEntries] = useState([]);
   const [reportThreads, setReportThreads] = useState({});
   const [revenue, setRevenue] = useState({ entries: [], totalHTG: 0 });
   const [rates, setRates] = useState(null);
@@ -70,6 +71,8 @@ export default function Admin({ params }) {
       setPayments(data.payments || []);
       setPaySummary(data.summary);
     }
+    const audres = await fetch('/api/admin/audit');
+    if (audres.ok) setAuditEntries((await audres.json()).entries || []);
     const repres = await fetch('/api/admin/reports');
     if (repres.ok) setReports((await repres.json()).reports || []);
     const sres = await fetch('/api/settings');
@@ -340,6 +343,18 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           </section>
         ))}
       </div>
+      <details className="card" style={{ marginTop: 24 }}>
+        <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}>🧾 {t.auditTitle} ({auditEntries.length})</summary>
+        <div className="card-body" style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
+          {auditEntries.length === 0 && <p className="muted" style={{ margin: 0 }}>—</p>}
+          {auditEntries.slice(0, 100).map((e) => (
+            <p key={e.id} style={{ margin: 0, fontSize: '0.88rem' }}>
+              <span className="muted">{new Date(e.at).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)}</span>
+              {' · '}<strong>{e.action}</strong>{e.target ? ` · ${e.target}` : ''}{' · '}<span className="muted">{e.actor}</span>
+            </p>
+          ))}
+        </div>
+      </details>
       <h2 style={{ marginTop: 32 }}>{t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>

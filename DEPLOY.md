@@ -125,3 +125,64 @@ that lived in container memory and is already gone.
 4. Manual activation from the accounts list still works (explicit admin
    approval). It shows in revenue as a confirmed activation without a
    payment reference.
+
+## Upgrading to Phase 6 (migrations, audit log, non-root image) — one-time notes
+
+1. **Back up first** (see "Backups" below), as for every upgrade.
+2. Rebuild and restart as usual. On first boot the app adopts versioned
+   migrations: it creates `schema_migrations`, records `0001 baseline` (no
+   changes to your data — every step is "create if missing") and applies
+   `0002 audit_log`. Check: `curl -s http://localhost:8097/api/health` →
+   `{"ok":true,"schema":"0002","pending":0}`.
+3. The container now runs as the unprivileged `node` user. On start it
+   hands the uploads folder to that user, so existing photos keep working.
+4. `docker ps` now shows `(healthy)` / `(unhealthy)` for `kayayiti-web`.
+
+## Operations runbook
+
+### Health
+`GET /api/health` → 200 `{"ok":true,"db":"up","schema":"0002","pending":0}`
+only when Postgres answers and every migration is applied; 503 otherwise.
+Point an uptime monitor at `https://kayayiti.app/api/health`.
+
+### Logs
+One JSON object per line: `docker logs -f kayayiti-web`. Useful filters:
+`docker logs kayayiti-web 2>&1 | grep '"level":"error"'` and
+`grep '"event":"audit.'`. Admin actions (logins, activations, payment
+reviews, verifications, takedowns, reset codes, reading a reported
+conversation, payment-number changes) are also kept in the `audit_log`
+table and shown on the Admin Board under "Activity log".
+
+### Backups
+`scripts/backup.sh` dumps the database and archives the uploads into
+`/var/backups/kayayiti`, keeps 14 days, and fails loudly on an empty dump.
+Run it nightly from cron on the host:
+
+```sh
+0 3 * * * /path/to/haiti-house-rental/scripts/backup.sh >> /var/log/kayayiti-backup.log 2>&1
+```
+
+Copy `/var/backups/kayayiti` off the machine as well (another disk,
+another server, or cloud storage). **Test a restore at least once.**
+
+### Restore
+```sh
+docker compose stop kayayiti
+scripts/restore.sh /var/backups/kayayiti/db-YYYY-MM-DD_HHMM.sql.gz \
+                   /var/backups/kayayiti/uploads-YYYY-MM-DD_HHMM.tar.gz
+docker compose start kayayiti
+curl -s http://localhost:8097/api/health
+```
+The restore asks you to type `RESTORE`, keeps the previous database as
+`kayayiti_restore_old`, and never deletes upload files.
+
+### Schema migrations
+Migrations live in `lib/migrations/` and are applied automatically, in
+order, at startup (each in a transaction, under a lock).
+- **Add one:** create `lib/migrations/NNNN_name.js` with `version`, `name`,
+  `up(db)`, `down(db)`; append it to `lib/migrations/index.js`. Never edit
+  a migration that has shipped.
+- **Roll back:** set `MIGRATE_DOWN_TO=0001` (the version to return to) in
+  `.env`, deploy the older code, restart, then **remove the variable**.
+  The baseline `0001` refuses to revert; going further back means
+  restoring a backup.

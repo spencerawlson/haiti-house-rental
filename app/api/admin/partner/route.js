@@ -1,4 +1,5 @@
 import { createServerAccount } from '@/lib/accounts-server';
+import { audit } from '@/lib/audit';
 
 // Admin-created partner account: active immediately, free — no fee, no
 // activation queue, and (via the revenue guard) never counted in revenue.
@@ -20,5 +21,6 @@ export async function POST(request) {
     partner: true,
   });
   if (!account) return Response.json({ error: 'Username taken' }, { status: 409 });
+  await audit('admin', 'account.partner_created', account.username);
   return Response.json({ account });
 }
