@@ -15,6 +15,7 @@ export default function Admin({ params }) {
   const t = getDict(params.locale);
   const [listings, setListings] = useState([]);
   const [accounts, setAccounts] = useState([]);
+  const [resetCodes, setResetCodes] = useState({});
   const [revenue, setRevenue] = useState({ entries: [], totalHTG: 0 });
   const [rates, setRates] = useState(null);
   const [rateError, setRateError] = useState(false);
@@ -151,10 +152,31 @@ export default function Admin({ params }) {
     load();
   }
 
+  // Admin-assisted recovery: confirm who is asking (call back the phone
+  // on the account) before reading the code to them.
+  async function issueResetCode(username) {
+    if (!window.confirm(t.resetCodeConfirm)) return;
+    const res = await fetch('/api/admin/reset-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setResetCodes((prev) => ({ ...prev, [username]: data.code }));
+    }
+  }
+
+  async function adminLogout() {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    window.location.href = `/${params.locale}/admin-login`;
+  }
+
   return (
     <main className="container">
         <BackButton locale={params.locale} />
       <h1>{t.adminTitle}</h1>
+      <p><button className="btn btn-secondary" type="button" onClick={adminLogout} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signOut}</button></p>
       <p className="muted">{t.adminNote}</p>
       <h2>{t.liveNow}</h2>
       <p className="muted">{t.liveNowNote}</p>
@@ -203,14 +225,18 @@ export default function Admin({ params }) {
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
               </p>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {a.role !== 'tenant' && !a.activated && (
                   <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
                 )}
                 {a.role !== 'tenant' && a.activated && (
                   <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
                 )}
+                <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}>🔑 {t.resetCodeButton}</button>
               </div>
+              {resetCodes[a.username] && (
+                <p style={{ margin: '8px 0 0' }}>{t.resetCodeIssued} <strong style={{ fontFamily: 'monospace', fontSize: 18 }}>{resetCodes[a.username]}</strong></p>
+              )}
             </div>
           </section>
         ))}
