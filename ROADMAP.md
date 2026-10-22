@@ -18,14 +18,15 @@ approval).
 - Map-popup XSS fixed.
 - `tests/auth.test.mjs` (14 regression tests), AUDIT.md, SECURITY.md.
 
-## Phase 1b — Remaining hardening
+## Phase 1b — Remaining hardening ✅
 
-- Admin sessions: random token in a `sessions`-style table, 12h expiry, constant-time compare (AUDIT #10).
+- Admin sessions: signed 12h token per login (HMAC, edge-verifiable), constant-time compare, sign-out (AUDIT #10).
 - Password recovery: admin-assisted reset (admin issues a one-time code the user enters), then SMS/WhatsApp code when a channel exists (AUDIT #11).
 - Origin check on state-changing requests (AUDIT #12).
-- Upgrade Next.js 14.2.5 → latest patched 14.2.x first, then evaluate 15 (AUDIT #13).
+- Next.js 14.2.5 → 14.2.35; evaluate 15 later (AUDIT #13).
 - Magic-byte check on uploads (AUDIT #15).
 - Web CI: build plus regression tests against a Postgres service container.
+- Security headers (nosniff, frame deny, referrer policy).
 
 ## Phase 2 — Conversations & appointments
 

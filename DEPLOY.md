@@ -94,3 +94,19 @@ that lived in container memory and is already gone.
    become a server session; the app clears it automatically and shows Sign in.
 4. Nothing new is required in the environment. `ADMIN_PASSWORD` and
    `DATABASE_URL` work as before.
+
+## Upgrading to Phase 1b (admin sessions, reset codes) — one-time notes
+
+1. **The admin signs in again.** Old admin cookies (the static password
+   hash) are refused. New admin sessions last 12 hours.
+2. **Password resets now go through the admin.** A user who forgot their
+   password contacts you. Confirm it's them (call back the phone on the
+   account), then click **Password code** on their card on the Admin
+   Board and read them the code. It works once, for 24 hours.
+3. New, optional environment variables:
+   - `ADMIN_SESSION_SECRET`: any long random string. Changing it signs out
+     every admin. If unset, only `ADMIN_PASSWORD` keys the tokens.
+   - `ALLOWED_ORIGINS`: comma-separated extra origins allowed to POST to
+     `/api`. Normally unneeded: kayayiti.app and the Capacitor apps load
+     from the same origin.
+4. The `password_reset_codes` table is created automatically at boot.

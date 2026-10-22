@@ -20,12 +20,12 @@ others; **High** = private data exposed or business rules bypassed;
 | 7 | High | **Password hash = password.** Unsalted client-side SHA-256 stored and compared directly; a DB leak lets anyone sign in (pass-the-hash) and the hashes crack fast. | `lib/accounts-server.js` | Fixed: salted scrypt over the client hash; boot migration wraps existing hashes (no lockout) |
 | 8 | Medium | **Unauthenticated, unlimited uploads** — disk-fill. Any `image/*` (incl. SVG) accepted and stored. | `app/api/upload/route.js` | Fixed: activated landlord session, 60/h, served formats only. Content sniffing still TODO |
 | 9 | Medium | **No rate limiting** on sign-in, signup, reset, chat. | all auth routes | Fixed (in-memory, single container) |
-| 10 | Medium | **Admin cookie never rotates.** Cookie value = SHA-256(ADMIN_PASSWORD): fixed forever, valid until the password changes, compared non-constant-time. | `lib/admin-auth.js`, `app/api/admin/login/route.js` | Open (Phase 1b) |
-| 11 | Medium | **Password reset is phone-only.** Anyone who knows a user's username and phone can reset. | `app/api/password-reset/route.js` | Open (Phase 1b): admin-assisted recovery or SMS/WhatsApp code |
-| 12 | Medium | **No CSRF defense beyond SameSite=Lax.** Lax blocks cross-site POST cookies in modern browsers, but there is no Origin check. | all POST routes | Open (Phase 1b) |
-| 13 | Medium | **Next.js 14.2.5** has published security advisories (incl. middleware-bypass CVE-2025-29927, fixed in 14.2.25). The admin gate depends on middleware. | `package.json` | Open (Phase 1b) — upgrade + regression test |
+| 10 | Medium | **Admin cookie never rotates.** Cookie value = SHA-256(ADMIN_PASSWORD): fixed forever, valid until the password changes, compared non-constant-time. | `lib/admin-auth.js`, `app/api/admin/login/route.js` | Fixed (1b): signed 12h token per login, constant-time checks, admin sign-out, login rate limit |
+| 11 | Medium | **Password reset is phone-only.** Anyone who knows a user's username and phone can reset. | `app/api/password-reset/route.js` | Fixed (1b): admin-assisted one-time codes (24h, single use, hashed); phone-only reset removed |
+| 12 | Medium | **No CSRF defense beyond SameSite=Lax.** Lax blocks cross-site POST cookies in modern browsers, but there is no Origin check. | all POST routes | Fixed (1b): middleware refuses cross-site state-changing /api requests |
+| 13 | Medium | **Next.js 14.2.5** has published security advisories (incl. middleware-bypass CVE-2025-29927, fixed in 14.2.25). The admin gate depends on middleware. | `package.json` | Fixed (1b): Next.js 14.2.35 (latest 14.2.x); `npm audit` not yet run — registry timed out |
 | 14 | Low | Presence pings accepted any claimed username. | `app/api/presence/route.js` | Fixed (session-derived) |
-| 15 | Low | Upload content is trusted by declared MIME + extension; no magic-byte check. | `app/api/upload/route.js` | Open (Phase 1b) |
+| 15 | Low | Upload content is trusted by declared MIME + extension; no magic-byte check. | `app/api/upload/route.js` | Fixed (1b): magic-byte check per format; `nosniff` on all responses |
 
 ## Product / workflow gaps
 
@@ -38,7 +38,7 @@ others; **High** = private data exposed or business rules bypassed;
 ## Engineering gaps
 
 - **No automated tests** before this branch. Phase 1 adds `tests/auth.test.mjs` (runs against a live throwaway instance).
-- No CI for web (only the mobile build workflow).
+- No CI for web — added in 1b (`.github/workflows/web-ci.yml`).
 - Schema changes run ad hoc in `initDb()`; Phase 1 adds a `migrations` table for run-once steps, not yet reversible migration files.
 - Uploaded photos stored at full size (up to 10 MB) — slow on Haitian mobile data.
 - No documented database backup/restore.

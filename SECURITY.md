@@ -16,6 +16,48 @@
   to render owner-only buttons quickly. It grants nothing. `/api/presence`
   and `/api/accounts/me` correct it when the server session is gone.
 
+## Admin sessions
+
+- `kay_admin` is a signed token `<expiry>.<nonce>.<HMAC-SHA256>`, made
+  fresh at each login. It expires after 12 hours and is set with
+  `HttpOnly; SameSite=Strict`, plus `Secure` in production.
+- The HMAC key comes from `ADMIN_PASSWORD`, plus `ADMIN_SESSION_SECRET` if
+  set. Changing either one revokes every admin session.
+- Middleware verifies the token on the edge runtime (Web Crypto, no
+  database). All comparisons are constant-time. Admin login is limited to
+  10 tries per 15 minutes per IP. The board has a sign-out button.
+
+## Password recovery (admin-assisted)
+
+1. The user contacts Kay Ayiti.
+2. The admin confirms who they are, e.g. by calling back the phone on the
+   account.
+3. The admin clicks **Password code** on the Admin Board. That issues a
+   one-time code: 10 characters, about 50 bits, stored only as SHA-256,
+   valid 24 hours, and a new code replaces the old one.
+4. The user enters username + code + new password on Forgot password.
+5. The code is used up, and every session of the account is revoked.
+
+Username + phone alone no longer resets anything.
+
+## CSRF
+
+The middleware refuses any non-GET `/api` request whose `Origin` host
+isn't this site, or whose `Sec-Fetch-Site` is `cross-site`. Allowed hosts:
+`Host`, `X-Forwarded-Host`, and the optional `ALLOWED_ORIGINS` list.
+Requests without `Origin` (non-browser clients) pass, and SameSite
+cookies cover old browsers.
+
+## Headers
+
+Every response carries:
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy` (geolocation for this site only)
+
+A nonce-based CSP is still to do.
+
 ## Passwords
 
 - The browser sends `sha256(password)`. The server stores
@@ -69,6 +111,9 @@ The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel).
   exactly the formats `/uploads/[file]` serves, so SVG/HTML can never be
   stored and served.
 - Size limits: 10 MB images, 100 MB videos.
+- Content check: the first bytes must match the extension (JPEG, PNG,
+  GIF, WebP, AVIF, MP4/MOV, WebM). An HTML file renamed to `.jpg` is
+  refused.
 
 ## Output encoding
 
@@ -77,12 +122,12 @@ React escapes by default. The one raw-HTML sink, Leaflet popups in
 
 ## Known open items
 
-See `AUDIT.md` #10–13 and #15:
-- admin session rotation and expiry
-- a stronger password-recovery channel
-- an Origin/CSRF check
-- the Next.js upgrade
-- magic-byte checks on uploads
+- A nonce-based Content-Security-Policy.
+- `npm audit` hasn't been run (the registry timed out). Run it in CI or
+  by hand.
+- Rate limits live in one process. Move them to Postgres or Redis if the
+  app ever runs as more than one container.
+- SMS/WhatsApp self-serve recovery codes, once a sending channel exists.
 
 ## Reporting
 
