@@ -33,6 +33,10 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Known vulnerabilities in production dependencies. Reported on every
+      # run; it fails the job only for high/critical advisories.
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
       - run: npm run build
       - name: Start app
         run: |

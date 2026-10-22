@@ -20,6 +20,9 @@ app/api/…             route handlers (JSON)
 components/           shared UI (ChatBox, ListingMap, TabBar, …)
 lib/*-server.js       server-only data access (Postgres via lib/db.js)
 lib/session-server.js session cookie ↔ account (identity for every API)
+lib/migrate.js        versioned migration runner; lib/migrations/ holds them
+lib/log.js, lib/audit.js  JSON logs; audit trail of admin actions
+scripts/              backup.sh / restore.sh (run on the Docker host)
 lib/password.js       scrypt hashing
 lib/rate-limit.js     in-memory limiter
 lib/chat-auth.js      who is owner/tenant on a thread
@@ -55,12 +58,20 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | payments | submitted MonCash/NatCash references; pending → confirmed/rejected by admin; `events` JSONB audit trail; UNIQUE (provider, reference) |
 | revenue_entries | logged activations (incl. manual admin activations before Phase 4) |
 | settings | MonCash/NatCash destination numbers |
-| migrations | names of run-once data migrations already applied |
+| migrations | legacy run-once data steps (used inside the 0001 baseline) |
+| schema_migrations | applied migration versions (Phase 6) |
+| audit_log | admin/security actions: actor, action, target, details |
 
-The schema is created and evolved at boot by `initDb()` with idempotent
-DDL. One-time data changes run through `runOnce()` and are recorded in
-`migrations`. Reversible, versioned migration files are planned for
-Phase 6 (`ROADMAP.md`).
+The schema is managed by versioned migrations in `lib/migrations/`. The
+runner (`lib/migrate.js`) applies pending ones at the first query, in
+order, each in a transaction under a Postgres advisory lock, and records
+them in `schema_migrations`.
+
+- `0001 baseline` is the whole schema up to Phase 5, plus the one-time
+  data steps. Those are still guarded by the legacy `migrations` table,
+  so they never re-run.
+- `0002 audit_log` adds the audit table.
+- Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing
 

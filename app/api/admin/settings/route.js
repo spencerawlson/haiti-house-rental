@@ -1,9 +1,13 @@
 import { setSettings } from '@/lib/settings-server';
+import { audit } from '@/lib/audit';
 
 // Admin Board sets the MonCash (Digicel) and NatCash (Natcom) destination
-// numbers for the registration fee.
-// v0: no auth on this route — gate the admin area before launch.
+// numbers that landlords pay to. Gated by the middleware like every
+// /api/admin/* route; every change is audited, since a wrong number
+// would send landlords' money to the wrong place.
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
-  return Response.json(await setSettings(data));
+  const saved = await setSettings(data);
+  await audit('admin', 'settings.payment_numbers', null, { moncashNumber: saved.moncashNumber, natcashNumber: saved.natcashNumber });
+  return Response.json(saved);
 }

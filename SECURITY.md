@@ -139,6 +139,24 @@ React escapes by default. The one raw-HTML sink, Leaflet popups in
   app ever runs as more than one container.
 - SMS/WhatsApp self-serve recovery codes, once a sending channel exists.
 
+## Audit trail
+
+`audit_log` records:
+- admin logins and failed logins (with IP)
+- account activation, deactivation and partner creation
+- reset codes issued (never the code itself)
+- payment confirmations and rejections, and payment-number changes
+- listing verification, advertising and takedown/restore
+- report resolutions
+- **every time the admin reads a private conversation**
+
+Entries are also written as JSON log lines.
+
+## Container
+
+The app runs as the unprivileged `node` user. The entrypoint only uses
+root to hand the uploads folder to `node`.
+
 ## Reporting
 
 Report vulnerabilities privately to the maintainer (Spencer). Do not

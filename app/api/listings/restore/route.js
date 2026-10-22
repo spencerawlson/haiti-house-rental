@@ -1,6 +1,7 @@
 import { getListing, setListingActive } from '@/lib/listings-server';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
+import { audit } from '@/lib/audit';
 
 // Put a taken-down listing back online: the listing owner, or the admin.
 export const dynamic = 'force-dynamic';
@@ -17,5 +18,6 @@ export async function POST(request) {
     return Response.json({ error: 'Not allowed' }, { status: 403 });
   }
   const restored = await setListingActive(data.id);
+  await audit(admin ? 'admin' : me.username, 'listing.restore', data.id);
   return Response.json({ listing: restored });
 }
