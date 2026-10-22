@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -11,7 +11,8 @@ import BackButton from '@/components/BackButton';
 // Opening it marks everything read.
 const ICON = { visit_proposed: '📅', visit_confirmed: '✅', visit_declined: '✖️', visit_cancelled: '🚫', visit_rescheduled: '🔁', payment_confirmed: '💳', payment_rejected: '⚠️', chat: '💬' };
 
-export default function Notifications({ params }) {
+export default function Notifications(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [items, setItems] = useState(null);
   const [signedIn, setSignedIn] = useState(true);

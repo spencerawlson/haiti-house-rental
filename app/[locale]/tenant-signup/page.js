@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { createAccount } from '@/lib/account';
@@ -9,7 +9,8 @@ import BackButton from '@/components/BackButton';
 
 // Tenant account: username + phone number + password, just like a landlord
 // account — except free. No fee, no admin activation: active immediately.
-export default function TenantSignup({ params }) {
+export default function TenantSignup(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
   const [name, setName] = useState('');

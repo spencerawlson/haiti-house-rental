@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { readFavorites } from '@/components/FavoriteButton';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 
 // Saved homes, kept in the browser until accounts exist.
-export default function Favorites({ params }) {
+export default function Favorites(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [listings, setListings] = useState(null);
 

@@ -16,7 +16,8 @@ export const dynamic = 'force-dynamic';
 // in turn — illustrative, not photos of that department.
 const DEPT_ART = ['landing-house', 'landing-mountain', 'landing-beach', 'landing-palms'];
 
-export default async function LocaleHome({ params }) {
+export default async function LocaleHome(props) {
+  const params = await props.params;
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const LISTINGS = await getListings();

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { ACTIVATION_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
@@ -14,7 +14,8 @@ import { compressImage } from '@/lib/image-compress';
 // Landlord posting form: details + description + house photos and videos.
 // Only an activated landlord account can post — tenants explore, they
 // never see this form, and the API enforces the same rule.
-export default function ListHome({ params }) {
+export default function ListHome(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

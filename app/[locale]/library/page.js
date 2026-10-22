@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -14,7 +14,8 @@ const AD_MONTHS = [1, 3, 6, 12];
 // down, newest first. Live homes can be viewed, edited or taken down;
 // taken-down homes can be put back online. Tenants see an empty library
 // (they post nothing); signed-out visitors are pointed to sign-in.
-export default function Library({ params }) {
+export default function Library(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);

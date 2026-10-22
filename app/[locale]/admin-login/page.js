@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import TabBar from '@/components/TabBar';
@@ -8,7 +8,8 @@ import BackButton from '@/components/BackButton';
 
 // Admin login. The password is set in the server env (ADMIN_PASSWORD) and
 // is never in the code or the repo.
-export default function AdminLogin({ params }) {
+export default function AdminLogin(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
   const [password, setPassword] = useState('');

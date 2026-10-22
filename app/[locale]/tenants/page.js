@@ -6,7 +6,8 @@ import BackButton from '@/components/BackButton';
 // Little landing page for tenants: sign in or create a free account.
 // No Gmail login — accounts are created here, with a username and a phone
 // number, and tenants never pay the fee.
-export default function Tenants({ params }) {
+export default async function Tenants(props) {
+  const params = await props.params;
   const t = getDict(params.locale);
   return (
     <>

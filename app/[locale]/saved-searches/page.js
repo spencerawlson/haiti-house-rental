@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { matchesQuery, resolveDepartmentId } from '@/lib/listings';
 import { readSavedSearches, SAVED_KEY } from '@/components/SaveSearchButton';
@@ -26,7 +26,8 @@ function matches(listing, query) {
   return true;
 }
 
-export default function SavedSearches({ params }) {
+export default function SavedSearches(props) {
+  const params = use(props.params);
   const t = getDict(params.locale);
   const [searches, setSearches] = useState(null);
   const [listings, setListings] = useState([]);

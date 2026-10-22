@@ -10,8 +10,8 @@ import Splash from '@/components/Splash';
 // splash, components/Splash.jsx). The top right stays clean —
 // no language links here. Language is chosen once, in Account → Settings,
 // and remembered in the kay_locale cookie, which this page reads.
-export default function Landing() {
-  const saved = cookies().get('kay_locale')?.value;
+export default async function Landing() {
+  const saved = (await cookies()).get('kay_locale')?.value;
   // First visit (no language saved yet): the screen-1 splash with the
   // language choice, then onboarding. Every later visit lands here.
   if (!LOCALES.includes(saved)) return <Splash />;
