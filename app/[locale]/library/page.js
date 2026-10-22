@@ -10,6 +10,16 @@ import { ADVERTISED_FEE_HTG_MONTH } from '@/lib/config';
 
 const AD_MONTHS = [1, 3, 6, 12];
 
+// How long a sold/leased home has before it is deleted. Hours while
+// there is more than one left, otherwise minutes, so the last stretch
+// does not just read "0 h".
+function hoursLeft(deletesAt) {
+  const ms = deletesAt - Date.now();
+  if (ms <= 0) return '0 min';
+  const hours = Math.floor(ms / 3600000);
+  return hours >= 1 ? `${hours} h` : `${Math.max(1, Math.round(ms / 60000))} min`;
+}
+
 // A landlord's library: every home they ever posted, live and taken
 // down, newest first. Live homes can be viewed, edited or taken down;
 // taken-down homes can be put back online. Tenants see an empty library
@@ -64,6 +74,20 @@ export default function Library({ params }) {
     if (res.ok) load(me.username);
   }
 
+  // Sold / leased: out of search now, deleted for good in 48 hours. That
+  // window is the undo — `restore` cancels it.
+  async function markSold(id, status) {
+    if (!window.confirm(status === 'sold' ? t.markSoldConfirm : t.markLeasedConfirm)) return;
+    setError('');
+    const res = await fetch('/api/listings/sold', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    });
+    if (res.ok) load(me.username);
+    else setError(t.deleteListingFailed);
+  }
+
   // Delete for good: the row and its photos leave the server, and so do
   // the conversations and visits about this home. Irreversible, so the
   // confirm text spells out what goes with it.
@@ -110,10 +134,17 @@ export default function Library({ params }) {
                 <p className="muted" style={{ margin: '0 0 4px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
                 <p className="muted" style={{ margin: '0 0 4px' }}>👁 <strong>{(h.views || 0).toLocaleString()}</strong> {t.viewsLabel}</p>
                 <p style={{ margin: '0 0 12px' }}>
-                  {h.status === 'active' ? (
-                    <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>
-                  ) : (
-                    <span className="muted">{t.statusRemoved}</span>
+                  {h.status === 'active' && <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>}
+                  {h.status === 'removed' && <span className="muted">{t.statusRemoved}</span>}
+                  {(h.status === 'sold' || h.status === 'leased') && (
+                    <>
+                      <span style={{ color: '#dc2626', fontWeight: 700 }}>
+                        {h.status === 'sold' ? `🏷 ${t.statusSold}` : `🏷 ${t.statusLeased}`}
+                      </span>
+                      {h.deletesAt && (
+                        <span className="muted"> · ⏳ {t.deletesIn} {hoursLeft(h.deletesAt)}</span>
+                      )}
+                    </>
                   )}
                 </p>
                 {h.status === 'active' && h.advertised && (
@@ -148,10 +179,15 @@ export default function Library({ params }) {
                       <Link className="btn" href={`/${params.locale}/listings/${h.id}`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.viewListing}</Link>
                       <Link className="btn btn-secondary" href={`/${params.locale}/listings/${h.id}/edit`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.editListing}</Link>
                       <button className="btn btn-secondary" type="button" onClick={() => takeDown(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
+                      <button className="btn btn-secondary" type="button" onClick={() => markSold(h.id, h.purpose === 'sale' ? 'sold' : 'leased')} style={{ minHeight: 40, padding: '8px 16px' }}>
+                        🏷 {h.purpose === 'sale' ? t.markSold : t.markLeased}
+                      </button>
                     </>
                   )}
                   {h.status !== 'active' && (
-                    <button className="btn" type="button" onClick={() => restore(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.restore}</button>
+                    <button className="btn" type="button" onClick={() => restore(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>
+                      {h.status === 'removed' ? t.restore : t.undoSold}
+                    </button>
                   )}
                   <button className="btn btn-danger" type="button" onClick={() => remove(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.deleteListing}</button>
                 </p>
