@@ -77,8 +77,7 @@ are in `docs/design/phase5/`.
 - Screens 11–12 account: profile header, landlord dashboard tiles, menu rows. New pages: My visits, My payments.
 
 Not done yet:
-- screen 1 splash restyle (the landing already has the language choice)
-- screen 2 onboarding
+- ~~screen 1 splash and screen 2 onboarding~~ done in Phase 7 (first visit only; see SPEC.md)
 - screen 8 gallery room tabs (needs room labels on photos)
 - the admin board restyle
 

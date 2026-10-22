@@ -4,12 +4,17 @@ import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
+import Splash from '@/components/Splash';
 
-// Landing page: the entry before the full app. The top right stays clean —
+// Landing page: the entry before the full app (after the first-visit
+// splash, components/Splash.jsx). The top right stays clean —
 // no language links here. Language is chosen once, in Account → Settings,
 // and remembered in the kay_locale cookie, which this page reads.
 export default function Landing() {
   const saved = cookies().get('kay_locale')?.value;
+  // First visit (no language saved yet): the screen-1 splash with the
+  // language choice, then onboarding. Every later visit lands here.
+  if (!LOCALES.includes(saved)) return <Splash />;
   const lang = LOCALES.includes(saved) ? saved : 'ht';
   const t = getDict(lang);
   const backgrounds = [
