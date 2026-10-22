@@ -6,6 +6,7 @@ import { getDict } from '@/lib/dictionaries';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
+import AvatarUpload from '@/components/AvatarUpload';
 import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -14,10 +15,6 @@ import ThemeToggle from '@/components/ThemeToggle';
 // and for landlords the screen 11 dashboard tiles). Details live on their
 // own pages (chats, visits, favorites, library, payments); this page is
 // the hub. Signed out, it offers sign-in / account creation.
-function initials(name) {
-  return String(name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() || '').join('') || '?';
-}
-
 function MenuRow({ href, icon, label, badge, onClick }) {
   const inner = (
     <>
@@ -90,7 +87,7 @@ export default function Account({ params }) {
 
         {loaded && me && (
           <section className="profile-head">
-            <span className="avatar" aria-hidden="true">{initials(me.name)}</span>
+            <AvatarUpload account={me} onChange={setMe} t={t} />
             <div style={{ minWidth: 0 }}>
               <h2 style={{ margin: 0 }}>{me.name}</h2>
               <p style={{ margin: '2px 0 0', color: 'var(--primary)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
@@ -135,6 +132,7 @@ export default function Account({ params }) {
 
         <nav className="menu card" style={{ marginTop: 20 }}>
           {me && <MenuRow href={`${base}/chats`} icon="💬" label={t.myMessages} badge={unread} />}
+          {me && <MenuRow href={`${base}/notifications`} icon="🔔" label={t.notificationsTitle} badge={0} />}
           {me && <MenuRow href={`${base}/visits`} icon="📅" label={t.myVisits} badge={0} />}
           <MenuRow href={`${base}/favorites`} icon="♡" label={t.favorites} />
           <MenuRow href={`${base}/saved-searches`} icon="🔔" label={t.savedSearches} />
@@ -157,6 +155,9 @@ export default function Account({ params }) {
                   onClick={() => {
                     document.cookie = `kay_locale=${l}; path=/; max-age=31536000`;
                     try { localStorage.setItem('kay_locale', l); } catch {}
+                    if (me) {
+                      fetch('/api/accounts/locale', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ locale: l }), keepalive: true }).catch(() => {});
+                    }
                   }}
                 >
                   {l === 'ht' ? 'Kreyòl' : l === 'fr' ? 'Français' : 'English'}

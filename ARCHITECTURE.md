@@ -46,7 +46,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 
 | Table | Holds |
 |-------|-------|
-| accounts | users; `password_hash` = scrypt over the browser SHA-256 |
+| accounts | users; `password_hash` = scrypt over the browser SHA-256; `avatar_url` = optional profile photo (an `/uploads/` path this server wrote) |
 | sessions | `sha256(token)`, username, expiry |
 | listings | listings; `status` is active or removed (never deleted); `details` JSONB (sanitized); `verified` (admin only) |
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
@@ -71,6 +71,7 @@ them in `schema_migrations`.
   data steps. Those are still guarded by the legacy `migrations` table,
   so they never re-run.
 - `0002 audit_log` adds the audit table.
+- `0004 profile_photo` adds `accounts.avatar_url`.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

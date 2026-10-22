@@ -84,6 +84,7 @@ A nonce-based CSP is still to do.
 | Report a listing | Any signed-in user except its owner |
 | Read any conversation, review reports | Admin (moderation) |
 | Mark activation transfer sent | The session account itself |
+| Set / remove own profile photo | The session account itself (any role, activated or not) |
 | Submit a payment reference | Landlord (activation: own account; advertising: own active listing) |
 | Confirm / reject a payment | Admin only; a payment can be confirmed once |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
@@ -107,6 +108,7 @@ Read and hidden markers moved with their threads.
 | Signup | 40 / hour per IP |
 | Password reset | 5 / hour per username, 20 / hour per IP |
 | Upload | 60 / hour per account |
+| Profile photo | 10 / hour per account |
 | Chat send | 30 / min per account |
 
 The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel). Per-IP
@@ -116,7 +118,14 @@ limits are what actually stop password guessing.
 
 ## Uploads
 
-- Allowed: activated landlords only.
+- Allowed: activated landlords only for listing media (`/api/upload`).
+  Profile photos (`/api/accounts/avatar`) are open to any signed-in
+  account — tenants have a profile too, and are never "activated" — but
+  are images only, 8 MB, 10 changes an hour. The stored value is always a
+  path this server wrote, never a URL from the client, so a profile photo
+  cannot point at a third-party tracker. Both doors share the format and
+  magic-byte checks in `lib/upload-file.js`: one copy, because two copies
+  drift and the stale one becomes the hole.
 - Formats: jpg, jpeg, png, webp, gif, avif, mp4, mov, webm. These are
   exactly the formats `/uploads/[file]` serves, so SVG/HTML can never be
   stored and served.
