@@ -9,7 +9,7 @@ export default function ListingCard({ listing, locale, t }) {
       <FavoriteButton listingId={listing.id} />
       <Link href={`/${locale}/listings/${listing.id}`} style={{ color: 'inherit' }}>
         {listing.photos?.length > 0 ? (
-          <img src={listing.photos[0]} alt="" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
+          <img src={listing.photos[0]} alt="" loading="lazy" decoding="async" style={{ width: '100%', height: 160, objectFit: 'cover', display: 'block' }} />
         ) : (
           <div className="house-art">{communeName(listing.commune, locale)}</div>
         )}
@@ -17,7 +17,12 @@ export default function ListingCard({ listing, locale, t }) {
           <p className="price" style={{ margin: '0 0 4px' }}>
             {listing.priceHTG.toLocaleString()} HTG {listing.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{rentPeriodLabel(listing.rentPeriod, t)}</span>}
           </p>
-          {listing.advertised && <p style={{ margin: '0 0 4px' }}><span className="badge">📣 {t.advertised}</span></p>}
+          {(listing.advertised || listing.verified) && (
+            <p style={{ margin: '0 0 4px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {listing.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
+              {listing.advertised && <span className="badge">📣 {t.advertised}</span>}
+            </p>
+          )}
           <h3 style={{ margin: '0 0 4px' }}>{listing.title}</h3>
           <p className="muted" style={{ margin: 0 }}>
             {communeName(listing.commune, locale)} · {listing.type === 'land'

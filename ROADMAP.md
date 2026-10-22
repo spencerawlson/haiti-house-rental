@@ -41,12 +41,18 @@ approval).
   - one active request per tenant per home
 - UI follows the design showcase: screen 9 (chat) and screen 10 (calendar + time slots).
 
-## Phase 3 — Listings
+## Phase 3 — Listings ✅
 
-- Structured optional fields: water, electricity/backup, internet, security, parking, furnished, availability date, conditions, extra fees.
-- Upload compression and responsive image sizes (critical on mobile data).
-- Listing reporting plus an admin verification badge (a manual check, never automatic for paid accounts).
-- Fair organic ordering independent of advertising; indexes for search.
+- Structured optional details stored as sanitized JSON (`lib/listing-details.js`): water, electricity, 24/7 power, internet, furnished, security, amenities, parking, availability date, conditions, extra fees. Shown as screen-7 tiles on the detail page.
+- Photos shrunk in the browser before upload (≤1600 px JPEG, usually 200–500 KB); HEIC is converted where the browser can decode it. Card images lazy-load.
+- Admin verification badge (a manual check with a confirmation prompt; never automatic, and landlords can't set it).
+- **Ordering bug fixed:** search used to `reverse()` the server order, putting the oldest demo houses first and new real listings last. It's now newest real listings first, with stable ties. Advertising never affects ranking.
+- Search filters: 24/7 power, furnished, verified.
+- Indexes on `listings (status, created_at)` and `(owner)`.
+- Detail page shows the department name, not its raw ID.
+- `tests/unit.test.mjs` (no server needed) and `tests/phase3.test.mjs`.
+
+Still open: responsive image sizes (several widths per photo) and a photo gallery with room tabs (screen 8).
 
 ## Phase 4 — Payments (manual, auditable)
 

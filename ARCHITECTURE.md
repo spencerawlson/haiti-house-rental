@@ -23,6 +23,8 @@ lib/session-server.js session cookie ↔ account (identity for every API)
 lib/password.js       scrypt hashing
 lib/rate-limit.js     in-memory limiter
 lib/chat-auth.js      who is owner/tenant on a thread
+lib/listing-details.js allowed detail fields + sanitizer (client-safe)
+lib/image-compress.js browser-side photo shrink before upload
 lib/account.js        browser helpers (sign-in, signup, session hint)
 lib/dictionaries.js   all UI strings in three languages
 middleware.js         admin gate (/api/admin/*, admin page, accounts list)
@@ -43,7 +45,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 |-------|-------|
 | accounts | users; `password_hash` = scrypt over the browser SHA-256 |
 | sessions | `sha256(token)`, username, expiry |
-| listings | listings; `status` is active or removed (never deleted) |
+| listings | listings; `status` is active or removed (never deleted); `details` JSONB (sanitized); `verified` (admin only) |
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
 | chat_reads, chat_hidden | per-user, per-thread markers |
 | visits | visit requests; `proposed_by`, `history` (JSONB, append-only) |
@@ -61,7 +63,8 @@ Phase 6 (`ROADMAP.md`).
 
 ## Testing
 
-Start a throwaway Postgres and the built app, then:
+`tests/unit.test.mjs` needs no server. For the rest, start a throwaway
+Postgres and the built app, then:
 
 ```
 BASE_URL=http://localhost:3000 ADMIN_PASSWORD=<test value> npm test

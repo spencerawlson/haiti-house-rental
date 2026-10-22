@@ -95,6 +95,18 @@ export default function Admin({ params }) {
     setNumbersSaved(true);
   }
 
+  // Verification is a human check (visit, documents, owner identity) —
+  // never automatic for paying accounts.
+  async function setVerifiedListing(id, verified) {
+    if (verified && !window.confirm(t.verifyConfirm)) return;
+    await fetch('/api/admin/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, verified }),
+    });
+    load();
+  }
+
   async function set(id, advertised) {
     await fetch('/api/admin/advertised', {
       method: 'POST',
@@ -402,8 +414,10 @@ export default function Admin({ params }) {
                 {l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}
                 {l.advertised && <> · <span className="badge">📣 {t.advertised}</span></>}
                 {l.advertisedRequested && !l.advertised && <> · <span className="badge">{t.advertisedRequestedBadge}</span></>}
+                {l.verified && <> · <span className="badge-verified">✓ {t.verifiedListing}</span></>}
               </p>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn btn-secondary" type="button" onClick={() => setVerifiedListing(l.id, !l.verified)} style={{ minHeight: 40, padding: '8px 16px' }}>{l.verified ? t.unverifyListing : `✓ ${t.verifyListing}`}</button>
                 {!l.advertised && (
                   <button className="btn" type="button" onClick={() => set(l.id, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.approveAdvertised}</button>
                 )}

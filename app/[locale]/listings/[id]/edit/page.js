@@ -8,6 +8,8 @@ import { rentPeriodLabel } from '@/lib/listings';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import ListingDetailsFields from '@/components/ListingDetailsFields';
+import { compressImage } from '@/lib/image-compress';
 
 // Landlord edit form: every field the creation form sets, pre-filled
 // from the listing. Existing photos/videos stay unless removed with ✕;
@@ -48,6 +50,7 @@ export default function EditListing({ params }) {
             bedrooms: String(l.bedrooms ?? ''),
             bathrooms: String(l.bathrooms ?? ''),
             advertisedRequested: !!l.advertisedRequested,
+            details: l.details || {},
             photos: [...(l.photos || [])],
             videos: [...(l.videos || [])],
           });
@@ -64,7 +67,7 @@ export default function EditListing({ params }) {
     const urls = [];
     for (const file of files) {
       const form = new FormData();
-      form.append('file', file);
+      form.append('file', await compressImage(file));
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
@@ -93,6 +96,7 @@ export default function EditListing({ params }) {
           bathrooms: f.bathrooms,
           purpose: f.purpose,
           advertisedRequested: f.advertisedRequested,
+          details: f.details,
           type: f.homeType,
           areaM2: f.areaM2,
           rentPeriod: f.rentPeriod,
@@ -185,6 +189,7 @@ export default function EditListing({ params }) {
                   </div>
                 </div>
               )}
+              <ListingDetailsFields value={f.details} onChange={(v) => set('details', v)} t={t} />
               <div className="field"><label>{t.photosLabel}</label>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                   {f.photos.map((src) => (

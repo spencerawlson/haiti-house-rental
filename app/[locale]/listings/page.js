@@ -24,6 +24,9 @@ export default async function Listings({ params, searchParams }) {
     minBeds: searchParams.minBeds || '',
     minBaths: searchParams.minBaths || '',
     purpose: searchParams.purpose || '',
+    power24: searchParams.power24 || '',
+    furnished: searchParams.furnished || '',
+    verified: searchParams.verified || '',
   };
   const shown = sortListings(filterListings(LISTINGS, f), searchParams.sort || '');
   const view = searchParams.view === 'map' ? 'map' : 'list';
@@ -73,6 +76,11 @@ export default async function Listings({ params, searchParams }) {
               <div className="field"><label>{t.minBaths}</label>
                 <input className="input" type="number" name="minBaths" defaultValue={f.minBaths} min="0" />
               </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="power24" value="1" defaultChecked={f.power24 === '1'} style={{ marginRight: 6 }} />⚡ {t.det_power24Short}</label>
+              <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="furnished" value="1" defaultChecked={f.furnished === '1'} style={{ marginRight: 6 }} />🛋️ {t.det_furnished_furnished}</label>
+              <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="verified" value="1" defaultChecked={f.verified === '1'} style={{ marginRight: 6 }} />✓ {t.verifiedListing}</label>
             </div>
             <div className="field"><label>{t.sortBy}</label>
               <select className="input" name="sort" defaultValue={searchParams.sort || ''}>

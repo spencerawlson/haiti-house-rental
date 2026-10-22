@@ -3,13 +3,14 @@ import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { getListing } from '@/lib/listings-server';
 import { rentPeriodLabel } from '@/lib/listings';
-import { communeName } from '@/lib/departments';
+import { communeName, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import TakeDownButton from '@/components/TakeDownButton';
 import ListingPhotos from '@/components/ListingPhotos';
 import EditListingButton from '@/components/EditListingButton';
 import VisitScheduler from '@/components/VisitScheduler';
 import ReportListingButton from '@/components/ReportListingButton';
+import ListingFacts from '@/components/ListingFacts';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,12 @@ export default async function ListingDetail({ params }) {
         <h1 style={{ marginBottom: 4 }}>{l.title}</h1>
         <p className="muted" style={{ marginTop: 0 }}>{communeName(l.commune, params.locale)} · {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</p>
         {l.description && <p style={{ whiteSpace: 'pre-wrap', marginTop: 0 }}>{l.description}</p>}
-        {l.advertised && <p><span className="badge">📣 {t.advertised}</span></p>}
+        {(l.advertised || l.verified) && (
+          <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {l.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
+            {l.advertised && <span className="badge">📣 {t.advertised}</span>}
+          </p>
+        )}
         <p className="price">{l.priceHTG.toLocaleString()} HTG {l.purpose === 'rent' && <span style={{ fontSize: '0.9rem', fontWeight: 400 }} className="muted">{rentPeriodLabel(l.rentPeriod, t)}</span>}</p>
         <div className="card" style={{ marginTop: 16 }}>
           <div className="card-body" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
@@ -42,9 +48,10 @@ export default async function ListingDetail({ params }) {
               </>
             )}
             <span><strong>{l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</strong></span>
-            <span className="muted">{l.department}</span>
+            <span className="muted">{departmentName(l.department, params.locale)}</span>
           </div>
         </div>
+        <ListingFacts details={l.details} t={t} locale={params.locale} />
         {l.videos?.length > 0 && (
           <div>
             <h2>{t.videosLabel}</h2>
