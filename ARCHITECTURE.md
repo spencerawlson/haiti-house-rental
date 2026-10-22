@@ -52,7 +52,8 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | conversations | id per (`listing_id`, `tenant`), landlord, block state |
 | reports | user reports on conversations/listings; open → resolved by admin |
 | password_reset_codes | admin-issued one-time reset codes (SHA-256, 24h) |
-| revenue_entries | logged activations |
+| payments | submitted MonCash/NatCash references; pending → confirmed/rejected by admin; `events` JSONB audit trail; UNIQUE (provider, reference) |
+| revenue_entries | logged activations (incl. manual admin activations before Phase 4) |
 | settings | MonCash/NatCash destination numbers |
 | migrations | names of run-once data migrations already applied |
 

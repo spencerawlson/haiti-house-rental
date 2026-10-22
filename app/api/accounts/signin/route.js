@@ -7,7 +7,7 @@ import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
   const username = String(data.username || '').toLowerCase();
-  if (!rateLimit(`signin:${username}`, 10, 15 * 60 * 1000) || !rateLimit(`signin-ip:${clientIp(request)}`, 30, 15 * 60 * 1000)) {
+  if (!rateLimit(`signin:${username}`, 10, 15 * 60 * 1000) || !rateLimit(`signin-ip:${clientIp(request)}`, 100, 15 * 60 * 1000)) {
     return tooMany();
   }
   const account = await verifyAccount(data.username, data.passwordHash);

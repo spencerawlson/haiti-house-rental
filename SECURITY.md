@@ -84,6 +84,8 @@ A nonce-based CSP is still to do.
 | Report a listing | Any signed-in user except its owner |
 | Read any conversation, review reports | Admin (moderation) |
 | Mark activation transfer sent | The session account itself |
+| Submit a payment reference | Landlord (activation: own account; advertising: own active listing) |
+| Confirm / reject a payment | Admin only; a payment can be confirmed once |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
 | Public profile lookup | Anyone — username, name, role only |
 
@@ -101,13 +103,16 @@ Read and hidden markers moved with their threads.
 
 | Route | Limit |
 |-------|-------|
-| Sign-in | 10 / 15 min per username, 30 / 15 min per IP |
-| Signup | 10 / hour per IP |
+| Sign-in | 10 / 15 min per username, 100 / 15 min per IP |
+| Signup | 40 / hour per IP |
 | Password reset | 5 / hour per username, 20 / hour per IP |
 | Upload | 60 / hour per account |
 | Chat send | 30 / min per account |
 
-The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel).
+The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel). Per-IP
+limits are generous on purpose: Haitian mobile carriers put many
+subscribers behind one shared (CGNAT) address, so the per-username
+limits are what actually stop password guessing.
 
 ## Uploads
 

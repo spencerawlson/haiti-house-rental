@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { LOCALES } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
-import { getMyAccount, signOut, markMyTransferSent } from '@/lib/account';
+import { getMyAccount, signOut } from '@/lib/account';
+import { ACTIVATION_FEE_HTG } from '@/lib/config';
+import PaymentForm, { PaymentStatus } from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -15,7 +17,7 @@ export default function Account({ params }) {
   const t = getDict(params.locale);
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);
-  const [provider, setProvider] = useState('moncash');
+  const [payments, setPayments] = useState([]);
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
   const [visits, setVisits] = useState([]);
   const [threads, setThreads] = useState([]);
@@ -34,6 +36,12 @@ export default function Account({ params }) {
           .then((r) => r.json())
           .then((d) => setThreads(d.threads || []))
           .catch(() => {});
+        if (a.role !== 'tenant') {
+          fetch('/api/payments')
+            .then((r) => r.json())
+            .then((d) => setPayments(d.payments || []))
+            .catch(() => {});
+        }
         fetch(`/api/listings?owner=${encodeURIComponent(a.username)}`)
           .then((r) => r.json())
           .then((d) => setMyHomes(d.listings || []))
@@ -48,10 +56,6 @@ export default function Account({ params }) {
     setMe(null);
   }
 
-  async function sentTransfer() {
-    const data = await markMyTransferSent(provider);
-    if (data?.account) setMe(data.account);
-  }
 
   async function takeDownHome(id) {
     if (!window.confirm(t.takeDownConfirm)) return;
@@ -89,21 +93,20 @@ export default function Account({ params }) {
               )}
               {me.activated ? (
                 <p style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.accountActive}</p>
-              ) : me.transferSent ? (
-                <p>⏳ {t.waitingActivation}</p>
               ) : (
                 <div style={{ display: 'grid', gap: 10 }}>
                   <p style={{ margin: 0 }}>{t.accountPending} {t.sendTransfer}</p>
-                  <div style={{ display: 'flex', gap: 16 }}>
-                    <label>
-                      <input type="radio" checked={provider === 'moncash'} onChange={() => setProvider('moncash')} /> MonCash
-                    </label>
-                    <label>
-                      <input type="radio" checked={provider === 'natcash'} onChange={() => setProvider('natcash')} /> NatCash
-                    </label>
-                  </div>
-                  <p style={{ margin: 0 }}>{t.sendTo} <strong>{provider === 'natcash' ? (destination.natcashNumber || t.numberNotSet) : (destination.moncashNumber || t.numberNotSet)}</strong></p>
-                  <button className="btn" type="button" onClick={sentTransfer} style={{ minHeight: 40, padding: '8px 16px' }}>{t.transferSent}</button>
+                  {payments.some((p) => p.kind === 'activation' && p.status === 'pending') ? (
+                    <p style={{ margin: 0 }}>⏳ {t.waitingActivation}</p>
+                  ) : (
+                    <PaymentForm kind="activation" amountHTG={ACTIVATION_FEE_HTG} destination={destination} strings={t} onSubmitted={(p) => setPayments((prev) => [p, ...prev])} />
+                  )}
+                </div>
+              )}
+              {payments.length > 0 && (
+                <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+                  <h3 style={{ margin: 0 }}>{t.myPayments}</h3>
+                  {payments.map((p) => <PaymentStatus key={p.id} payment={p} strings={t} locale={params.locale} />)}
                 </div>
               )}
               <button className="btn btn-secondary" type="button" onClick={logout} style={{ minHeight: 40, padding: '8px 16px', marginTop: 12 }}>{t.signOut}</button>
