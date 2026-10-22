@@ -12,6 +12,7 @@ import VisitScheduler from '@/components/VisitScheduler';
 import ReportListingButton from '@/components/ReportListingButton';
 import ListingFacts from '@/components/ListingFacts';
 import FavoriteButton from '@/components/FavoriteButton';
+import ViewPing from '@/components/ViewPing';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,7 @@ export default async function ListingDetail({ params }) {
   return (
     <>
       <main className="container">
+        <ViewPing listingId={l.id} />
         <div className="detail-hero">
           <Link href={`${base}/listings`} className="hero-btn" style={{ left: 14 }} aria-label={t.back}>←</Link>
           <FavoriteButton listingId={l.id} />

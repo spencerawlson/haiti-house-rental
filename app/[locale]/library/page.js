@@ -22,6 +22,7 @@ export default function Library({ params }) {
   const [adOpen, setAdOpen] = useState(null);
   const [pendingAds, setPendingAds] = useState({});
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
+  const [error, setError] = useState('');
 
   function load(username) {
     fetch(`/api/listings?owner=${encodeURIComponent(username)}&all=1`)
@@ -63,6 +64,26 @@ export default function Library({ params }) {
     if (res.ok) load(me.username);
   }
 
+  // Delete for good: the row and its photos leave the server, and so do
+  // the conversations and visits about this home. Irreversible, so the
+  // confirm text spells out what goes with it.
+  async function remove(id) {
+    if (!window.confirm(t.deleteListingConfirm)) return;
+    setError('');
+    const res = await fetch('/api/listings/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      load(me.username);
+      return;
+    }
+    // 409 = a payment for this home is still pending review.
+    const data = await res.json().catch(() => ({}));
+    setError(data.error === 'payment_pending' ? t.deleteListingPending : t.deleteListingFailed);
+  }
+
   return (
     <>
       <main className="container">
@@ -74,6 +95,7 @@ export default function Library({ params }) {
             <Link className="btn btn-secondary" href={`/${params.locale}/signin`}>{t.signIn}</Link>
           </p>
         )}
+        {error && <p style={{ color: '#dc2626', margin: '0 0 12px', fontWeight: 700 }} role="alert">{error}</p>}
         {loaded && me && homes.length === 0 && <p className="muted">{t.noMyListings}</p>}
         <div className="grid">
           {homes.map((h) => (
@@ -86,6 +108,7 @@ export default function Library({ params }) {
               <div className="card-body">
                 <p style={{ margin: '0 0 4px' }}><strong>{h.title}</strong></p>
                 <p className="muted" style={{ margin: '0 0 4px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
+                <p className="muted" style={{ margin: '0 0 4px' }}>👁 <strong>{(h.views || 0).toLocaleString()}</strong> {t.viewsLabel}</p>
                 <p style={{ margin: '0 0 12px' }}>
                   {h.status === 'active' ? (
                     <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>
@@ -130,6 +153,7 @@ export default function Library({ params }) {
                   {h.status !== 'active' && (
                     <button className="btn" type="button" onClick={() => restore(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.restore}</button>
                   )}
+                  <button className="btn btn-danger" type="button" onClick={() => remove(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.deleteListing}</button>
                 </p>
               </div>
             </section>

@@ -72,6 +72,7 @@ A nonce-based CSP is still to do.
 |--------|-----|
 | Post a listing, upload media | Activated landlord (session) |
 | Edit / take down / restore a listing | Its owner (session) or admin |
+| Delete a listing for good | Its owner (session) or admin. Irreversible: removes the row, its photos from disk, and its conversations and visits (for the tenant too). Refused while a payment for it is pending. Payments, reports and the audit entry are kept. |
 | View own library incl. taken-down homes | That owner |
 | Read/write a chat thread | The thread's tenant, or the listing owner |
 | Owner reply | Only into an existing tenant thread |
@@ -109,6 +110,7 @@ Read and hidden markers moved with their threads.
 | Password reset | 5 / hour per username, 20 / hour per IP |
 | Upload | 60 / hour per account |
 | Profile photo | 10 / hour per account |
+| Listing view count | 120 / hour per IP (volume ceiling), then 1 per viewer per 30 min |
 | Chat send | 30 / min per account |
 
 The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel). Per-IP
@@ -147,6 +149,10 @@ React escapes by default. The one raw-HTML sink, Leaflet popups in
 - Rate limits live in one process. Move them to Postgres or Redis if the
   app ever runs as more than one container.
 - SMS/WhatsApp self-serve recovery codes, once a sending channel exists.
+- Listing view counts come from a browser-supplied visitor id, so a
+  determined person could inflate the count on their own listing. It is a
+  vanity metric nobody is billed on, and a per-IP ceiling caps the volume;
+  do not reuse this counter for anything that charges money.
 
 ## Audit trail
 
@@ -158,6 +164,7 @@ React escapes by default. The one raw-HTML sink, Leaflet popups in
 - listing verification, advertising and takedown/restore
 - report resolutions
 - **every time the admin reads a private conversation**
+- listing deletion, with what it removed (messages, visits, files)
 
 Entries are also written as JSON log lines.
 

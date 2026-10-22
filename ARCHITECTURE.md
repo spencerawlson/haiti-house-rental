@@ -48,7 +48,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 |-------|-------|
 | accounts | users; `password_hash` = scrypt over the browser SHA-256; `avatar_url` = optional profile photo (an `/uploads/` path this server wrote) |
 | sessions | `sha256(token)`, username, expiry |
-| listings | listings; `status` is active or removed (never deleted); `details` JSONB (sanitized); `verified` (admin only) |
+| listings | listings; `status` is active or removed; `details` JSONB (sanitized); `verified` (admin only); `views` (owner-only count). The owner can delete one for good — row, photos, chats and visits all go (`/api/listings/delete`) |
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
 | chat_reads, chat_hidden | per-user, per-thread markers |
 | visits | visit requests; `proposed_by`, `history` (JSONB, append-only) |
@@ -72,6 +72,7 @@ them in `schema_migrations`.
   so they never re-run.
 - `0002 audit_log` adds the audit table.
 - `0004 profile_photo` adds `accounts.avatar_url`.
+- `0005 listing_views` adds `listings.views`.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

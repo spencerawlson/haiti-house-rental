@@ -128,6 +128,18 @@ a:hover { text-decoration: underline; }
   box-shadow: none;
 }
 .btn-secondary:hover { background: var(--primary-soft); }
+/* Destructive actions (delete a listing for good). Outlined rather than
+   solid red: it sits next to other buttons and must read as dangerous
+   without shouting louder than the primary action. */
+.btn-danger {
+  background: var(--card);
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  box-shadow: none;
+}
+.btn-danger:hover { background: #dc2626; color: #fff; }
+[data-theme="dark"] .btn-danger { color: #f87171; border-color: #f87171; }
+[data-theme="dark"] .btn-danger:hover { background: #b91c1c; color: #fff; }
 
 .chip {
   display: inline-block;
