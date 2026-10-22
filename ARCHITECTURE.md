@@ -46,7 +46,10 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | listings | listings; `status` is active or removed (never deleted) |
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
 | chat_reads, chat_hidden | per-user, per-thread markers |
-| visits | visit requests |
+| visits | visit requests; `proposed_by`, `history` (JSONB, append-only) |
+| conversations | id per (`listing_id`, `tenant`), landlord, block state |
+| reports | user reports on conversations/listings; open → resolved by admin |
+| password_reset_codes | admin-issued one-time reset codes (SHA-256, 24h) |
 | revenue_entries | logged activations |
 | settings | MonCash/NatCash destination numbers |
 | migrations | names of run-once data migrations already applied |

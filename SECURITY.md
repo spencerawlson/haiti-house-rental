@@ -77,7 +77,12 @@ A nonce-based CSP is still to do.
 | Owner reply | Only into an existing tenant thread |
 | Request a visit | Any signed-in user except the owner |
 | See visits on a listing | Owner: all; tenant: own; signed out: none |
-| Confirm/decline a visit | Listing owner |
+| Confirm/decline a visit | The side that did not propose the current time |
+| Cancel / reschedule a visit | Either side of that visit |
+| Block a conversation | Either participant; only the blocker unblocks |
+| Report a conversation | Its participants |
+| Report a listing | Any signed-in user except its owner |
+| Read any conversation, review reports | Admin (moderation) |
 | Mark activation transfer sent | The session account itself |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
 | Public profile lookup | Anyone — username, name, role only |

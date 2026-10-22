@@ -9,6 +9,7 @@ import TakeDownButton from '@/components/TakeDownButton';
 import ListingPhotos from '@/components/ListingPhotos';
 import EditListingButton from '@/components/EditListingButton';
 import VisitScheduler from '@/components/VisitScheduler';
+import ReportListingButton from '@/components/ReportListingButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +59,7 @@ export default async function ListingDetail({ params }) {
           <Link className="btn" href={`/${params.locale}/chats?listingId=${l.id}`}>{t.contact}</Link>
         </div>
         <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
+        <ReportListingButton listingId={l.id} owner={l.owner} strings={t} />
       </main>
       <TabBar locale={params.locale} browse={t.browse} favorites={t.favorites} explore={t.explore} account={t.account} />
     </>

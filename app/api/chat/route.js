@@ -1,5 +1,6 @@
 import { getThread, postMessage, threadExists } from '@/lib/chat';
 import { resolveThread } from '@/lib/chat-auth';
+import { ensureConversation, getConversation } from '@/lib/conversations-server';
 import { getSessionAccount, unauthorized } from '@/lib/session-server';
 import { rateLimit, tooMany } from '@/lib/rate-limit';
 
@@ -14,8 +15,14 @@ export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const thread = await resolveThread(me, params.get('listingId') || '', params.get('tenant'));
   if (!thread) return Response.json({ error: 'Listing not found' }, { status: 404 });
-  const messages = thread.tenant === null ? [] : await getThread(thread.listing.id, thread.tenant);
-  return Response.json({ messages, isOwner: thread.isOwner, tenant: thread.tenant });
+  if (thread.tenant === null) return Response.json({ messages: [], isOwner: thread.isOwner, tenant: null, conversation: null });
+  const conv = await getConversation(thread.listing.id, thread.tenant);
+  return Response.json({
+    messages: await getThread(thread.listing.id, thread.tenant),
+    isOwner: thread.isOwner,
+    tenant: thread.tenant,
+    conversation: conv ? { id: conv.id, blocked: !!conv.blockedBy, blockedByMe: conv.blockedBy === me.username } : null,
+  });
 }
 
 export async function POST(request) {
@@ -32,6 +39,9 @@ export async function POST(request) {
   if (thread.isOwner && (!thread.tenant || !(await threadExists(thread.listing.id, thread.tenant)))) {
     return Response.json({ error: 'No such conversation' }, { status: 400 });
   }
+  // A blocked conversation takes no new messages from either side.
+  const conv = await ensureConversation(thread.listing, thread.tenant);
+  if (conv?.blockedBy) return Response.json({ error: 'blocked' }, { status: 403 });
   const msg = await postMessage({
     listingId: thread.listing.id,
     sender: thread.isOwner ? 'owner' : 'tenant',

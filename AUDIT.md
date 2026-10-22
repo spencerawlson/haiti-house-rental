@@ -30,9 +30,9 @@ others; **High** = private data exposed or business rules bypassed;
 ## Product / workflow gaps
 
 - No out-of-app notifications (SMS/WhatsApp) for messages and visits.
-- No listing reporting or moderation queue; no block/report in chat.
+- ~~No listing reporting or moderation queue; no block/report in chat.~~ Done in Phase 2.
 - Activation and advertising are manual with no payment reference, status history, or expiry.
-- Visits cannot be rescheduled or cancelled; no time-slot validation.
+- ~~Visits cannot be rescheduled or cancelled; no time-slot validation.~~ Done in Phase 2.
 - Owner inbox loops one query per thread (N+1) — fine at today's size.
 
 ## Engineering gaps

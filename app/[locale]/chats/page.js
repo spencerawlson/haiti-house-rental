@@ -119,7 +119,7 @@ export default function Chats({ params }) {
                 {selectedThread?.otherName && (
                   <p className="muted" style={{ margin: '0 0 12px' }}>{listing.title}</p>
                 )}
-                <ChatBox listingId={listing.id} tenant={selectedTenant} strings={t} locale={params.locale} />
+                <ChatBox listingId={listing.id} tenant={selectedTenant} listing={listing} strings={t} locale={params.locale} />
               </>
             )}
           </>

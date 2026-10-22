@@ -16,6 +16,8 @@ export default function Admin({ params }) {
   const [listings, setListings] = useState([]);
   const [accounts, setAccounts] = useState([]);
   const [resetCodes, setResetCodes] = useState({});
+  const [reports, setReports] = useState([]);
+  const [reportThreads, setReportThreads] = useState({});
   const [revenue, setRevenue] = useState({ entries: [], totalHTG: 0 });
   const [rates, setRates] = useState(null);
   const [rateError, setRateError] = useState(false);
@@ -60,6 +62,8 @@ export default function Admin({ params }) {
       setRevenue(data);
       if (!convertAmount) setConvertAmount(String(data.totalHTG));
     }
+    const repres = await fetch('/api/admin/reports');
+    if (repres.ok) setReports((await repres.json()).reports || []);
     const sres = await fetch('/api/settings');
     if (sres.ok) {
       const data = await sres.json();
@@ -98,6 +102,28 @@ export default function Admin({ params }) {
       body: JSON.stringify({ id, advertised }),
     });
     load();
+  }
+
+  // Moderator view of a reported conversation (toggle).
+  async function viewReportedThread(report) {
+    if (reportThreads[report.id]) {
+      setReportThreads((prev) => ({ ...prev, [report.id]: null }));
+      return;
+    }
+    const res = await fetch(`/api/admin/conversation?id=${encodeURIComponent(report.targetId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      setReportThreads((prev) => ({ ...prev, [report.id]: data }));
+    }
+  }
+
+  async function resolveReport(id) {
+    await fetch('/api/admin/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    setReports((prev) => prev.filter((r) => r.id !== id));
   }
 
   async function takeDown(id) {
@@ -207,6 +233,43 @@ export default function Admin({ params }) {
           {numbersSaved && <p style={{ margin: 0 }}>{t.numbersSaved}</p>}
         </div>
       </form>
+      <h2 style={{ marginTop: 32 }}>⚑ {t.reportsTitle} ({reports.length})</h2>
+      <div className="grid" style={{ marginBottom: 16 }}>
+        {reports.length === 0 && <p className="muted">{t.noReports}</p>}
+        {reports.map((r) => (
+          <section key={r.id} className="card">
+            <div className="card-body" style={{ display: 'grid', gap: 6 }}>
+              <p style={{ margin: 0 }}>
+                <strong>{r.kind === 'listing' ? t.reportListing : t.reportChat}</strong> · {t[{ scam: 'reasonScam', harassment: 'reasonHarassment', spam: 'reasonSpam', wrong_info: 'reasonWrongInfo', not_available: 'reasonNotAvailable', other: 'reasonOther' }[r.reason]] || r.reason}
+              </p>
+              <p className="muted" style={{ margin: 0 }}>
+                @{r.reporter} · {new Date(r.createdAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)}
+                {r.listingId && <> · <a href={`/${params.locale}/listings/${r.listingId}`}>{r.listingTitle || r.listingId}</a></>}
+              </p>
+              {r.details && <p style={{ margin: 0 }}>“{r.details}”</p>}
+              {reportThreads[r.id] && (
+                <div className="chat-box" style={{ padding: 10, border: '1px solid var(--line)', borderRadius: 12 }}>
+                  <p className="muted" style={{ margin: 0 }}>@{reportThreads[r.id].conversation.tenant || '—'} ↔ @{reportThreads[r.id].conversation.landlord || '—'}{reportThreads[r.id].conversation.blockedBy ? ` · ⊘ @${reportThreads[r.id].conversation.blockedBy}` : ''}</p>
+                  {reportThreads[r.id].messages.map((m) => (
+                    <p key={m.id} className={`bubble ${m.sender === 'owner' ? 'bubble-theirs' : 'bubble-mine'}`} style={{ margin: 0 }}>
+                      <strong>{m.sender === 'owner' ? t.ownerLabel : t.tenantLabel}:</strong> {m.text}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {r.kind === 'conversation' && (
+                  <button className="btn btn-secondary" type="button" onClick={() => viewReportedThread(r)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.viewConversation}</button>
+                )}
+                {r.kind === 'listing' && (
+                  <button className="btn btn-secondary" type="button" onClick={() => takeDown(r.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
+                )}
+                <button className="btn" type="button" onClick={() => resolveReport(r.id)} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.resolveReport}</button>
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
       <h2 style={{ marginTop: 32 }}>{t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>

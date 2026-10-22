@@ -1,41 +1,16 @@
 // Authentication + authorization regression tests (Phase 1).
 // Run against a running app with a THROWAWAY database — never production:
 //
-//   BASE_URL=http://host:port ADMIN_PASSWORD=... node --test tests/
+//   BASE_URL=http://host:port ADMIN_PASSWORD=... npm test
 //
 // Every test here is an attack that worked before Phase 1: acting as
 // another user by naming them in a request body, reading other people's
 // chats/visits/phones, skipping the activation fee, guessing passwords.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
+import { BASE, ADMIN_PASSWORD, sha, client, haitiDate } from './helpers.mjs';
 
-const BASE = process.env.BASE_URL || 'http://localhost:3000';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const run = Date.now().toString(36);
-const sha = (s) => createHash('sha256').update(s).digest('hex');
-
-// Minimal cookie-jar client: one per simulated person.
-function client() {
-  let cookies = {};
-  return async function call(path, { method = 'GET', body, form } = {}) {
-    const headers = {};
-    if (body) headers['Content-Type'] = 'application/json';
-    const jar = Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
-    if (jar) headers.Cookie = jar;
-    const res = await fetch(BASE + path, { method, headers, body: form || (body ? JSON.stringify(body) : undefined), redirect: 'manual' });
-    for (const c of res.headers.getSetCookie?.() || []) {
-      const [pair] = c.split(';');
-      const i = pair.indexOf('=');
-      const name = pair.slice(0, i);
-      const value = pair.slice(i + 1);
-      if (value) cookies[name] = value; else delete cookies[name];
-    }
-    let data = null;
-    try { data = await res.json(); } catch {}
-    return { status: res.status, data };
-  };
-}
 
 const users = {
   landlord: { name: 'Lan Lord', username: `land_${run}`, password: 'pw-landlord-1', phone: '+509 3000 0001', role: 'landlord' },
@@ -140,8 +115,8 @@ test('chats are private per tenant', { skip: !ADMIN_PASSWORD && 'needs a listing
 });
 
 test('visits are private and only the owner decides', { skip: !ADMIN_PASSWORD && 'needs a listing' }, async () => {
-  assert.equal((await as.anon('/api/visits', { method: 'POST', body: { listingId, date: '2099-01-01', time: '10:00' } })).status, 401);
-  const v = await as.t1('/api/visits', { method: 'POST', body: { listingId, tenant: users.t2.username, date: '2099-01-01', time: '10:00' } });
+  assert.equal((await as.anon('/api/visits', { method: 'POST', body: { listingId, date: haitiDate(3), time: '10:00' } })).status, 401);
+  const v = await as.t1('/api/visits', { method: 'POST', body: { listingId, tenant: users.t2.username, date: haitiDate(3), time: '10:00' } });
   assert.equal(v.status, 200);
   assert.equal(v.data.visit.tenant, users.t1.username);
   assert.deepEqual((await as.t2(`/api/visits?listingId=${listingId}`)).data.visits, []);

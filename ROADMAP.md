@@ -28,10 +28,18 @@ approval).
 - Web CI: build plus regression tests against a Postgres service container.
 - Security headers (nosniff, frame deny, referrer policy).
 
-## Phase 2 — Conversations & appointments
+## Phase 2 — Conversations & appointments ✅
 
-- A conversation id per thread; block and report in chat; moderator access.
-- Visits: reschedule and cancel, future-only dates and sane hours, owner can't book their own listing (done), status history.
+- `conversations` table: stable id per (listing, tenant), landlord, block state; backfilled for existing threads.
+- Block (either side; only the blocker unblocks; messages kept) and report in chat.
+- Report a listing; admin reports queue with moderator access to the reported conversation, takedown and resolve.
+- Visits:
+  - server-checked dates and times (Haiti time, today to 180 days, 06:00–20:00 on the half hour)
+  - the side that didn't propose confirms
+  - cancel, and reschedule by either side
+  - append-only history
+  - one active request per tenant per home
+- UI follows the design showcase: screen 9 (chat) and screen 10 (calendar + time slots).
 
 ## Phase 3 — Listings
 
