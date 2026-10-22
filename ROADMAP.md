@@ -105,3 +105,15 @@ Original scope:
 - Backup and restore runbook for `kayayiti-pgdata` and `kayayiti-uploads`.
 - Env-var documentation.
 - Capacitor Android/iOS checks, including the pending Gradle 9 wrapper bump.
+
+## Phase 8 — Launch round ✅
+
+- Demo listings hidden from the public (kept in the database; `SHOW_DEMO_LISTINGS=true` for previews). A "just launched" card shows while there are few homes.
+- Automatic backups: a `backup` service in docker-compose, at start and every 24 h.
+- Notifications:
+  - an in-app inbox (bell on Home) for visit requests and answers and payment decisions
+  - SMS via Twilio (API key or auth token), optional WhatsApp, email via Resend
+  - in the user's language, chat alerts throttled to one per conversation per 15 minutes
+  - fire-and-forget, so a failing provider never breaks the app
+  - migration `0003` adds the inbox and each account's language
+- `.env` is kept out of git and Docker images, and there's a `.env.example` to copy.
