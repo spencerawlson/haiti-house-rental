@@ -17,6 +17,8 @@ export default function Admin({ params }) {
   const [accounts, setAccounts] = useState([]);
   const [resetCodes, setResetCodes] = useState({});
   const [reports, setReports] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [paySummary, setPaySummary] = useState(null);
   const [reportThreads, setReportThreads] = useState({});
   const [revenue, setRevenue] = useState({ entries: [], totalHTG: 0 });
   const [rates, setRates] = useState(null);
@@ -61,6 +63,12 @@ export default function Admin({ params }) {
       const data = await rres.json();
       setRevenue(data);
       if (!convertAmount) setConvertAmount(String(data.totalHTG));
+    }
+    const payres = await fetch('/api/admin/payments');
+    if (payres.ok) {
+      const data = await payres.json();
+      setPayments(data.payments || []);
+      setPaySummary(data.summary);
     }
     const repres = await fetch('/api/admin/reports');
     if (repres.ok) setReports((await repres.json()).reports || []);
@@ -112,6 +120,25 @@ export default function Admin({ params }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, advertised }),
+    });
+    load();
+  }
+
+  // Confirm only after matching the reference and amount on the
+  // MonCash/NatCash statement. A confirmation activates the account or
+  // starts/extends advertising, exactly once.
+  async function reviewPayment(p, decision) {
+    let note = '';
+    if (decision === 'confirmed' && !window.confirm(`${t.payConfirmPrompt}
+${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
+    if (decision === 'rejected') {
+      note = window.prompt(t.payRejectPrompt) ?? null;
+      if (note === null) return;
+    }
+    await fetch('/api/admin/payments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: p.id, decision, note }),
     });
     load();
   }
@@ -245,6 +272,37 @@ export default function Admin({ params }) {
           {numbersSaved && <p style={{ margin: 0 }}>{t.numbersSaved}</p>}
         </div>
       </form>
+      <h2 style={{ marginTop: 32 }}>💳 {t.paymentsTitle} ({payments.length})</h2>
+      {paySummary && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+          <span className="chip">✓ {t.payConfirmedTotal}: <strong style={{ marginLeft: 4 }}>{paySummary.confirmedHTG.toLocaleString()} HTG</strong></span>
+          <span className="chip">⏳ {t.payPendingTotal}: <strong style={{ marginLeft: 4 }}>{paySummary.pendingHTG.toLocaleString()} HTG</strong></span>
+          <span className="chip">{t.payKindActivation}: {paySummary.byKind.activation.confirmedHTG.toLocaleString()} HTG</span>
+          <span className="chip">{t.payKindAdvertising}: {paySummary.byKind.advertising.confirmedHTG.toLocaleString()} HTG</span>
+        </div>
+      )}
+      <div className="grid" style={{ marginBottom: 16 }}>
+        {payments.length === 0 && <p className="muted">{t.noPendingPayments}</p>}
+        {payments.map((p) => (
+          <section key={p.id} className="card">
+            <div className="card-body" style={{ display: 'grid', gap: 6 }}>
+              <p style={{ margin: 0 }}>
+                <strong>{p.amountHTG.toLocaleString()} HTG</strong> · {p.provider === 'natcash' ? 'NatCash' : 'MonCash'} · <code style={{ fontSize: '1rem' }}>{p.reference}</code>
+              </p>
+              <p className="muted" style={{ margin: 0 }}>
+                {p.kind === 'advertising' ? `${t.payKindAdvertising} · ${p.months} ${t.payMonthUnit} · ${p.listingTitle || p.listingId}` : t.payKindActivation}
+              </p>
+              <p className="muted" style={{ margin: 0 }}>
+                {p.accountName} · @{p.username} · {t.transferFrom} {p.accountPhone} · {new Date(p.submittedAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)}
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn" type="button" onClick={() => reviewPayment(p, 'confirmed')} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.payConfirmBtn}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => reviewPayment(p, 'rejected')} style={{ minHeight: 40, padding: '8px 16px' }}>{t.payRejectBtn}</button>
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
       <h2 style={{ marginTop: 32 }}>⚑ {t.reportsTitle} ({reports.length})</h2>
       <div className="grid" style={{ marginBottom: 16 }}>
         {reports.length === 0 && <p className="muted">{t.noReports}</p>}

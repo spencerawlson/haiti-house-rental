@@ -54,7 +54,7 @@ approval).
 
 Still open: responsive image sizes (several widths per photo) and a photo gallery with room tabs (screen 8).
 
-## Phase 4 — Payments (manual, auditable)
+## Phase 4 — Payments (manual, auditable) ✅
 
 - The landlord submits a MonCash/NatCash reference.
 - Payment records move pending → confirmed/rejected, with the reviewing admin and a timestamp.

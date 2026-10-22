@@ -22,7 +22,9 @@ export async function GET(request) {
 // at once) are admin-created via /api/admin/partner — a `partner` flag
 // sent here used to be honored, which skipped the activation fee.
 export async function POST(request) {
-  if (!rateLimit(`signup:${clientIp(request)}`, 10, 60 * 60 * 1000)) return tooMany();
+  // Per-IP limits are generous: Haitian mobile carriers put many
+  // subscribers behind one shared (CGNAT) address.
+  if (!rateLimit(`signup:${clientIp(request)}`, 40, 60 * 60 * 1000)) return tooMany();
   const data = await request.json().catch(() => ({}));
   const username = String(data.username || '').trim();
   if (!data.name || !username || !data.passwordHash || !data.phone) {

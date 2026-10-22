@@ -110,3 +110,18 @@ that lived in container memory and is already gone.
      `/api`. Normally unneeded: kayayiti.app and the Capacitor apps load
      from the same origin.
 4. The `password_reset_codes` table is created automatically at boot.
+
+## Upgrading to Phase 4 (payments) — one-time notes
+
+1. New table `payments` and the listing columns `advertised_since` /
+   `advertised_until` are created automatically at boot.
+2. **New landlord flow:** send the MonCash/NatCash transfer, then enter
+   its transaction number on Account (activation) or Library (advertising).
+   You confirm it on the Admin Board under "Payments to review", after
+   matching the number and amount on your MonCash/NatCash statement.
+3. Advertising confirmed through a payment ends on its own when the paid
+   months run out. Homes you approved before Phase 4 have no end date and
+   stay advertised until you remove them.
+4. Manual activation from the accounts list still works (explicit admin
+   approval). It shows in revenue as a confirmed activation without a
+   payment reference.

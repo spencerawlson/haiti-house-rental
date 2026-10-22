@@ -5,6 +5,10 @@ import { useEffect, useState } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
+import PaymentForm from '@/components/PaymentForm';
+import { ADVERTISED_FEE_HTG_MONTH } from '@/lib/config';
+
+const AD_MONTHS = [1, 3, 6, 12];
 
 // A landlord's library: every home they ever posted, live and taken
 // down, newest first. Live homes can be viewed, edited or taken down;
@@ -15,6 +19,9 @@ export default function Library({ params }) {
   const [me, setMe] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [homes, setHomes] = useState([]);
+  const [adOpen, setAdOpen] = useState(null);
+  const [pendingAds, setPendingAds] = useState({});
+  const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
 
   function load(username) {
     fetch(`/api/listings?owner=${encodeURIComponent(username)}&all=1`)
@@ -27,7 +34,14 @@ export default function Library({ params }) {
     const session = getSession();
     setMe(session);
     setLoaded(true);
-    if (session) load(session.username);
+    if (session) {
+      load(session.username);
+      fetch('/api/payments')
+        .then((r) => r.json())
+        .then((d) => setPendingAds(Object.fromEntries((d.payments || []).filter((p) => p.kind === 'advertising' && p.status === 'pending').map((p) => [p.listingId, p]))))
+        .catch(() => {});
+    }
+    fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
   }, []);
 
   async function takeDown(id) {
@@ -79,7 +93,33 @@ export default function Library({ params }) {
                     <span className="muted">{t.statusRemoved}</span>
                   )}
                 </p>
+                {h.status === 'active' && h.advertised && (
+                  <p style={{ margin: '0 0 8px' }}>
+                    <span className="badge">📣 {t.advertised}</span>
+                    {h.advertisedUntil && <span className="muted"> · {t.adUntil} {new Date(h.advertisedUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}</span>}
+                  </p>
+                )}
+                {h.status === 'active' && pendingAds[h.id] && <p className="muted" style={{ margin: '0 0 8px' }}>⏳ {t.adPaymentPending}</p>}
+                {adOpen === h.id && !pendingAds[h.id] && (
+                  <div className="card" style={{ boxShadow: 'none', marginBottom: 12 }}>
+                    <div className="card-body" style={{ display: 'grid', gap: 8 }}>
+                      <p className="muted" style={{ margin: 0 }}>{t.adExplain}</p>
+                      <PaymentForm
+                        kind="advertising"
+                        listingId={h.id}
+                        monthOptions={AD_MONTHS}
+                        monthlyHTG={ADVERTISED_FEE_HTG_MONTH}
+                        destination={destination}
+                        strings={t}
+                        onSubmitted={(p) => { setPendingAds((prev) => ({ ...prev, [h.id]: p })); setAdOpen(null); }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+                  {h.status === 'active' && !pendingAds[h.id] && adOpen !== h.id && (
+                    <button className="btn btn-secondary" type="button" onClick={() => setAdOpen(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>📣 {h.advertised ? t.adExtend : t.adStart}</button>
+                  )}
                   {h.status === 'active' && (
                     <>
                       <Link className="btn" href={`/${params.locale}/listings/${h.id}`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.viewListing}</Link>
