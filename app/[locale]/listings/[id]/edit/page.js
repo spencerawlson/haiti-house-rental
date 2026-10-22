@@ -196,6 +196,17 @@ export default function EditListing(props) {
                   {f.photos.map((src) => (
                     <span key={src} style={{ position: 'relative', display: 'inline-block' }}>
                       <img src={src} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                      <select
+                        aria-label={t.photoTagLabel}
+                        value={f.details?.photoTags?.[src] || ''}
+                        onChange={(e) => set('details', { ...f.details, photoTags: { ...(f.details?.photoTags || {}), [src]: e.target.value || undefined } })}
+                        style={{ width: 80, fontSize: 11, marginTop: 4 }}
+                      >
+                        <option value="">—</option>
+                        <option value="inside">{t.photoTag_inside}</option>
+                        <option value="outside">{t.photoTag_outside}</option>
+                        <option value="area">{t.photoTag_area}</option>
+                      </select>
                       <button type="button" onClick={() => set('photos', f.photos.filter((p) => p !== src))} style={{ position: 'absolute', top: -8, right: -8, width: 24, height: 24, borderRadius: 999, border: 'none', background: '#dc2626', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>✕</button>
                     </span>
                   ))}

@@ -490,3 +490,16 @@ a:hover { text-decoration: underline; }
 .onb-dots button.active { width: 26px; background: var(--primary); }
 .onb-next { width: 56px; height: 56px; border-radius: 999px; border: none; background: var(--primary); color: #fff; font-size: 1.4rem; font-weight: 900; cursor: pointer; box-shadow: 0 6px 16px rgba(29, 78, 216, 0.3); }
 [data-theme="dark"] .onb-next { color: #0f172a; }
+
+/* Gallery (design screen 8) */
+.photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+@media (min-width: 720px) { .photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.photo-grid button { padding: 0; border: none; background: var(--primary-soft); border-radius: 14px; overflow: hidden; cursor: zoom-in; }
+.photo-grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+
+/* Admin Board (modernized): summary tiles, section chips, section headers */
+.admin-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
+@media (min-width: 720px) { .admin-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.admin-nav { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 10px 0; margin-bottom: 4px; }
+.admin-h2 { margin: 34px 0 12px; padding-top: 8px; font-size: 1.15rem; scroll-margin-top: 64px; border-top: 1px solid var(--line); }
+.admin .card + .card { margin-top: 0; }
