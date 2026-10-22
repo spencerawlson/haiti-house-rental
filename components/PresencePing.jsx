@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect } from 'react';
-import { getSession } from '@/lib/account';
+import { syncSessionHint } from '@/lib/account';
 
 const VISITOR_KEY = 'kay-visitor';
 
 // Heartbeat: while any Kay Ayiti page is open, ping once a minute so the
-// Admin Board can show who is live. Signed-in users ping with their
-// username; everyone else pings with an anonymous id kept in localStorage.
+// Admin Board can show who is live. Signed-in users count by their
+// session cookie; everyone else by an anonymous id kept in localStorage.
+// The reply also keeps the local "signed in" hint honest (e.g. a session
+// that expired, or one from before server sessions existed).
 export default function PresencePing() {
   useEffect(() => {
     let visitor = null;
@@ -19,13 +21,13 @@ export default function PresencePing() {
       }
     } catch {}
     async function ping() {
-      const session = getSession();
       try {
-        await fetch('/api/presence', {
+        const res = await fetch('/api/presence', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: session?.username || null, visitor }),
+          body: JSON.stringify({ visitor }),
         });
+        if (res.ok) syncSessionHint((await res.json()).username);
       } catch {}
     }
     ping();

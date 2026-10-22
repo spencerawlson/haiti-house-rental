@@ -1,7 +1,7 @@
 import { getListings, getListing, getListingsForOwner, addListing, updateListing } from '@/lib/listings-server';
 import { resolveCommune } from '@/lib/listings';
 import { isAdminCookie } from '@/lib/admin-auth';
-import { getServerAccount } from '@/lib/accounts-server';
+import { getSessionAccount } from '@/lib/session-server';
 
 // Live data: never serve a build-time snapshot of the listings.
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,10 @@ export async function GET(request) {
     return Response.json({ listing });
   }
   const owner = params.get('owner') || '';
+  // A landlord's library includes taken-down homes: only for themselves.
   if (owner && params.get('all') === '1') {
+    const me = await getSessionAccount(request);
+    if (!me || me.username !== owner) return Response.json({ listings: [] });
     return Response.json({ listings: await getListingsForOwner(owner) });
   }
   const listings = await getListings();
@@ -45,11 +48,13 @@ export async function POST(request) {
   const data = await request.json().catch(() => ({}));
   // Only an activated landlord account can post. Tenants explore; they
   // never create listings — enforced here, not just in the form, so a
-  // direct API call cannot bypass it.
-  const owner = data.owner ? await getServerAccount(data.owner) : null;
+  // direct API call cannot bypass it. The owner is the session account;
+  // an `owner` sent in the body is ignored.
+  const owner = await getSessionAccount(request);
   if (!owner || owner.role !== 'landlord' || !owner.activated) {
     return Response.json({ error: 'Only activated landlord accounts can post listings' }, { status: 403 });
   }
+  data.owner = owner.username;
   if (data.commune && typeof data.lat !== 'number') {
     const coords = await geocode(data.commune);
     if (coords) Object.assign(data, coords);
@@ -70,7 +75,8 @@ export async function PATCH(request) {
     return Response.json({ error: 'Listing not found' }, { status: 404 });
   }
   const admin = await isAdminCookie(request.cookies.get('kay_admin')?.value);
-  if (!admin && listing.owner !== data.username) {
+  const me = admin ? null : await getSessionAccount(request);
+  if (!admin && (!me || !listing.owner || listing.owner !== me.username)) {
     return Response.json({ error: 'Not allowed' }, { status: 403 });
   }
   if (!String(data.title || '').trim() || !String(data.commune || '').trim()) {

@@ -35,7 +35,7 @@ export default function Library({ params }) {
     const res = await fetch('/api/listings/takedown', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, username: me?.username }),
+      body: JSON.stringify({ id }),
     });
     if (res.ok) load(me.username);
   }
@@ -44,7 +44,7 @@ export default function Library({ params }) {
     const res = await fetch('/api/listings/restore', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, username: me?.username }),
+      body: JSON.stringify({ id }),
     });
     if (res.ok) load(me.username);
   }

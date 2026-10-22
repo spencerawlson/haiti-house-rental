@@ -29,14 +29,17 @@ export default function ListingMap({ listings, locale, t, userLocation }) {
           radius: 10, color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.9,
         }).addTo(map).bindPopup('📍');
       }
+      // Popups are raw HTML: every listing value is escaped, or a landlord
+      // could put a script in a title and run it for every map visitor.
+      const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
       for (const l of listings) {
         if (typeof l.lat !== 'number' || typeof l.lng !== 'number') continue;
         points.push([l.lat, l.lng]);
         L.marker([l.lat, l.lng])
           .addTo(map)
           .bindPopup(
-            `<strong>${l.priceHTG.toLocaleString()} HTG${l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}</strong><br/>` +
-            `<a href="/${locale}/listings/${l.id}">${l.title}</a><br/>${communeName(l.commune, locale)}`,
+            `<strong>${esc(Number(l.priceHTG || 0).toLocaleString())} HTG${l.purpose === 'rent' ? ` ${esc(rentPeriodLabel(l.rentPeriod, t))}` : ''}</strong><br/>` +
+            `<a href="/${esc(locale)}/listings/${encodeURIComponent(l.id)}">${esc(l.title)}</a><br/>${esc(communeName(l.commune, locale))}`,
           );
       }
       if (points.length > 1) map.fitBounds(points, { padding: [30, 30] });

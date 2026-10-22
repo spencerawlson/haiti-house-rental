@@ -1,41 +1,48 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { getSession } from '@/lib/account';
 
-// Discussion box between a potential tenant and the listing owner.
-// The signed-in owner of this listing replies as the owner; everyone else
-// writes as the tenant. Polls the thread every 5s.
-export default function ChatBox({ listingId, owner, strings }) {
+// A private conversation between one tenant and the listing owner. The
+// server decides who is who from the session: a tenant always sees their
+// own thread; the owner sees the tenant thread passed as `tenant` (picked
+// from the Chats list). Your own messages sit on the right. Polls every 5s.
+export default function ChatBox({ listingId, tenant = null, strings, locale }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
-
-  useEffect(() => {
-    const session = getSession();
-    setIsOwner(!!session && !!owner && session.username === owner);
-  }, [owner]);
+  const [signedIn, setSignedIn] = useState(null);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/chat?listingId=${encodeURIComponent(listingId)}`);
-    if (res.ok) {
-      const data = await res.json();
-      setMessages(data.messages);
-      // Opening the chat marks the thread read for this user, so the
-      // unread badge clears once the messages have actually been seen.
-      const session = getSession();
-      if (session) {
-        fetch('/api/chat/read', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ listingId, username: session.username }),
-        }).catch(() => {});
-      }
+    const q = `listingId=${encodeURIComponent(listingId)}${tenant !== null ? `&tenant=${encodeURIComponent(tenant)}` : ''}`;
+    const res = await fetch(`/api/chat?${q}`);
+    if (res.status === 401) {
+      setSignedIn(false);
+      return;
     }
-  }, [listingId]);
+    if (!res.ok) return;
+    const data = await res.json();
+    setSignedIn(true);
+    setMessages(data.messages);
+    setIsOwner(!!data.isOwner);
+    // Opening the chat marks the thread read for this user, so the
+    // unread badge clears once the messages have actually been seen.
+    if (data.tenant !== null) {
+      fetch('/api/chat/read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, tenant: data.tenant }),
+      }).catch(() => {});
+    }
+  }, [listingId, tenant]);
 
   useEffect(() => {
+    if (!getSession()) {
+      setSignedIn(false);
+      return undefined;
+    }
     load();
     const timer = setInterval(load, 5000);
     return () => clearInterval(timer);
@@ -46,11 +53,10 @@ export default function ChatBox({ listingId, owner, strings }) {
     const text = draft.trim();
     if (!text) return;
     setSendError(false);
-    const session = getSession();
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId, sender: isOwner ? 'owner' : 'tenant', text, author: session?.username || null }),
+      body: JSON.stringify({ listingId, text, tenant }),
     });
     // A failed send used to clear the draft silently, so a message lost
     // to a restart or a dropped connection looked like it went through.
@@ -68,32 +74,53 @@ export default function ChatBox({ listingId, owner, strings }) {
     return isOwner ? strings.tenantLabel : strings.youLabel;
   }
 
+  // The owner opened their own listing without picking a tenant thread.
+  const ownerWithoutThread = isOwner && tenant === null;
+  // The anonymous legacy thread has nobody to read a reply.
+  const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '');
+
   return (
     <section className="card" style={{ marginTop: 28 }}>
       <div className="card-body">
         <h2 style={{ margin: '0 0 14px' }}>{strings.chatTitle}</h2>
-        {isOwner && <p className="muted" style={{ margin: '0 0 14px' }}>{strings.replyAsOwner}</p>}
-        <div className="chat-box" style={{ marginBottom: 16 }}>
-          {messages.map((m) => {
-            const mine = isOwner ? m.sender === 'owner' : m.sender === 'tenant';
-            return (
-              <p key={m.id} className={`bubble ${mine ? 'bubble-mine' : 'bubble-theirs'}`}>
-                <strong>{label(m)}:</strong> {m.text}
-              </p>
-            );
-          })}
-        </div>
-        <form onSubmit={send} style={{ display: 'flex', gap: 8 }}>
-          <input
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder={isOwner ? strings.ownerPlaceholder : strings.chatPlaceholder}
-            className="input"
-            style={{ flex: 1 }}
-          />
-          <button className="btn" type="submit">{strings.send}</button>
-        </form>
-        {sendError && <p style={{ margin: '8px 0 0', color: '#b91c1c' }}>{strings.chatSendError}</p>}
+        {signedIn === false && (
+          <>
+            <p style={{ margin: '0 0 12px' }}>{strings.chatSignIn}</p>
+            <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+              <Link className="btn" href={`/${locale}/signin`}>{strings.signIn}</Link>
+              <Link className="btn btn-secondary" href={`/${locale}/tenants`}>{strings.createAccount}</Link>
+            </p>
+          </>
+        )}
+        {ownerWithoutThread && <p className="muted" style={{ margin: 0 }}>{strings.chatPickThread}</p>}
+        {signedIn && !ownerWithoutThread && (
+          <>
+            {isOwner && <p className="muted" style={{ margin: '0 0 14px' }}>{strings.replyAsOwner}</p>}
+            <div className="chat-box" style={{ marginBottom: 16 }}>
+              {messages.map((m) => {
+                const mine = isOwner ? m.sender === 'owner' : m.sender === 'tenant';
+                return (
+                  <p key={m.id} className={`bubble ${mine ? 'bubble-mine' : 'bubble-theirs'}`}>
+                    <strong>{label(m)}:</strong> {m.text}
+                  </p>
+                );
+              })}
+            </div>
+            {canWrite && (
+              <form onSubmit={send} style={{ display: 'flex', gap: 8 }}>
+                <input
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder={isOwner ? strings.ownerPlaceholder : strings.chatPlaceholder}
+                  className="input"
+                  style={{ flex: 1 }}
+                />
+                <button className="btn" type="submit">{strings.send}</button>
+              </form>
+            )}
+            {sendError && <p style={{ margin: '8px 0 0', color: '#b91c1c' }}>{strings.chatSendError}</p>}
+          </>
+        )}
       </div>
     </section>
   );

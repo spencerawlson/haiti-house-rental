@@ -81,3 +81,16 @@ curl -s http://localhost:8097/api/health
 Data now survives rebuilds (Postgres volume). The one thing a rebuild
 still cannot bring back is data created before the Postgres migration —
 that lived in container memory and is already gone.
+
+## Upgrading to Phase 1 (server sessions) — one-time notes
+
+1. **Back up first** (the boot migrations rewrite password hashes and chat rows in place):
+   `docker exec kayayiti-db pg_dump -U kayayiti kayayiti > kayayiti-$(date +%F).sql`
+2. Rebuild and restart as usual. On first boot the app runs two run-once
+   migrations, recorded in the `migrations` table:
+   - `scrypt-password-hashes`: existing passwords keep working.
+   - `chat-per-tenant-threads`: splits shared listing chats into private per-tenant threads.
+3. **Everyone signs in once more.** The old browser-only sign-in state cannot
+   become a server session; the app clears it automatically and shows Sign in.
+4. Nothing new is required in the environment. `ADMIN_PASSWORD` and
+   `DATABASE_URL` work as before.

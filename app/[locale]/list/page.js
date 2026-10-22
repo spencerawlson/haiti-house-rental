@@ -65,7 +65,7 @@ export default function ListHome({ params }) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, owner: myUsername, rentPeriod }),
+        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod }),
       });
       if (!res.ok) throw new Error('Create failed');
       const data = await res.json();

@@ -20,11 +20,10 @@ export default function TakeDownButton({ listingId, owner, locale, confirmText, 
 
   async function takeDown() {
     if (!window.confirm(confirmText)) return;
-    const session = getSession();
     const res = await fetch('/api/listings/takedown', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: listingId, username: session?.username }),
+      body: JSON.stringify({ id: listingId }),
     });
     if (res.ok) router.push(`/${locale}/listings`);
   }

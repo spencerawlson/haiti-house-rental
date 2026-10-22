@@ -47,7 +47,7 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
     const res = await fetch('/api/visits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId, tenant: session.username, date, time, message }),
+      body: JSON.stringify({ listingId, date, time, message }),
     });
     if (!res.ok) {
       setError(strings.visitInvalid);
@@ -63,7 +63,7 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
     await fetch('/api/visits/status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status, username: session.username }),
+      body: JSON.stringify({ id, status }),
     });
     load();
   }

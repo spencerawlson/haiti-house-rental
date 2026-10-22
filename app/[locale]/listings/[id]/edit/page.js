@@ -77,7 +77,6 @@ export default function EditListing({ params }) {
     e.preventDefault();
     setStatus(t.uploading);
     try {
-      const session = getSession();
       const photos = [...f.photos, ...(await uploadAll(newPhotos))];
       const videos = [...f.videos, ...(await uploadAll(newVideos))];
       const res = await fetch('/api/listings', {
@@ -85,7 +84,6 @@ export default function EditListing({ params }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: params.id,
-          username: session?.username,
           title: f.title,
           description: f.description,
           department: f.department,
