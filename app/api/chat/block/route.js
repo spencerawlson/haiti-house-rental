@@ -12,7 +12,7 @@ export async function POST(request) {
   const { listingId, tenant, blocked } = await request.json().catch(() => ({}));
   const thread = await resolveThread(me, listingId, tenant);
   if (!thread || thread.tenant === null) return Response.json({ error: 'Not found' }, { status: 404 });
-  const conv = await getConversation(thread.listing.id, thread.tenant);
+  const conv = await getConversation(thread.listingId, thread.tenant);
   if (!conv) return Response.json({ error: 'Not found' }, { status: 404 });
   const updated = await setBlocked(conv.id, me.username, blocked === true);
   return Response.json({ conversation: { id: updated.id, blocked: !!updated.blockedBy, blockedByMe: updated.blockedBy === me.username } });

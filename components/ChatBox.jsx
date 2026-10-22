@@ -19,6 +19,11 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   const [signedIn, setSignedIn] = useState(null);
   const [conversation, setConversation] = useState(null);
   const [reporting, setReporting] = useState(false);
+  // closed = no new messages. landlordLeft = the home was deleted, so the
+  // landlord is out of the conversation for good. The tenant keeps every
+  // message either way — their history is theirs.
+  const [closed, setClosed] = useState(false);
+  const [landlordLeft, setLandlordLeft] = useState(false);
 
   const threadTenant = isOwner ? tenant : null;
 
@@ -35,6 +40,8 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     setMessages(data.messages);
     setIsOwner(!!data.isOwner);
     setConversation(data.conversation);
+    setClosed(!!data.closed);
+    setLandlordLeft(!!data.landlordLeft);
     // Opening the chat marks the thread read for this user, so the
     // unread badge clears once the messages have actually been seen.
     if (data.tenant !== null) {
@@ -70,6 +77,12 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     // losing the message.
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
+      if (data.error === 'landlord_left') {
+        setLandlordLeft(true);
+        setClosed(true);
+        setSendError('');
+        return;
+      }
       setSendError(data.error === 'blocked' ? strings.chatBlocked : strings.chatSendError);
       return;
     }
@@ -101,7 +114,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   const ownerWithoutThread = isOwner && tenant === null;
   const blocked = !!conversation?.blocked;
   // The anonymous legacy thread has nobody to read a reply.
-  const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '') && !blocked;
+  const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '') && !blocked && !closed;
 
   return (
     <section className="card" style={{ marginTop: 20 }}>
@@ -159,6 +172,11 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
             </div>
             {blocked && (
               <p className="notice" style={{ margin: '0 0 12px' }}>{conversation.blockedByMe ? strings.chatBlockedByMe : strings.chatBlocked}</p>
+            )}
+            {!blocked && closed && (
+              <p className="notice" style={{ margin: '0 0 12px' }}>
+                {landlordLeft ? strings.chatLandlordLeft : strings.chatListingGone}
+              </p>
             )}
             {canWrite && (
               <form onSubmit={send} className="chat-composer">

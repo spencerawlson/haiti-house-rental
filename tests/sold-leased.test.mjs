@@ -7,7 +7,7 @@
 // checked the thing it is named after.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADMIN_PASSWORD, client, signup, adminClient, uniq } from './helpers.mjs';
+import { ADMIN_PASSWORD, client, signup, adminClient, uniq, haitiDate } from './helpers.mjs';
 
 const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const SWEEP_MS = Number(process.env.SOLD_DELETE_AFTER_MS);
@@ -45,7 +45,7 @@ before(async () => {
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
 });
 
-test('marking a home sold hides it from tenants at once and sets a deadline', { skip }, async () => {
+test('a sold home stays on the site, tagged, and takes no contact', { skip }, async () => {
   const id = await newListing(`Sold ${run}`, 'sale');
   const r = await as.L('/api/listings/sold', { method: 'POST', body: { id, status: 'sold' } });
   assert.equal(r.status, 200);
@@ -53,11 +53,34 @@ test('marking a home sold hides it from tenants at once and sets a deadline', { 
   assert.ok(r.data.listing.soldAt > 0, 'soldAt recorded');
   assert.ok(r.data.listing.deletesAt > r.data.listing.soldAt, 'deletion is scheduled after the tag');
 
-  // Gone for tenants immediately — no wasted mobile data on a sold home.
-  assert.equal((await as.T(`/api/listings?id=${id}`)).status, 404);
-  assert.ok(!((await as.T('/api/listings')).data.listings || []).some((l) => l.id === id), 'out of search');
-  // Still the landlord's, with the countdown.
+  // Still visible to everyone, carrying its tag — people should see that
+  // homes actually move here, not watch listings vanish silently.
+  const seen = await as.T(`/api/listings?id=${id}`);
+  assert.equal(seen.status, 200);
+  assert.equal(seen.data.listing.status, 'sold');
+  assert.ok(((await as.T('/api/listings')).data.listings || []).some((l) => l.id === id), 'still in search');
+
+  // But not contactable: no new messages, no visit requests.
+  assert.equal((await as.T('/api/chat', { method: 'POST', body: { listingId: id, text: 'is it free?' } })).status, 404);
+  const v = await as.T('/api/visits', { method: 'POST', body: { listingId: id, date: haitiDate(3), time: '10:00' } });
+  assert.ok(v.status >= 400, `visit refused on a sold home, got ${v.status}`);
+
   assert.equal((await mine(id))?.status, 'sold');
+});
+
+test('the deletion countdown is visible to the landlord only', { skip }, async () => {
+  const id = await newListing(`Clock ${run}`, 'sale');
+  await as.L('/api/listings/sold', { method: 'POST', body: { id, status: 'sold' } });
+  // Public shapes carry the tag but never the clock.
+  const pub = (await as.T(`/api/listings?id=${id}`)).data.listing;
+  assert.equal(pub.status, 'sold');
+  assert.equal(pub.deletesAt, undefined, 'no countdown in the public detail');
+  assert.equal(pub.soldAt, undefined, 'no sold timestamp in the public detail');
+  const inList = (await as.T('/api/listings')).data.listings.find((l) => l.id === id);
+  assert.equal(inList?.deletesAt, undefined, 'none in the public list either');
+  // The owner sees it.
+  const own = await mine(id);
+  assert.ok(own.deletesAt > Date.now(), 'owner sees the deadline');
 });
 
 test('leased is the same tag for a rental', { skip }, async () => {
@@ -65,7 +88,7 @@ test('leased is the same tag for a rental', { skip }, async () => {
   const r = await as.L('/api/listings/sold', { method: 'POST', body: { id, status: 'leased' } });
   assert.equal(r.status, 200);
   assert.equal(r.data.listing.status, 'leased');
-  assert.equal((await as.T(`/api/listings?id=${id}`)).status, 404);
+  assert.equal((await as.T(`/api/listings?id=${id}`)).data.listing.status, 'leased', 'still visible, tagged leased');
 });
 
 test('only the owner may tag, and only with sold or leased', { skip }, async () => {
@@ -84,8 +107,8 @@ test('undo puts it back online and cancels the deletion', { skip }, async () => 
   const back = await as.L('/api/listings/restore', { method: 'POST', body: { id } });
   assert.equal(back.status, 200);
   assert.equal(back.data.listing.status, 'active');
-  assert.equal(back.data.listing.soldAt, null, 'the clock is cleared, not just the status');
-  assert.equal(back.data.listing.deletesAt, null);
+  // The clock is cleared, not just the status: the owner view shows none.
+  assert.equal((await mine(id))?.deletesAt, null);
   // Visible to tenants again.
   assert.equal((await as.T(`/api/listings?id=${id}`)).status, 200);
 });
@@ -117,7 +140,13 @@ test('the deadline passes and the home is deleted for good', { skip: sweepSkip }
   assert.equal((await as.T(`/api/listings?id=${id}`)).status, 404);
   // And it really was deleted, not just hidden: nothing to restore.
   assert.equal((await as.L('/api/listings/restore', { method: 'POST', body: { id } })).status, 404);
-  assert.ok(!((await as.T('/api/chat/inbox')).data.threads || []).some((th) => th.listingId === id), 'its chat went too');
+  // The tenant KEEPS the conversation — auto-deletion is still a delete by
+  // the landlord, and each side owns its own history. It comes back marked
+  // closed, with the landlord out of it.
+  const kept = ((await as.T('/api/chat/inbox')).data.threads || []).find((th) => th.listingId === id);
+  assert.ok(kept, 'the tenant still has their thread');
+  assert.equal(kept.landlordLeft, true, 'landlord is out of the conversation');
+  assert.equal((await as.T('/api/chat', { method: 'POST', body: { listingId: id, text: 'still there?' } })).status, 409);
 });
 
 test('a home with a pending payment survives its deadline', { skip: sweepSkip }, async () => {

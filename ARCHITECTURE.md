@@ -55,7 +55,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
 | chat_reads, chat_hidden | per-user, per-thread markers |
 | visits | visit requests; `proposed_by`, `history` (JSONB, append-only) |
-| conversations | id per (`listing_id`, `tenant`), landlord, block state |
+| conversations | id per (`listing_id`, `tenant`), landlord, block state, `listing_title` + `closed_at` so a thread outlives its listing |
 | reports | user reports on conversations/listings; open → resolved by admin |
 | password_reset_codes | admin-issued one-time reset codes (SHA-256, 24h) |
 | payments | submitted MonCash/NatCash references; pending → confirmed/rejected by admin; `events` JSONB audit trail; UNIQUE (provider, reference) |
@@ -77,6 +77,8 @@ them in `schema_migrations`.
 - `0004 profile_photo` adds `accounts.avatar_url`.
 - `0005 listing_views` adds `listings.views`.
 - `0006 sold_leased` adds `listings.sold_at` and its index.
+- `0007 conversation_survives` adds `conversations.listing_title` and
+  `closed_at`, so a tenant keeps a thread after the home is deleted.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

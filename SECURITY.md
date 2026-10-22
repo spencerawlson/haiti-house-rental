@@ -72,8 +72,8 @@ A nonce-based CSP is still to do.
 |--------|-----|
 | Post a listing, upload media | Activated landlord (session) |
 | Edit / take down / restore a listing | Its owner (session) or admin |
-| Mark a listing sold / leased | Its owner (session) or admin. Only those two values are accepted, so this endpoint cannot be used to set an arbitrary status. Hides it at once; schedules deletion in 48 h; undone by restore until then. |
-| Delete a listing for good | Its owner (session) or admin. Irreversible: removes the row, its photos from disk, and its conversations and visits (for the tenant too). Refused while a payment for it is pending. Payments, reports and the audit entry are kept. |
+| Mark a listing sold / leased | Its owner (session) or admin. Only those two values are accepted, so this endpoint cannot be used to set an arbitrary status. The home stays listed with its tag but takes no chat or visits; deletion is scheduled in 48 h; undone by restore until then. The countdown (`soldAt`/`deletesAt`) is owner-only and never in a public response. |
+| Delete a listing for good | Its owner (session) or admin. Irreversible: removes the row and its photos from disk. **Conversations and visits are KEPT** — each side owns its own history, so the landlord leaves the thread (it drops out of their inbox, read-only for the tenant) rather than erasing what the tenant wrote. Refused while a payment for it is pending. Payments, reports and the audit entry are kept. |
 | View own library incl. taken-down homes | That owner |
 | Read/write a chat thread | The thread's tenant, or the listing owner |
 | Owner reply | Only into an existing tenant thread |

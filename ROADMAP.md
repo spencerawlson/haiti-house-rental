@@ -7,8 +7,9 @@ pricing (tenants free; activation 1000 HTG one-time; advertising
 
 Changed in Phase 9: listings are no longer kept forever. A landlord can
 delete their own home for good — or tag it sold/leased, which deletes it
-automatically after 48 hours — and that also removes its photos from disk
-and the conversations and visits about it. It is the one irreversible
+automatically after 48 hours — and that removes its photos from disk too.
+Chats and visits are NOT deleted: each side owns its own history, so the
+landlord leaves the conversation and the tenant keeps every message. It is the one irreversible
 action in the app. Payments and reports about a deleted listing are
 still kept — money is a ledger, and a moderation trail that a landlord
 could erase by deleting the listing would be no trail at all.
@@ -163,3 +164,27 @@ Original scope:
   auto-deletion delay comes from `SOLD_DELETE_AFTER_MS` so the suite can
   use seconds instead of two days; CI sets it, and the sweep test skips
   when it is unset rather than passing without checking anything.
+
+## Phase 9b — Corrections ✅
+
+- **A tenant no longer loses their chat history** when a landlord deletes
+  a home. Deleting used to delete the conversations, which reached into
+  the tenant's inbox and erased what they wrote. Now the landlord leaves
+  the conversation: it drops out of their inbox, the tenant keeps every
+  message and can still read the thread, and nobody can write to it
+  again. The thread shows "the landlord is out of the conversation" under
+  the last message. Migration `0007` pins `listing_title` and `closed_at`
+  onto the conversation so it stands up once the listing row is gone.
+  Visits are kept for the same reason — they already carried
+  `listing_title`.
+- `resolveThread()` now returns `listingId`, so no caller reaches into
+  `thread.listing.id` and trips over a deleted listing.
+- **A sold/leased home stays on the site** with its tag instead of
+  disappearing: people can see that homes actually move here. It takes no
+  chat and no visit requests, and the 48-hour deletion countdown is
+  **owner-only** — `soldAt`/`deletesAt` are attached in
+  `getListingsForOwner()` and never appear in a public response.
+- **Fixed:** the "Mete kay ou" button on the home page's just-launched
+  card sent a signed-in landlord to the signup page to make a second
+  account. It now goes to `/list`, which already handles all four cases
+  (signed out, tenant, awaiting activation, ready).

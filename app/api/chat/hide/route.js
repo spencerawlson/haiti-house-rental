@@ -11,6 +11,6 @@ export async function POST(request) {
   if (!me) return unauthorized();
   const { listingId, tenant } = await request.json().catch(() => ({}));
   const thread = await resolveThread(me, listingId, tenant);
-  if (thread && thread.tenant !== null) await hideThread(thread.listing.id, me.username, thread.tenant);
+  if (thread && thread.tenant !== null) await hideThread(thread.listingId, me.username, thread.tenant);
   return Response.json({ ok: true });
 }

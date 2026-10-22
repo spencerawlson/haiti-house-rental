@@ -11,7 +11,9 @@ export async function GET(request) {
   const id = params.get('id') || '';
   if (id) {
     const listing = await getListing(id);
-    if (!listing || listing.status !== 'active') {
+    // Sold and leased homes are still served: they stay on the site with
+    // their tag until the 48-hour sweep removes them.
+    if (!listing || !['active', 'sold', 'leased'].includes(listing.status)) {
       return Response.json({ error: 'Listing not found' }, { status: 404 });
     }
     return Response.json({ listing });
