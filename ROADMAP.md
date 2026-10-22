@@ -63,7 +63,26 @@ Still open: responsive image sizes (several widths per photo) and a photo galler
 - Revenue split into confirmed and pending.
 - Nothing is activated without explicit admin approval.
 
-## Phase 5 — UX redesign (mobile-first)
+## Phase 5 — UX redesign (mobile-first) ✅ (first pass)
+
+Built against `docs/design/app-showcase.png`; screenshots of the result
+are in `docs/design/phase5/`.
+- Clean white and blue look (the animated sky background is gone), solid blue buttons, dark mode kept.
+- Tab bar Akèy / Rechèch / Favori / Mesaj / Kont, with an unread badge.
+- Screen 4 home: logo and bell, search pill, quick chips, department circles, advertised carousel (honestly labeled), newest homes.
+- Screen 4 listing cards: heart, blue price, room/WiFi/24h/parking icons, badges.
+- Screens 5–6 search: fold-out filters (rent/sale toggle, bedroom chips), list/map toggle, map price pins.
+- Screen 7 detail: hero photo with back and heart, sheet layout, fact tiles, sticky "Contact the owner".
+- Screen 3 signup: role cards (tenant free / landlord 1,000 HTG once / administrator).
+- Screens 11–12 account: profile header, landlord dashboard tiles, menu rows. New pages: My visits, My payments.
+
+Not done yet:
+- screen 1 splash restyle (the landing already has the language choice)
+- screen 2 onboarding
+- screen 8 gallery room tabs (needs room labels on photos)
+- the admin board restyle
+
+Original scope:
 
 Landing, search and filters, cards, detail pages, landlord, tenant and
 admin dashboards, chat, appointments, auth screens. Keep the Nunito/pill

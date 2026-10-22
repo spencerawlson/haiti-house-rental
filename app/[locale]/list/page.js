@@ -98,7 +98,7 @@ export default function ListHome({ params }) {
             <p style={{ margin: '0 0 12px' }}>{t.signInToPost}</p>
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link>
-              <Link className="btn btn-secondary" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+              <Link className="btn btn-secondary" href={`/${params.locale}/signup?role=landlord`}>{t.createAccount}</Link>
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function ListHome({ params }) {
             <p style={{ margin: '0 0 12px' }}>{t.landlordsOnly}</p>
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <Link className="btn" href={`/${params.locale}/listings`}>{t.browse}</Link>
-              <Link className="btn btn-secondary" href={`/${params.locale}/signup`}>{t.createAccount}</Link>
+              <Link className="btn btn-secondary" href={`/${params.locale}/signup?role=landlord`}>{t.createAccount}</Link>
             </p>
           </div>
         </div>

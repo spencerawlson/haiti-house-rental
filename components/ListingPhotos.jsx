@@ -7,7 +7,9 @@ import { useEffect, useRef, useState } from 'react';
 // + / − buttons to zoom in and out, and drag to pan while zoomed.
 // Double-tap toggles between fit and 2×. Escape closes, arrows move
 // between photos.
-export default function ListingPhotos({ photos, placeholder }) {
+// `hero` (Phase 5, design screen 7): one full-bleed photo with a 1/N
+// counter; tapping it opens the lightbox, which pages through them all.
+export default function ListingPhotos({ photos, placeholder, hero = false }) {
   const [openIndex, setOpenIndex] = useState(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -100,7 +102,7 @@ export default function ListingPhotos({ photos, placeholder }) {
 
   if (!photos || photos.length === 0) {
     return (
-      <div className="house-art" style={{ borderRadius: 16, marginTop: 16, height: 200 }}>{placeholder}</div>
+      <div className="house-art" style={hero ? { height: 240, borderRadius: 0 } : { borderRadius: 16, marginTop: 16, height: 200 }}>{placeholder}</div>
     );
   }
 
@@ -110,9 +112,16 @@ export default function ListingPhotos({ photos, placeholder }) {
         src={photos[0]}
         alt=""
         onClick={() => open(0)}
-        style={{ width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block', cursor: 'zoom-in' }}
+        style={hero
+          ? { width: '100%', height: 'min(62vw, 380px)', minHeight: 240, objectFit: 'cover', display: 'block', cursor: 'zoom-in' }
+          : { width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block', cursor: 'zoom-in' }}
       />
-      {photos.length > 1 && (
+      {hero && photos.length > 1 && (
+        <button type="button" onClick={() => open(0)} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, border: 'none', borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          📷 1/{photos.length}
+        </button>
+      )}
+      {!hero && photos.length > 1 && (
         <div className="gallery">
           {photos.slice(1).map((src, i) => (
             <img key={src} src={src} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
