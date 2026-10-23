@@ -22,6 +22,27 @@ export default function TabBar({ locale }) {
   const t = getDict(locale);
   const pathname = usePathname() || '';
   const [unread, setUnread] = useState(0);
+  // The Account tab shows the signed-in person's photo. It comes from the
+  // session hint in localStorage (kept fresh by the presence ping), so no
+  // page pays for an extra request to render the tab bar. Signed out — or
+  // with no photo set — the outline avatar stays.
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [avatarBroken, setAvatarBroken] = useState(false);
+  useEffect(() => {
+    function readHint() {
+      const s = getSession();
+      setAvatarUrl(s?.avatarUrl || null);
+    }
+    readHint();
+    // The ping refreshes the hint on a cycle; follow it, and also catch a
+    // change made in another tab.
+    const timer = setInterval(readHint, 5000);
+    window.addEventListener('storage', readHint);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('storage', readHint);
+    };
+  }, []);
   useEffect(() => {
     async function refresh() {
       if (!getSession()) return;
@@ -54,7 +75,11 @@ export default function TabBar({ locale }) {
       {tabs.map((tab) => (
         <Link key={tab.key} href={tab.href} className={active === tab.key ? 'active' : ''} aria-current={active === tab.key ? 'page' : undefined}>
           <span className="tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{ICONS[tab.key]}</svg>
+            {tab.key === 'account' && avatarUrl && !avatarBroken ? (
+              <img className="tab-avatar" src={avatarUrl} alt="" onError={() => setAvatarBroken(true)} />
+            ) : (
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{ICONS[tab.key]}</svg>
+            )}
             {tab.key === 'chat' && unread > 0 && <span className="tab-badge">{unread > 99 ? '99+' : unread}</span>}
           </span>
           {tab.label}

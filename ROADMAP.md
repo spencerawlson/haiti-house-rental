@@ -7,8 +7,9 @@ pricing (tenants free; activation 1000 HTG one-time; advertising
 
 Changed in Phase 9: listings are no longer kept forever. A landlord can
 delete their own home for good — or tag it sold/leased, which deletes it
-automatically after 48 hours — and that also removes its photos from disk
-and the conversations and visits about it. It is the one irreversible
+automatically after 48 hours — and that removes its photos from disk too.
+Chats and visits are NOT deleted: each side owns its own history, so the
+landlord leaves the conversation and the tenant keeps every message. It is the one irreversible
 action in the app. Payments and reports about a deleted listing are
 still kept — money is a ledger, and a moderation trail that a landlord
 could erase by deleting the listing would be no trail at all.
@@ -163,3 +164,79 @@ Original scope:
   auto-deletion delay comes from `SOLD_DELETE_AFTER_MS` so the suite can
   use seconds instead of two days; CI sets it, and the sweep test skips
   when it is unset rather than passing without checking anything.
+
+## Phase 10 — Scheduled jobs & visit reminders ✅
+
+- **A real scheduler.** The 48-hour deletion used to run off page traffic,
+  so it fired on the first view after the deadline and never on an idle
+  site. There is now a `cron` service (`scripts/cron-loop.sh`, the same
+  shape as the backup loop) calling `POST /api/cron` every 5 minutes.
+  The endpoint is guarded by `CRON_SECRET`, compared in constant time,
+  and **fails closed**: with no secret set it answers 503 instead of
+  running. Each job is isolated, so one failing does not stop the other,
+  and the reply says which failed. The read-path sweep stays as a
+  backstop for a deployment that has not configured cron.
+- **Visit reminders** (migration `0009`): both sides of a *confirmed*
+  visit are nudged two days before, one day before, and on the morning of
+  the day (from 06:00 Haiti time). Sent in each person's own language,
+  through whichever channels are configured, plus the in-app inbox.
+  - Reminders fire in **windows**, not at deadlines, so a visit confirmed
+    two hours beforehand gets the morning nudge only instead of all three
+    at once — and a reminder whose window has closed is skipped rather
+    than arriving absurdly late.
+  - Exactly-once comes from the claim in `visit_reminders` (PK per visit
+    per kind), taken *before* sending: a crash loses a reminder rather
+    than sending a duplicate, which is the right way round when each SMS
+    costs money.
+  - Rescheduling clears the record, so the new date gets a fresh set.
+  - Haiti observes daylight saving, so the offset is read from the date
+    rather than hardcoded (tested against January and July).
+
+## Phase 10b — Signed-in state in the chrome ✅
+
+- **Fixed:** the landing page offered "Konekte" to somebody who was
+  already signed in, sending them to a sign-in form for the account they
+  were using. It is a server component, so the real session is checked
+  there and the button becomes "Kont" (→ Account). A stale or forged
+  session cookie falls back to "Konekte" rather than a dead link.
+- The Account tab shows the signed-in person's **profile photo**, with
+  the outline avatar as the placeholder when signed out or when no photo
+  is set (and if the image 404s). The photo rides along on the
+  `/api/presence` reply, which already had the account row loaded, and is
+  cached in the `kay-session` hint — so no page pays for an extra request
+  to render the tab bar. Uploading or removing a photo updates the tab
+  immediately instead of waiting for the next ping.
+
+## Phase 9b — Corrections ✅
+
+- **A tenant no longer loses their chat history** when a landlord deletes
+  a home. Deleting used to delete the conversations, which reached into
+  the tenant's inbox and erased what they wrote. Now the landlord leaves
+  the conversation: it drops out of their inbox, the tenant keeps every
+  message and can still read the thread, and nobody can write to it
+  again. The thread shows "the landlord is out of the conversation" under
+  the last message. Migration `0007` pins `listing_title` and `closed_at`
+  onto the conversation so it stands up once the listing row is gone.
+  Visits are kept for the same reason — they already carried
+  `listing_title`.
+- `resolveThread()` now returns `listingId`, so no caller reaches into
+  `thread.listing.id` and trips over a deleted listing.
+- **A sold/leased home stays on the site** with its tag instead of
+  disappearing: people can see that homes actually move here. It takes no
+  chat and no visit requests, and the 48-hour deletion countdown is
+  **owner-only** — `soldAt`/`deletesAt` are attached in
+  `getListingsForOwner()` and never appear in a public response.
+- **Admin Board account figures** (migration `0008`): every account card
+  now shows last seen, number of logins, average session length, and
+  property-visit appointments (total and still-open), with a green dot
+  for a session open right now. Presence was in-memory only — a Map that
+  prunes after 10 minutes and resets on restart — and session rows are
+  deleted on sign-out, so none of this could be answered before. A new
+  append-only `login_events` table records it, tied to its session by
+  `token_hash` so signing out on one phone does not close the record of a
+  session still open on another. Session validation is untouched.
+  The board says plainly that the figures start from the day they shipped.
+- **Fixed:** the "Mete kay ou" button on the home page's just-launched
+  card sent a signed-in landlord to the signup page to make a second
+  account. It now goes to `/list`, which already handles all four cases
+  (signed out, tenant, awaiting activation, ready).

@@ -17,7 +17,7 @@ export async function POST(request) {
   const details = String(data.details || '').trim().slice(0, 1000);
   if (data.kind === 'conversation') {
     const thread = await resolveThread(me, data.listingId, data.tenant);
-    const conv = thread && thread.tenant !== null ? await getConversation(thread.listing.id, thread.tenant) : null;
+    const conv = thread && thread.tenant !== null ? await getConversation(thread.listingId, thread.tenant) : null;
     if (!conv) return Response.json({ error: 'Not found' }, { status: 404 });
     const { report, duplicate } = await createReport({ kind: 'conversation', targetId: conv.id, listingId: conv.listingId, reporter: me.username, reason, details });
     return Response.json({ report: { id: report.id }, duplicate });

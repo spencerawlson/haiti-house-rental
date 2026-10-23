@@ -37,8 +37,11 @@ export default function ListingCard({ listing, locale, t }) {
             {d.power24 && <span>⚡ 24/24</span>}
             {d.parking > 0 && <span>🚗 {d.parking}</span>}
           </div>
-          {(listing.verified || listing.advertised) && (
+          {(listing.verified || listing.advertised || listing.status === 'sold' || listing.status === 'leased') && (
             <div className="lcard-badges">
+              {(listing.status === 'sold' || listing.status === 'leased') && (
+                <span className="badge-taken">🏷 {listing.status === 'sold' ? t.statusSold : t.statusLeased}</span>
+              )}
               {listing.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
               {listing.advertised && <span className="badge">📣 {t.advertised}</span>}
             </div>

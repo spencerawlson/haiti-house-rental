@@ -25,7 +25,11 @@ export default async function ListingDetail(props) {
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const l = await getListing(params.id);
-  if (!l || l.status !== 'active') notFound();
+  if (!l || !['active', 'sold', 'leased'].includes(l.status)) notFound();
+  // A sold or leased home stays visible, tagged, and uncontactable. The
+  // deletion countdown is deliberately not shown here — only its owner
+  // sees that, in their library.
+  const taken = l.status === 'sold' || l.status === 'leased';
   const d = l.details || {};
   return (
     <>
@@ -45,8 +49,9 @@ export default async function ListingDetail(props) {
           <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 700 }}>
             📍 {communeName(l.commune, params.locale)}, {departmentName(l.department, params.locale)}
           </p>
-          {(l.advertised || l.verified) && (
+          {(l.advertised || l.verified || taken) && (
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 0' }}>
+              {taken && <span className="badge-taken">🏷 {l.status === 'sold' ? t.statusSold : t.statusLeased}</span>}
               {l.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
               {l.advertised && <span className="badge">📣 {t.advertised}</span>}
             </p>
@@ -84,12 +89,20 @@ export default async function ListingDetail(props) {
               </div>
             </>
           )}
-          <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
+          {taken ? (
+            <p className="notice" style={{ margin: '22px 0 0' }}>
+              {l.status === 'sold' ? t.soldNotice : t.leasedNotice}
+            </p>
+          ) : (
+            <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
+          )}
           <ReportListingButton listingId={l.id} owner={l.owner} strings={t} />
         </section>
-        <div className="sticky-cta">
-          <Link className="btn" href={`${base}/chats?listingId=${l.id}`}>💬 {t.contact}</Link>
-        </div>
+        {!taken && (
+          <div className="sticky-cta">
+            <Link className="btn" href={`${base}/chats?listingId=${l.id}`}>💬 {t.contact}</Link>
+          </div>
+        )}
       </main>
       <TabBar locale={params.locale} />
     </>

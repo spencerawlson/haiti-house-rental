@@ -79,7 +79,11 @@ export default async function LocaleHome(props) {
             <div className="card-body" style={{ display: 'grid', gap: 8 }}>
               <strong>🌱 {t.earlyTitle}</strong>
               <span className="muted">{t.earlyText}</span>
-              <Link className="btn" href={`${base}/signup?role=landlord`}>＋ {t.postHome}</Link>
+              {/* Goes to the posting page, not to signup: a landlord who is
+                  already signed in was being asked to create a second
+                  account. /list sorts out the four cases itself (signed
+                  out, tenant, landlord awaiting activation, ready). */}
+              <Link className="btn" href={`${base}/list`}>＋ {t.postHome}</Link>
             </div>
           </section>
         )}

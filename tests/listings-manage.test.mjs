@@ -6,7 +6,7 @@
 // ledger has to survive, because money is a ledger.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADMIN_PASSWORD, client, signup, adminClient, uniq } from './helpers.mjs';
+import { ADMIN_PASSWORD, client, signup, adminClient, uniq, haitiDate } from './helpers.mjs';
 
 const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const run = uniq();
@@ -72,20 +72,56 @@ test('delete removes the listing for good, and a taken-down home can be deleted'
   assert.equal((await as.L('/api/listings/delete', { method: 'POST', body: { id } })).status, 404);
 });
 
-test('deleting takes its conversations and visits with it', { skip }, async () => {
+test('deleting leaves the conversation: landlord out, tenant keeps it', { skip }, async () => {
   const id = await newListing(`Chatty ${run}`);
-  // A tenant writes, and asks to visit.
   assert.equal((await as.T('/api/chat', { method: 'POST', body: { listingId: id, text: 'Still available?' } })).status, 200);
-  const inboxBefore = (await as.L('/api/chat/inbox')).data.threads || [];
-  assert.ok(inboxBefore.some((th) => th.listingId === id), 'landlord sees the thread');
+  assert.ok(((await as.L('/api/chat/inbox')).data.threads || []).some((th) => th.listingId === id), 'landlord sees the thread');
 
   const del = await as.L('/api/listings/delete', { method: 'POST', body: { id } });
   assert.equal(del.status, 200);
-  assert.ok(del.data.removed.messages >= 1, 'messages deleted');
+  assert.ok(del.data.removed.conversationsClosed >= 1, 'the conversation was closed, not deleted');
 
-  // Gone for BOTH sides — the tenant loses the history too.
-  assert.ok(!((await as.L('/api/chat/inbox')).data.threads || []).some((th) => th.listingId === id));
-  assert.ok(!((await as.T('/api/chat/inbox')).data.threads || []).some((th) => th.listingId === id));
+  // The landlord left: it drops out of THEIR inbox.
+  assert.ok(!((await as.L('/api/chat/inbox')).data.threads || []).some((th) => th.listingId === id), 'gone from the landlord inbox');
+
+  // The tenant keeps their history. This is the whole point: a landlord
+  // tidying their library must not erase what a tenant wrote.
+  const mineThread = ((await as.T('/api/chat/inbox')).data.threads || []).find((th) => th.listingId === id);
+  assert.ok(mineThread, 'tenant still has the thread');
+  assert.equal(mineThread.closed, true, 'marked closed');
+  assert.equal(mineThread.landlordLeft, true, 'landlord is out of the conversation');
+  assert.equal(mineThread.listingTitle, `Chatty ${run}`, 'still named, from the conversation');
+
+  // Readable...
+  const read = await as.T(`/api/chat?listingId=${encodeURIComponent(id)}`);
+  assert.equal(read.status, 200);
+  assert.equal(read.data.messages.length, 1);
+  assert.equal(read.data.messages[0].text, 'Still available?');
+  assert.equal(read.data.landlordLeft, true);
+  // ...but closed to new messages, with a reason the UI can show.
+  const write = await as.T('/api/chat', { method: 'POST', body: { listingId: id, text: 'hello?' } });
+  assert.equal(write.status, 409);
+  assert.equal(write.data.error, 'landlord_left');
+
+  // Marking it read still works, and nobody else can reach it.
+  assert.equal((await as.T('/api/chat/read', { method: 'POST', body: { listingId: id } })).status, 200);
+  const other = client();
+  assert.equal((await other('/api/chat', { method: 'POST', body: { listingId: id, text: 'hi' } })).status, 401);
+});
+
+test('a deleted home keeps the tenant visit record too', { skip }, async () => {
+  const id = await newListing(`Visited ${run}`);
+  const v = await as.T('/api/visits', {
+    method: 'POST',
+    body: { listingId: id, date: haitiDate(3), time: '10:00', message: 'can I see it' },
+  });
+  assert.equal(v.status, 200);
+  assert.equal((await as.L('/api/listings/delete', { method: 'POST', body: { id } })).status, 200);
+  // The tenant's own appointment record survives, with the home's name.
+  const mine = (await as.T('/api/visits')).data.visits || [];
+  const kept = mine.find((x) => x.listingId === id);
+  assert.ok(kept, 'visit kept');
+  assert.equal(kept.listingTitle, `Visited ${run}`);
 });
 
 test('the payment ledger survives a deleted listing', { skip }, async () => {

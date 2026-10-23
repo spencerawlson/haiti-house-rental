@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { compressImage } from '@/lib/image-compress';
+import { syncSessionHint } from '@/lib/account';
 
 // The profile circle on the Account page. It used to be initials only,
 // with no way to put a real face on it. Now the circle IS the button: tap
@@ -31,6 +32,9 @@ export default function AvatarUpload({ account, onChange, t }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.account) throw new Error(data.error || 'failed');
       setBroken(false);
+      // So the tab bar picks the new photo up without waiting for the
+      // next presence ping.
+      syncSessionHint(data.account.username, data.account.avatarUrl);
       onChange(data.account);
     } catch {
       setError(failMessage);

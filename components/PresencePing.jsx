@@ -18,7 +18,10 @@ export default function PresencePing() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ visitor }),
         });
-        if (res.ok) syncSessionHint((await res.json()).username);
+        if (res.ok) {
+          const d = await res.json();
+          syncSessionHint(d.username, d.avatarUrl);
+        }
       } catch {}
     }
     ping();

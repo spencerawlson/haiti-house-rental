@@ -49,11 +49,32 @@ services:
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-}
       - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://kayayiti.app}
+      # Scheduled jobs (the `cron` service below). Without this the
+      # /api/cron endpoint stays closed and nothing is scheduled.
+      - CRON_SECRET=${CRON_SECRET:-}
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - kayayiti-uploads:/app/public/uploads
+
+  # Scheduled jobs (scripts/cron-loop.sh): every 5 minutes it asks the app
+  # to delete sold/leased homes whose 48 hours are up and to send the visit
+  # reminders that are due. Kept as its own service so the schedule is
+  # visible here, and so restarting the web app cannot silently stop it.
+  cron:
+    image: alpine:3.20
+    container_name: kayayiti-cron
+    restart: unless-stopped
+    environment:
+      CRON_SECRET: ${CRON_SECRET:-}
+      CRON_INTERVAL: ${CRON_INTERVAL:-300}
+      CRON_URL: http://kayayiti:3000/api/cron
+    volumes:
+      - ./scripts/cron-loop.sh:/cron-loop.sh:ro
+    entrypoint: ["/bin/sh", "-c", "apk add --no-cache curl >/dev/null && exec /bin/sh /cron-loop.sh"]
+    depends_on:
+      - kayayiti
 
   # Automatic backups (scripts/backup-loop.sh): one at start, then every
   # 24 h — database dump + uploads archive into ./backups (or BACKUP_DIR),

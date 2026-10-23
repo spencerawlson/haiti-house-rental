@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sortListings, filterListings } from '../lib/listings.js';
 import { sanitizeDetails } from '../lib/listing-details.js';
+import { dueReminder, haitiWallClockToMs } from '../lib/reminders-server.js';
 
 const L = (id, priceHTG, createdAt, extra = {}) => ({ id, priceHTG, createdAt, title: id, commune: 'Delmas', department: 'ouest', type: 'house', purpose: 'rent', bedrooms: 1, bathrooms: 1, ...extra });
 
@@ -60,4 +61,36 @@ test('notifications render in the account language', async () => {
   assert.equal(render('visit_proposed', params, 'ht'), 'Ana mande vizite "Kay ak lakou" 2026-11-02 a 10:00.');
   assert.match(render('visit_proposed', params, 'fr'), /^Ana demande à visiter « Kay ak lakou »/);
   assert.match(render('visit_proposed', params, 'en'), /^Ana asked to visit "Kay ak lakou"/);
+});
+
+// Visit reminder windows. Pure logic, no server: this is where the real
+// risk lives, so it must be deterministic rather than depending on the
+// clock or on Postgres.
+test('visit reminders fire in windows, never stacked', () => {
+  const v = { date: '2026-11-02', time: '10:30' };
+  const start = haitiWallClockToMs(v.date, v.time);
+  const h = (n) => n * 3600000;
+  const day = 86400000;
+  assert.equal(dueReminder(v, start - 3 * day), null, 'too early for anything');
+  assert.equal(dueReminder(v, start - h(47)), 'two_days');
+  assert.equal(dueReminder(v, start - h(25)), 'two_days', 'still the 2-day window at 25h');
+  assert.equal(dueReminder(v, start - h(23)), 'one_day');
+  assert.equal(dueReminder(v, haitiWallClockToMs(v.date, '06:00')), 'morning', '6 a.m. on the day');
+  assert.equal(dueReminder(v, start - h(0.5)), 'morning', 'half an hour before');
+  assert.equal(dueReminder(v, start + h(1)), null, 'nothing after it has started');
+});
+
+test('a visit confirmed at the last minute gets one reminder, not three', () => {
+  // The whole point of windows: the 2-day and 1-day moments are long
+  // past, and sending all three at once would be absurd.
+  const v = { date: '2026-11-02', time: '18:00' };
+  const start = haitiWallClockToMs(v.date, v.time);
+  assert.equal(dueReminder(v, start - 600000), 'morning', '10 minutes before -> morning only');
+});
+
+test('Haiti wall-clock honours daylight saving', () => {
+  // Haiti is UTC-5 in winter and UTC-4 in summer; the offset is read from
+  // the date rather than hardcoded.
+  assert.equal(new Date(haitiWallClockToMs('2026-01-15', '10:00')).toISOString(), '2026-01-15T15:00:00.000Z');
+  assert.equal(new Date(haitiWallClockToMs('2026-07-15', '10:00')).toISOString(), '2026-07-15T14:00:00.000Z');
 });

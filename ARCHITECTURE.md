@@ -27,9 +27,14 @@ lib/password.js       scrypt hashing
 lib/rate-limit.js     in-memory limiter
 lib/chat-auth.js      who is owner/tenant on a thread
 lib/listing-details.js allowed detail fields + sanitizer (client-safe)
+lib/reminders-server.js visit reminders (2 days / 1 day / morning) and the
+                      Haiti-time window logic they fire in
+app/api/cron/         the scheduled job: due deletions + due reminders,
+                      guarded by CRON_SECRET (fail closed)
+scripts/cron-loop.sh  the `cron` service calls /api/cron every 5 min
 lib/listings-server.js sweepSoldListings() — deletes sold/leased homes
-                      whose 48 h are up. No scheduler in this app: it runs
-                      from the listing read paths, throttled.
+                      whose 48 h are up. Driven by the scheduled job; the
+                      read-path call is only a backstop.
 lib/image-compress.js browser-side photo shrink before upload
 lib/account.js        browser helpers (sign-in, signup, session hint)
 lib/dictionaries.js   all UI strings in three languages
@@ -55,7 +60,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
 | chat_reads, chat_hidden | per-user, per-thread markers |
 | visits | visit requests; `proposed_by`, `history` (JSONB, append-only) |
-| conversations | id per (`listing_id`, `tenant`), landlord, block state |
+| conversations | id per (`listing_id`, `tenant`), landlord, block state, `listing_title` + `closed_at` so a thread outlives its listing |
 | reports | user reports on conversations/listings; open → resolved by admin |
 | password_reset_codes | admin-issued one-time reset codes (SHA-256, 24h) |
 | payments | submitted MonCash/NatCash references; pending → confirmed/rejected by admin; `events` JSONB audit trail; UNIQUE (provider, reference) |
@@ -64,6 +69,8 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | migrations | legacy run-once data steps (used inside the 0001 baseline) |
 | schema_migrations | applied migration versions (Phase 6) |
 | audit_log | admin/security actions: actor, action, target, details |
+| visit_reminders | which reminders have gone out: PK (`visit_id`, `kind`) is the claim that makes the job safe to re-run |
+| login_events | one row per sign-in (tied to its session by `token_hash`): `at`, `last_seen_at`, `ended_at`. Feeds the Admin Board's per-account figures. Append-only; never consulted for authorization |
 
 The schema is managed by versioned migrations in `lib/migrations/`. The
 runner (`lib/migrate.js`) applies pending ones at the first query, in
@@ -77,6 +84,11 @@ them in `schema_migrations`.
 - `0004 profile_photo` adds `accounts.avatar_url`.
 - `0005 listing_views` adds `listings.views`.
 - `0006 sold_leased` adds `listings.sold_at` and its index.
+- `0007 conversation_survives` adds `conversations.listing_title` and
+  `closed_at`, so a tenant keeps a thread after the home is deleted.
+- `0008 login_events` adds the login-history table behind the Admin
+  Board's account figures (last seen, logins, average session).
+- `0009 visit_reminders` adds the sent-reminder claims table.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

@@ -16,13 +16,21 @@ export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const thread = await resolveThread(me, params.get('listingId') || '', params.get('tenant'));
   if (!thread) return Response.json({ error: 'Listing not found' }, { status: 404 });
-  if (thread.tenant === null) return Response.json({ messages: [], isOwner: thread.isOwner, tenant: null, conversation: null });
-  const conv = await getConversation(thread.listing.id, thread.tenant);
+  if (thread.tenant === null) {
+    return Response.json({ messages: [], isOwner: thread.isOwner, tenant: null, conversation: null, closed: false, landlordLeft: false });
+  }
+  const listingId = thread.listingId;
+  const conv = thread.conversation || (await getConversation(listingId, thread.tenant));
   return Response.json({
-    messages: await getThread(thread.listing.id, thread.tenant),
+    messages: await getThread(listingId, thread.tenant),
     isOwner: thread.isOwner,
     tenant: thread.tenant,
     conversation: conv ? { id: conv.id, blocked: !!conv.blockedBy, blockedByMe: conv.blockedBy === me.username } : null,
+    // Readable but not writable. landlordLeft = the home was deleted, so
+    // the other side is gone for good rather than just offline.
+    closed: !!thread.closed,
+    landlordLeft: !thread.listing,
+    listingTitle: thread.listing?.title || conv?.listingTitle || null,
   });
 }
 
@@ -32,19 +40,23 @@ export async function POST(request) {
   if (!rateLimit(`chat:${me.username}`, 30, 60 * 1000)) return tooMany();
   const { listingId, text, tenant } = await request.json().catch(() => ({}));
   const thread = await resolveThread(me, listingId, tenant);
-  if (!thread || thread.listing.status !== 'active') {
-    return Response.json({ error: 'Listing not found' }, { status: 404 });
+  if (!thread) return Response.json({ error: 'Listing not found' }, { status: 404 });
+  // A closed thread takes no new messages. When the home was deleted the
+  // landlord is out of the conversation for good, so say which it is and
+  // let the tenant keep reading what is already there.
+  if (thread.closed) {
+    return Response.json({ error: thread.listing ? 'Listing not found' : 'landlord_left' }, { status: thread.listing ? 404 : 409 });
   }
   // The owner only replies inside an existing tenant thread, to a real
   // account (the anonymous legacy thread has nobody to read a reply).
-  if (thread.isOwner && (!thread.tenant || !(await threadExists(thread.listing.id, thread.tenant)))) {
+  if (thread.isOwner && (!thread.tenant || !(await threadExists(thread.listingId, thread.tenant)))) {
     return Response.json({ error: 'No such conversation' }, { status: 400 });
   }
   // A blocked conversation takes no new messages from either side.
   const conv = await ensureConversation(thread.listing, thread.tenant);
   if (conv?.blockedBy) return Response.json({ error: 'blocked' }, { status: 403 });
   const msg = await postMessage({
-    listingId: thread.listing.id,
+    listingId: thread.listingId,
     sender: thread.isOwner ? 'owner' : 'tenant',
     tenant: thread.tenant,
     text,
@@ -54,9 +66,9 @@ export async function POST(request) {
   // Tell the other side (SMS/email only — the Messages tab counts chats),
   // at most once per conversation every 15 minutes.
   const recipient = thread.isOwner ? thread.tenant : thread.listing.owner;
-  const link = `/ht/chats?listingId=${encodeURIComponent(thread.listing.id)}${thread.isOwner ? '' : `&tenant=${encodeURIComponent(thread.tenant)}`}`;
+  const link = `/ht/chats?listingId=${encodeURIComponent(thread.listingId)}${thread.isOwner ? '' : `&tenant=${encodeURIComponent(thread.tenant)}`}`;
   notify(recipient, 'chat', { name: String(me.name || '').split(/\s+/)[0], title: thread.listing.title, text: msg.text.slice(0, 80) }, {
-    link, inApp: false, throttleKey: `${thread.listing.id}|${thread.tenant}`,
+    link, inApp: false, throttleKey: `${thread.listingId}|${thread.tenant}`,
   });
   return Response.json({ message: msg });
 }

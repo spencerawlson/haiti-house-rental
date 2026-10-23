@@ -1,5 +1,6 @@
 import { createServerAccount, listServerAccounts, getPublicProfile, setAccountLocale } from '@/lib/accounts-server';
 import { createSession } from '@/lib/session-server';
+import { getAccountMetrics } from '@/lib/account-metrics-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 
 // Live data: never serve a build-time snapshot of the accounts.
@@ -15,7 +16,14 @@ export async function GET(request) {
     if (!account) return Response.json({ error: 'Not found' }, { status: 404 });
     return Response.json({ account });
   }
-  return Response.json({ accounts: await listServerAccounts() });
+  // The full list reaches here only through the admin gate in
+  // middleware.js, so it is the one place engagement figures belong. They
+  // are merged in rather than added to pub(), which every signed-in
+  // user's own profile uses.
+  const [accounts, metrics] = await Promise.all([listServerAccounts(), getAccountMetrics()]);
+  return Response.json({
+    accounts: accounts.map((a) => ({ ...a, metrics: metrics[a.username] || null })),
+  });
 }
 
 // Public signup: tenant or landlord only. Partner accounts (free, active

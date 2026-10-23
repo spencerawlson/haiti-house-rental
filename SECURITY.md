@@ -12,9 +12,12 @@
   senders in a request body or query are never trusted for authorization.
 - Sign-out deletes the session row. A password reset deletes every session
   of that account.
-- The browser keeps a `kay-session` localStorage hint (`{ username }`) only
-  to render owner-only buttons quickly. It grants nothing. `/api/presence`
-  and `/api/accounts/me` correct it when the server session is gone.
+- The browser keeps a `kay-session` localStorage hint
+  (`{ username, avatarUrl }`) only to render owner-only buttons quickly
+  and to show the profile photo on the Account tab without an extra
+  request per page. It grants nothing — the server never reads it.
+  `/api/presence` and `/api/accounts/me` correct it when the server
+  session is gone, and sign-out clears it.
 
 ## Admin sessions
 
@@ -72,8 +75,8 @@ A nonce-based CSP is still to do.
 |--------|-----|
 | Post a listing, upload media | Activated landlord (session) |
 | Edit / take down / restore a listing | Its owner (session) or admin |
-| Mark a listing sold / leased | Its owner (session) or admin. Only those two values are accepted, so this endpoint cannot be used to set an arbitrary status. Hides it at once; schedules deletion in 48 h; undone by restore until then. |
-| Delete a listing for good | Its owner (session) or admin. Irreversible: removes the row, its photos from disk, and its conversations and visits (for the tenant too). Refused while a payment for it is pending. Payments, reports and the audit entry are kept. |
+| Mark a listing sold / leased | Its owner (session) or admin. Only those two values are accepted, so this endpoint cannot be used to set an arbitrary status. The home stays listed with its tag but takes no chat or visits; deletion is scheduled in 48 h; undone by restore until then. The countdown (`soldAt`/`deletesAt`) is owner-only and never in a public response. |
+| Delete a listing for good | Its owner (session) or admin. Irreversible: removes the row and its photos from disk. **Conversations and visits are KEPT** — each side owns its own history, so the landlord leaves the thread (it drops out of their inbox, read-only for the tenant) rather than erasing what the tenant wrote. Refused while a payment for it is pending. Payments, reports and the audit entry are kept. |
 | View own library incl. taken-down homes | That owner |
 | Read/write a chat thread | The thread's tenant, or the listing owner |
 | Owner reply | Only into an existing tenant thread |
@@ -90,6 +93,8 @@ A nonce-based CSP is still to do.
 | Submit a payment reference | Landlord (activation: own account; advertising: own active listing) |
 | Confirm / reject a payment | Admin only; a payment can be confirmed once |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
+| Trigger the scheduled job (`/api/cron`) | Anyone holding `CRON_SECRET`. Compared in constant time; **fail closed** — with no secret set the endpoint answers 503 rather than running. Rate-limited per IP. It is reachable through the tunnel, so the secret is the only thing in front of it; keep it out of the repo like `ADMIN_PASSWORD`. |
+| Per-account engagement figures (last seen, logins, average session, visits) | Admin only. Merged into the admin-gated `GET /api/accounts` list, never into `pub()`, so they cannot reach a public profile or `/api/accounts/me`. Tested. |
 | Public profile lookup | Anyone — username, name, role only |
 
 ## Chat privacy
@@ -112,6 +117,7 @@ Read and hidden markers moved with their threads.
 | Upload | 60 / hour per account |
 | Profile photo | 10 / hour per account |
 | Listing view count | 120 / hour per IP (volume ceiling), then 1 per viewer per 30 min |
+| Scheduled job (`/api/cron`) | 60 / hour per IP |
 | Chat send | 30 / min per account |
 
 The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel). Per-IP
@@ -150,6 +156,11 @@ React escapes by default. The one raw-HTML sink, Leaflet popups in
 - Rate limits live in one process. Move them to Postgres or Redis if the
   app ever runs as more than one container.
 - SMS/WhatsApp self-serve recovery codes, once a sending channel exists.
+- `login_events` records a behavioural history (when each account signs
+  in, how long it stays). It is append-only, admin-only, and never
+  consulted for authorization — a failure to write one can never lock
+  anybody out. It is still personal data: if a retention policy is ever
+  adopted, this table needs a cutoff, because nothing prunes it today.
 - Listing view counts come from a browser-supplied visitor id, so a
   determined person could inflate the count on their own listing. It is a
   vanity metric nobody is billed on, and a per-IP ceiling caps the volume;

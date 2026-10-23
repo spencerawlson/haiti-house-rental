@@ -11,6 +11,27 @@ import BackButton from '@/components/BackButton';
 // convert it. Nothing here is automatic — a landlord's advertising
 // checkbox is only a request until the admin approves, and revenue is
 // logged only when the admin activates an account.
+// Engagement figures on each account card (0008). "—" means not
+// recorded rather than zero: login history only starts at the deploy that
+// added it, so an older account genuinely has nothing to show.
+function sinceLabel(ms, t) {
+  if (!ms) return '—';
+  const mins = Math.floor((Date.now() - ms) / 60000);
+  if (mins < 1) return t.justNow;
+  if (mins < 60) return `${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} h`;
+  return `${Math.floor(hours / 24)} j`;
+}
+
+function durationLabel(ms) {
+  if (ms === null || ms === undefined) return '—';
+  const mins = Math.round(ms / 60000);
+  if (mins < 1) return '< 1 min';
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)} h ${mins % 60} min`;
+}
+
 export default function Admin(props) {
   const params = use(props.params);
   const t = getDict(params.locale);
@@ -364,6 +385,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
       </details>
       <h2 style={{ marginTop: 32 }}>{t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
+      <p className="muted" style={{ marginTop: -6 }}>{t.metricsNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
         <span className="chip">{t.totalUsers}: {accounts.length}</span>
         <span className="chip">{t.liveUsers}: {accounts.filter((a) => a.activated).length}</span>
@@ -380,6 +402,18 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
               </p>
+              <div className="metric-row">
+                <span title={t.lastSeenHelp}>
+                  👁 {t.lastSeen}: <strong>{sinceLabel(a.metrics?.lastSeenAt, t)}</strong>
+                  {a.metrics?.activeSessions > 0 && <span className="live-dot" title={t.liveNow} />}
+                </span>
+                <span title={t.loginsHelp}>🔑 {t.logins}: <strong>{a.metrics?.logins ?? 0}</strong></span>
+                <span title={t.avgSessionHelp}>⏱ {t.avgSession}: <strong>{durationLabel(a.metrics?.avgSessionMs)}</strong></span>
+                <span title={t.visitsCountHelp}>
+                  📅 {t.visitsCount}: <strong>{a.metrics?.visits ?? 0}</strong>
+                  {' '}<span className="muted">({a.metrics?.visitsActive ?? 0} {t.visitsLive})</span>
+                </span>
+              </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {a.role !== 'tenant' && !a.activated && (
                   <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
