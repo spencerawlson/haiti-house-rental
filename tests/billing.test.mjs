@@ -19,6 +19,8 @@ const QUARTER_MS = Number(process.env.BILLING_QUARTER_MS);
 const GRACE_MS = Number(process.env.BILLING_GRACE_MS);
 const timeSkip = skip || (!Number.isFinite(QUARTER_MS) && 'needs BILLING_QUARTER_MS on the server');
 const graceSkip = timeSkip || (!Number.isFinite(GRACE_MS) && 'needs BILLING_GRACE_MS on the server');
+const DUE_MS = Number(process.env.BILLING_DUE_REMINDER_MS);
+const dueSkip = timeSkip || (!Number.isFinite(DUE_MS) && 'needs BILLING_DUE_REMINDER_MS on the server');
 
 const JOIN = 1500;
 const QUARTER = 1000;
@@ -65,6 +67,32 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // file's call may already have done the work this one was about to
 // trigger. Assert on the end state, never on the count a particular
 // invocation happened to return.
+// notify() is fire-and-forget, so a reminder lands a moment after the
+// cron call returns.
+async function waitForNotes(tag, want, kind = 'billing_due_soon', ms = 25000) {
+  const until = Date.now() + ms;
+  const read = async () =>
+    ((await as[tag]('/api/notifications')).data.notifications || []).filter((x) => x.kind === kind);
+  let got = await read();
+  // The job has to be RUN while we wait: a reminder is not due until the
+  // account crosses into the horizon, which happens as time passes.
+  while (got.length < want && Date.now() < until) {
+    await cron();
+    await sleep(400);
+    got = await read();
+  }
+  return got;
+}
+
+// Keep running the job and confirm the count does not grow — "exactly
+// once" has to mean once across many runs, not merely "not yet twice".
+async function stillOnce(tag, want, kind = 'billing_due_soon') {
+  for (let i = 0; i < 5; i++) { await cron(); await sleep(250); }
+  const got = ((await as[tag]('/api/notifications')).data.notifications || []).filter((x) => x.kind === kind);
+  assert.equal(got.length, want, `still ${want} after repeated runs`);
+  return got;
+}
+
 async function waitForStatus(tag, want, ms = 25000) {
   const until = Date.now() + ms;
   let a = await me(tag);
@@ -225,6 +253,40 @@ test('a month of silence deactivates the account, and coming back costs the join
   assert.equal(after.billingStatus, 'active');
   assert.equal(after.activated, true);
   assert.equal((await postListing('D', `Back ${run}`)).status, 200, 'can post again');
+});
+
+test('a landlord is warned before the quarter ends, once', { skip: dueSkip }, async () => {
+  await newLandlord('W');
+  await payAndConfirm('W', 'join');
+  // With the test-length quarter, paid_until is already inside the
+  // reminder horizon, so the next run is due to warn.
+  const notes = async () =>
+    ((await as.W('/api/notifications')).data.notifications || []).filter((x) => x.kind === 'billing_due_soon');
+
+  assert.equal((await notes()).length, 0, 'nothing before the job runs');
+
+  // Wait for the account to cross into the reminder horizon.
+  const got = await waitForNotes('W', 1);
+  assert.equal(got.length, 1, 'warned once the quarter is nearly up');
+  assert.ok(got[0].params.amount, 'says what is owed');
+  assert.ok(got[0].params.date, 'and by when');
+  // The warning arrives while the account is still ACTIVE — before the
+  // homes come down, which is the whole point of it.
+  assert.equal((await me('W')).billingStatus, 'active');
+
+  // The claim is what stops five minutes of cron being five reminders.
+  await stillOnce('W', 1);
+});
+
+test('renewing earns a fresh warning for the new period', { skip: dueSkip }, async () => {
+  // Same account: paying moves paid_until, so the next period is warned
+  // about separately instead of being treated as already-warned.
+  const q = await pay('W', 'quarter');
+  assert.equal(q.status, 200);
+  await admin('/api/admin/payments', { method: 'POST', body: { id: q.data.payment.id, decision: 'confirmed' } });
+  const got = await waitForNotes('W', 2);
+  assert.equal(got.length, 2, 'one warning per billing period');
+  await stillOnce('W', 2);
 });
 
 test('the admin can override a subscription, and only the admin can', { skip }, async () => {

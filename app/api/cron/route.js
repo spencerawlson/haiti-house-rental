@@ -1,7 +1,7 @@
 import { timingSafeEqual } from 'crypto';
 import { sweepSoldListings } from '@/lib/listings-server';
 import { sendVisitReminders } from '@/lib/reminders-server';
-import { sweepBilling } from '@/lib/billing-server';
+import { sweepBilling, sendDueReminders } from '@/lib/billing-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 import { log } from '@/lib/log';
 
@@ -42,7 +42,7 @@ async function run(request) {
     return Response.json({ error: 'Not allowed' }, { status: 401 });
   }
   const started = Date.now();
-  const result = { deletedListings: 0, remindersSent: 0, suspended: 0, deactivated: 0, errors: [] };
+  const result = { deletedListings: 0, remindersSent: 0, dueReminders: 0, suspended: 0, deactivated: 0, errors: [] };
   // Each job is isolated: one failing must not stop the other, and the
   // reply says which failed instead of just 500ing.
   try {
@@ -59,6 +59,16 @@ async function run(request) {
   } catch (e) {
     result.errors.push(`reminders: ${e.message}`);
     log('error', 'cron.reminders_failed', { message: e.message });
+  }
+  try {
+    // Warn BEFORE sweeping, so an account that is about to lapse gets its
+    // heads-up rather than going straight to a suspension notice in the
+    // same run.
+    const due = await sendDueReminders();
+    result.dueReminders = due.length;
+  } catch (e) {
+    result.errors.push(`due reminders: ${e.message}`);
+    log('error', 'cron.due_reminders_failed', { message: e.message });
   }
   try {
     const billing = await sweepBilling();

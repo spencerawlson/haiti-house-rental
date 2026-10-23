@@ -70,6 +70,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | migrations | legacy run-once data steps (used inside the 0001 baseline) |
 | schema_migrations | applied migration versions (Phase 6) |
 | audit_log | admin/security actions: actor, action, target, details |
+| billing_reminders | which subscription warnings have gone out: PK (`username`, `period_end`, `kind`) is the claim that makes the job safe to re-run |
 | visit_reminders | which reminders have gone out: PK (`visit_id`, `kind`) is the claim that makes the job safe to re-run |
 | login_events | one row per sign-in (tied to its session by `token_hash`): `at`, `last_seen_at`, `ended_at`. Feeds the Admin Board's per-account figures. Append-only; never consulted for authorization |
 
@@ -92,6 +93,7 @@ them in `schema_migrations`.
 - `0009 visit_reminders` adds the sent-reminder claims table.
 - `0010 quarterly_billing` turns the landlord fee into a subscription and
   grandfathers existing payers with a full quarter.
+- `0011 billing_reminders` adds the "payment due soon" claims table.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

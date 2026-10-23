@@ -193,6 +193,14 @@ suspension when a quarter lapses, deactivation 30 days after that, and
   fixing a mistake), audited.
 - **Grandfathering:** landlords who already paid the old one-time fee get
   a full quarter from the migration, not from their original activation.
+- **A week's warning before the quarter ends** (migration `0011`): the
+  suspension notice used to be the first a landlord heard of it, by which
+  point their homes had already left the site. The warning names the
+  amount and the date, and is sent once per billing period — the claim in
+  `billing_reminders` is what stops a five-minute job becoming a
+  five-minute reminder. Renewing earns a fresh warning for the new
+  period. The job warns before it sweeps, so an account on the edge is
+  never warned and suspended in the same run.
 
 ## Phase 10 — Scheduled jobs & visit reminders ✅
 
