@@ -39,7 +39,7 @@ before(async () => {
   // The landlord must be activated before it can post.
   const p = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', reference: ref('DMACT') },
+    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000020' },
   });
   assert.equal(p.status, 200);
   await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
@@ -128,7 +128,7 @@ test('the payment ledger survives a deleted listing', { skip }, async () => {
   const id = await newListing(`Paid ${run}`);
   const pay = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', reference: ref('DMAD') },
+    body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', senderPhone: '30000021' },
   });
   assert.equal(pay.status, 200);
   // A pending payment blocks deletion: confirming it later would extend
@@ -145,7 +145,7 @@ test('the payment ledger survives a deleted listing', { skip }, async () => {
   // The money is still counted, and the record is still the landlord's.
   const after = (await admin('/api/admin/payments')).data.summary.byKind.advertising.confirmedHTG;
   assert.equal(after, before, 'confirmed advertising revenue unchanged');
-  assert.ok((await as.L('/api/payments')).data.payments.some((p) => p.reference === ref('DMAD')));
+  assert.ok((await as.L('/api/payments')).data.payments.some((p) => p.senderPhone === '+50930000021'));
 });
 
 test('views: counted once per viewer, never the owner', { skip }, async () => {

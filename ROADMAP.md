@@ -60,7 +60,8 @@ could erase by deleting the listing would be no trail at all.
 - Detail page shows the department name, not its raw ID.
 - `tests/unit.test.mjs` (no server needed) and `tests/phase3.test.mjs`.
 
-Still open: responsive image sizes (several widths per photo) and a photo gallery with room tabs (screen 8).
+Still open: responsive image sizes (several widths per photo). The photo
+gallery with room tabs (screen 8) shipped in Phase 12.
 
 ## Phase 4 — Payments (manual, auditable) ✅
 
@@ -86,8 +87,8 @@ are in `docs/design/phase5/`.
 
 Not done yet:
 - ~~screen 1 splash and screen 2 onboarding~~ done in Phase 7 (first visit only; see SPEC.md)
-- screen 8 gallery room tabs (needs room labels on photos)
-- the admin board restyle
+- ~~screen 8 gallery room tabs~~ done in Phase 12
+- ~~the admin board restyle~~ done in Phase 12, tabbed in Phase 13
 
 Original scope:
 
@@ -277,3 +278,90 @@ suspension when a quarter lapses, deactivation 30 days after that, and
   card sent a signed-in landlord to the signup page to make a second
   account. It now goes to `/list`, which already handles all four cases
   (signed out, tenant, awaiting activation, ready).
+
+## Phase 12 — Gallery & Admin Board restyle ✅
+
+- Photo gallery with room tabs (design screen 8): photos are labelled
+  inside / outside / surroundings and the detail page groups them under
+  tabs. The labels are sanitized server-side against an allowlist and the
+  URLs against `/uploads/<file>`, so neither a room name nor an off-site
+  image can be injected through them.
+- The Admin Board restyle: summary tiles, section chips, section headers.
+- `tests/journeys.mjs`: end-to-end tenant and landlord journeys, safe to
+  run against production because every account and listing it creates is
+  labelled `qa_`/"QA test". Opt-in (`--yes-production`) and not run by CI.
+
+## Phase 13 — Admin tabs, traffic reports, transaction deletion ✅
+
+The board was one long page that loaded every account on every visit. At
+a thousand users that is slow; at a hundred thousand it does not render.
+
+- **Users is its own tab** (`components/AdminUsers.jsx`), searched,
+  filtered and paged in Postgres (`listServerAccountsPage`). Search covers
+  name, username, account id, phone and email; filters cover role and
+  subscription status; `per` is capped at 100 so a hand-written
+  `?per=100000` cannot ask for the old behaviour back. The panel fetches
+  only when the tab is opened.
+- **The engagement figures are scoped to the page.** `getAccountMetrics()`
+  used to aggregate every login event and every visit in the database to
+  answer a question about the twenty-five rows on screen; it now takes a
+  list of usernames, and passing none returns nothing rather than
+  everything.
+- **Live-now no longer scans the account table.** It looked up each live
+  user with `.find()` over every account — on a route polled every 30
+  seconds.
+- **Traffic reports** (migration `0012`), daily / weekly / monthly, with
+  CSV download. Six series: visitors, signups, new and returning
+  subscribers, suspensions, deactivations, and revenue by kind.
+  - **Flows sum, stocks do not.** Visitors and revenue add up over a week;
+    "active subscribers" is a level, so the report shows where it ended. A
+    week of forty active subscribers is forty, not two hundred and eighty.
+  - **A visitor is a person, not a request.** One row per visitor per
+    Haiti day, claimed with `ON CONFLICT DO NOTHING`, so the once-a-minute
+    heartbeat from an open tab cannot inflate it. Signed-in people count
+    by account, so a phone and a laptop are one visitor. Never by IP:
+    Haitian carriers put many subscribers behind one address.
+  - **Only what cannot be recomputed is stored.** Signups, new subscribers
+    and revenue are derived live from `accounts.created_at` and the
+    payment ledger, so those reports have full history. Visitors and the
+    active/churn series had no source and begin at the deploy — the same
+    honest limit the account figures carry, and the board says so on
+    screen.
+  - The CSV is rendered from the same report object the screen uses, so a
+    download cannot disagree with the page.
+- **The transfer is identified by phone number, not a transaction ID**
+  (migration `0013`). The landlord is asked for the number they sent the
+  money from, which is what the admin matches against the MonCash/NatCash
+  statement. It is a new column, not a reuse of `reference`: that carries
+  `UNIQUE (provider, reference)`, so a phone number in it would have
+  rejected every landlord's second payment from the same phone — every
+  renewal. `reference` is now generated server-side.
+  - Consequence worth knowing: "one transfer pays once" is gone as a
+    database rule, because a phone number is not a one-time token. What
+    stops a double submission is the one-pending-payment-per-account
+    guard.
+- **Transactions can be deleted, and the deletion is a permanent record.**
+  A test payment sitting in confirmed revenue is a lie about the money, so
+  it has to be removable — but a deletion that leaves no trace is worse.
+  Deleting copies the whole row into `payment_deletions` with who did it
+  and **a mandatory reason**, and only then takes the row out.
+  - Mandatory is a `CHECK` constraint as well as a prompt: a rule enforced
+    only at the edge is a rule the next caller skips.
+  - Nothing in the app clears that table — no route, no helper, no button
+    — and the migration's `down()` deliberately leaves it in place,
+    breaking the usual reversibility rule on purpose. A rollback must not
+    become a way to erase the record of what was erased.
+  - Deleting a confirmed payment does move the revenue figures. It does
+    not reverse what the payment did: an account it activated stays
+    activated, and advertising it paid for keeps running.
+- `tests/traffic.test.mjs` (17 tests) plus deletion tests in
+  `tests/phase4.test.mjs`. Because test files run concurrently against one
+  server, the traffic tests assert properties that survive concurrency —
+  ten pings are not ten visitors; a flow total equals the sum of its own
+  rows — rather than exact global counts.
+- **Fixed in the test suite:** every file signed in as admin separately,
+  which sat exactly on the admin login limit (10 per 15 minutes), so
+  adding one more file made the whole suite fail on a 429.
+  `adminClient()` now shares one session across the suite.
+- Kreyòl wording: the featured-homes section is "Kay vedèt yo" rather than
+  "Kay an piblisite".

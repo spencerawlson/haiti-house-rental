@@ -44,7 +44,7 @@ async function pay(tag, kind, amountGuess) {
   n += 1;
   const r = await as[tag]('/api/payments', {
     method: 'POST',
-    body: { kind, provider: 'moncash', reference: `BL${n}${run}`.toUpperCase() },
+    body: { kind, provider: 'moncash', senderPhone: '30000011' },
   });
   return r;
 }
