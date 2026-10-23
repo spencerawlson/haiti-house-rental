@@ -9,7 +9,9 @@ import { useEffect, useRef, useState } from 'react';
 // between photos.
 // `hero` (Phase 5, design screen 7): one full-bleed photo with a 1/N
 // counter; tapping it opens the lightbox, which pages through them all.
-export default function ListingPhotos({ photos, placeholder, hero = false }) {
+// `grid` (design screen 8): every photo as a 2-column grid; tapping one
+// opens the lightbox. `galleryHref`: the hero counter links to the gallery.
+export default function ListingPhotos({ photos, placeholder, hero = false, grid = false, galleryHref = null }) {
   const [openIndex, setOpenIndex] = useState(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -100,35 +102,10 @@ export default function ListingPhotos({ photos, placeholder, hero = false }) {
     }
   }
 
-  if (!photos || photos.length === 0) {
+  // The zoomable full-screen viewer, shared by every display mode.
+  function lightbox() {
     return (
-      <div className="house-art" style={hero ? { height: 240, borderRadius: 0 } : { borderRadius: 16, marginTop: 16, height: 200 }}>{placeholder}</div>
-    );
-  }
-
-  return (
-    <>
-      <img
-        src={photos[0]}
-        alt=""
-        onClick={() => open(0)}
-        style={hero
-          ? { width: '100%', height: 'min(62vw, 380px)', minHeight: 240, objectFit: 'cover', display: 'block', cursor: 'zoom-in' }
-          : { width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block', cursor: 'zoom-in' }}
-      />
-      {hero && photos.length > 1 && (
-        <button type="button" onClick={() => open(0)} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, border: 'none', borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-          📷 1/{photos.length}
-        </button>
-      )}
-      {!hero && photos.length > 1 && (
-        <div className="gallery">
-          {photos.slice(1).map((src, i) => (
-            <img key={src} src={src} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
-          ))}
-        </div>
-      )}
-      {openIndex !== null && (
+      openIndex !== null && (
         <div
           ref={stageRef}
           onClick={() => setOpenIndex(null)}
@@ -194,7 +171,59 @@ export default function ListingPhotos({ photos, placeholder, hero = false }) {
             <button type="button" onClick={() => applyScale(1)} aria-label="Reset zoom" style={{ height: 44, padding: '0 16px', borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Reset</button>
           </div>
         </div>
+      )
+    );
+  }
+
+  if (!photos || photos.length === 0) {
+    return (
+      <div className="house-art" style={hero ? { height: 240, borderRadius: 0 } : { borderRadius: 16, marginTop: 16, height: 200 }}>{placeholder}</div>
+    );
+  }
+
+  if (grid) {
+    return (
+      <>
+        <div className="photo-grid">
+          {photos.map((src, i) => (
+            <button key={src} type="button" onClick={() => open(i)} aria-label={`${i + 1} / ${photos.length}`}>
+              <img src={src} alt="" loading="lazy" decoding="async" />
+            </button>
+          ))}
+        </div>
+        {lightbox()}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <img
+        src={photos[0]}
+        alt=""
+        onClick={() => open(0)}
+        style={hero
+          ? { width: '100%', height: 'min(62vw, 380px)', minHeight: 240, objectFit: 'cover', display: 'block', cursor: 'zoom-in' }
+          : { width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block', cursor: 'zoom-in' }}
+      />
+      {hero && photos.length > 1 && galleryHref && (
+        <a href={galleryHref} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+          📷 1/{photos.length}
+        </a>
       )}
+      {hero && photos.length > 1 && !galleryHref && (
+        <button type="button" onClick={() => open(0)} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, border: 'none', borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+          📷 1/{photos.length}
+        </button>
+      )}
+      {!hero && photos.length > 1 && (
+        <div className="gallery">
+          {photos.slice(1).map((src, i) => (
+            <img key={src} src={src} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
+          ))}
+        </div>
+      )}
+      {lightbox()}
     </>
   );
 }

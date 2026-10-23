@@ -38,7 +38,7 @@ export default async function ListingDetail(props) {
         <div className="detail-hero">
           <Link href={`${base}/listings`} className="hero-btn" style={{ left: 14 }} aria-label={t.back}>←</Link>
           <FavoriteButton listingId={l.id} />
-          <ListingPhotos photos={l.photos || []} placeholder={communeName(l.commune, params.locale)} hero />
+          <ListingPhotos photos={l.photos || []} placeholder={communeName(l.commune, params.locale)} hero galleryHref={`${base}/listings/${l.id}/photos`} />
         </div>
         <section className="detail-sheet">
           <p style={{ display: 'flex', gap: 8, margin: '0 0 8px', flexWrap: 'wrap' }}>

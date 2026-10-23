@@ -94,3 +94,9 @@ test('Haiti wall-clock honours daylight saving', () => {
   assert.equal(new Date(haitiWallClockToMs('2026-01-15', '10:00')).toISOString(), '2026-01-15T15:00:00.000Z');
   assert.equal(new Date(haitiWallClockToMs('2026-07-15', '10:00')).toISOString(), '2026-07-15T14:00:00.000Z');
 });
+
+test('photo room tags: uploaded photos and known rooms only', () => {
+  const out = sanitizeDetails({ photoTags: { '/uploads/a.jpg': 'inside', '/uploads/b.jpg': 'garage', 'https://evil.example/x.jpg': 'outside', '/uploads/../etc/passwd': 'area' } });
+  assert.deepEqual(out.photoTags, { '/uploads/a.jpg': 'inside' });
+  assert.equal(sanitizeDetails({ photoTags: 'nope' }).photoTags, undefined);
+});

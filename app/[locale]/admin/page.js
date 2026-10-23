@@ -266,12 +266,29 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
   }
 
   return (
-    <main className="container">
-        <BackButton locale={params.locale} />
-      <h1>{t.adminTitle}</h1>
-      <p><button className="btn btn-secondary" type="button" onClick={adminLogout} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signOut}</button></p>
-      <p className="muted">{t.adminNote}</p>
-      <h2>{t.liveNow}</h2>
+    <main className="container admin">
+      <BackButton locale={params.locale} />
+      <header className="topbar" style={{ marginTop: 8 }}>
+        <h1 className="page-title" style={{ margin: 0 }}>🛡️ {t.adminTitle}</h1>
+        <button className="btn btn-secondary" type="button" onClick={adminLogout} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signOut}</button>
+      </header>
+      <p className="muted" style={{ marginTop: 0 }}>{t.adminNote}</p>
+      {/* Summary tiles (same style as the landlord dashboard): what needs
+          the admin now. Each tile jumps to its section. */}
+      <div className="stat-tiles admin-tiles">
+        <a href="#payments" className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{payments.length}</strong><span>{t.dashPendingPayments}{paySummary ? ` · ${paySummary.pendingHTG.toLocaleString()} HTG` : ''}</span></a>
+        <a href="#reports" className="stat-tile tone-purple"><span className="stat-icon">⚑</span><strong>{reports.length}</strong><span>{t.reportsTitle}</span></a>
+        <a href="#accounts" className="stat-tile tone-blue"><span className="stat-icon">⏳</span><strong>{accounts.filter((a) => a.role !== 'tenant' && !a.activated).length}</strong><span>{t.pendingUsers}</span></a>
+        <a href="#listings" className="stat-tile tone-green"><span className="stat-icon">🏠</span><strong>{listings.length}</strong><span>{t.statusLive}</span></a>
+        <a href="#revenue" className="stat-tile tone-green"><span className="stat-icon">💰</span><strong>{(paySummary?.confirmedHTG || 0).toLocaleString()}</strong><span>HTG · {t.payConfirmedTotal}</span></a>
+        <a href="#live" className="stat-tile tone-blue"><span className="stat-icon">🟢</span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
+      </div>
+      <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
+        {[['payments', `💳 ${t.paymentsTitle}`], ['reports', `⚑ ${t.reportsTitle}`], ['accounts', `👥 ${t.accountsTitle}`], ['listings', `🏠 ${t.advertisedTitle || t.adminTitle}`], ['revenue', `💰 ${t.revenueTitle}`], ['settings', `⚙️ ${t.paymentNumbers}`], ['live', `🟢 ${t.liveNow}`]].map(([id, label]) => (
+          <a key={id} className="chip" href={`#${id}`}>{label}</a>
+        ))}
+      </nav>
+      <h2 id="live" className="admin-h2">🟢 {t.liveNow}</h2>
       <p className="muted">{t.liveNowNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
         <span className="chip">🟢 {presence.users.length} {t.liveUsers}</span>
@@ -287,7 +304,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
         ))}
         {presence.users.length === 0 && <p className="muted">{t.noLiveUsers}</p>}
       </div>
-      <h2>{t.paymentNumbers}</h2>
+      <h2 id="settings" className="admin-h2">⚙️ {t.paymentNumbers}</h2>
       <form className="card" onSubmit={saveNumbers}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
           <div className="field"><label>{t.moncashNumber}</label>
@@ -303,7 +320,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
       {channels && (
         <p className="muted" style={{ marginTop: 24 }}>🔔 {t.notifyChannels}: SMS {channels.sms ? `✓ ${t.channelOn}` : t.channelOff} · WhatsApp {channels.whatsapp ? `✓ ${t.channelOn}` : t.channelOff} · Email {channels.email ? `✓ ${t.channelOn}` : t.channelOff}</p>
       )}
-      <h2 style={{ marginTop: 32 }}>💳 {t.paymentsTitle} ({payments.length})</h2>
+      <h2 id="payments" className="admin-h2">💳 {t.paymentsTitle} ({payments.length})</h2>
       {paySummary && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
           <span className="chip">✓ {t.payConfirmedTotal}: <strong style={{ marginLeft: 4 }}>{paySummary.confirmedHTG.toLocaleString()} HTG</strong></span>
@@ -334,7 +351,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           </section>
         ))}
       </div>
-      <h2 style={{ marginTop: 32 }}>⚑ {t.reportsTitle} ({reports.length})</h2>
+      <h2 id="reports" className="admin-h2">⚑ {t.reportsTitle} ({reports.length})</h2>
       <div className="grid" style={{ marginBottom: 16 }}>
         {reports.length === 0 && <p className="muted">{t.noReports}</p>}
         {reports.map((r) => (
@@ -383,7 +400,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           ))}
         </div>
       </details>
-      <h2 style={{ marginTop: 32 }}>{t.accountsTitle}</h2>
+      <h2 id="accounts" className="admin-h2">👥 {t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
       <p className="muted" style={{ marginTop: -6 }}>{t.metricsNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
@@ -438,7 +455,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
         ))}
         {accounts.length === 0 && <p className="muted">{t.noAccounts}</p>}
       </div>
-      <h2 style={{ marginTop: 32 }}>{t.createPartnerAccount}</h2>
+      <h2 className="admin-h2">🤝 {t.createPartnerAccount}</h2>
       <p className="muted">{t.partnerNote}</p>
       <form className="card" onSubmit={createPartner}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
@@ -476,7 +493,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           {partnerMessage && <p style={{ margin: 0 }}>{partnerMessage}</p>}
         </div>
       </form>
-      <h2 style={{ marginTop: 32 }}>{t.revenueTitle}</h2>
+      <h2 id="revenue" className="admin-h2">💰 {t.revenueTitle}</h2>
       <div className="card">
         <div className="card-body">
           <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 4px' }}>{revenue.totalHTG.toLocaleString()} HTG</p>
@@ -498,7 +515,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
         ))}
         {revenue.entries.length === 0 && <p className="muted">{t.noActivations}</p>}
       </div>
-      <h2 style={{ marginTop: 32 }}>{t.converterTitle}</h2>
+      <h2 className="admin-h2">💱 {t.converterTitle}</h2>
       <div className="card">
         <div className="card-body" style={{ display: 'grid', gap: 12 }}>
           <div className="field"><label>{t.converterAmount}</label>
@@ -524,7 +541,7 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           </div>
         </div>
       </div>
-      <h2 style={{ marginTop: 32 }}>{t.advertisedTitle || t.adminTitle}</h2>
+      <h2 id="listings" className="admin-h2">🏠 {t.advertisedTitle || t.adminTitle}</h2>
       <div className="grid">
         {listings.map((l) => (
           <section key={l.id} className="card">
