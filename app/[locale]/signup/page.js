@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { ACTIVATION_FEE_HTG } from '@/lib/config';
+import { JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
 import { createAccount } from '@/lib/account';
 import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
@@ -142,7 +142,7 @@ export default function Signup(props) {
             <div className="role-cards" role="radiogroup" aria-label={t.chooseRole}>
               {[
                 { id: 'tenant', icon: '👤', title: t.roleTenant, sub: t.roleTenantSub, extra: t.free },
-                { id: 'landlord', icon: '🏠', title: t.roleLandlord, sub: t.roleLandlordSub, extra: `${ACTIVATION_FEE_HTG.toLocaleString()} HTG ${t.oneTime}` },
+                { id: 'landlord', icon: '🏠', title: t.roleLandlord, sub: t.roleLandlordSub, extra: `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}` },
                 { id: 'admin', icon: '🛡️', title: t.roleAdmin, sub: '', extra: '' },
               ].map((r) => (
                 <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={`role-card${role === r.id ? ' selected' : ''}`} onClick={() => setRole(r.id)}>
@@ -220,7 +220,7 @@ export default function Signup(props) {
               <p>{t.accountCreated}</p>
               <p>{t.sendTransfer}</p>
               <p className="muted" style={{ margin: 0 }}>{t.fromYourNumber} {phone}</p>
-              <PaymentForm kind="activation" amountHTG={ACTIVATION_FEE_HTG} destination={destination} strings={t} onSubmitted={() => router.push(`/${params.locale}/account`)} />
+              <PaymentForm kind="join" amountHTG={JOIN_FEE_HTG} destination={destination} strings={t} onSubmitted={() => router.push(`/${params.locale}/account`)} />
               <p className="muted" style={{ margin: 0 }}>{t.transferNote}</p>
               <Link href={`/${params.locale}/account`}>{t.payLater} ›</Link>
             </div>

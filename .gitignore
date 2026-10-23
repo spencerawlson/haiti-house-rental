@@ -6,3 +6,4 @@ backups/
 .env.*
 !.env.example
 node_modules*/
+tmp_*

@@ -27,6 +27,7 @@ lib/password.js       scrypt hashing
 lib/rate-limit.js     in-memory limiter
 lib/chat-auth.js      who is owner/tenant on a thread
 lib/listing-details.js allowed detail fields + sanitizer (client-safe)
+lib/billing-server.js  the landlord subscription lifecycle and its sweep
 lib/reminders-server.js visit reminders (2 days / 1 day / morning) and the
                       Haiti-time window logic they fire in
 app/api/cron/         the scheduled job: due deletions + due reminders,
@@ -54,7 +55,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 
 | Table | Holds |
 |-------|-------|
-| accounts | users; `password_hash` = scrypt over the browser SHA-256; `avatar_url` = optional profile photo (an `/uploads/` path this server wrote) |
+| accounts | users; `password_hash` = scrypt over the browser SHA-256; `avatar_url` = optional profile photo (an `/uploads/` path this server wrote); `billing_status` / `paid_until` / `suspended_at` = the landlord subscription (`paid_until` NULL = never expires: tenants and partners) |
 | sessions | `sha256(token)`, username, expiry |
 | listings | listings; `status` is active, removed, sold or leased; `sold_at` starts the 48 h auto-deletion; `details` JSONB (sanitized); `verified` (admin only); `views` (owner-only count). The owner can delete one for good — row, photos, chats and visits all go (`/api/listings/delete`) |
 | chat_messages | messages; a thread = (`listing_id`, `tenant`) |
@@ -69,6 +70,7 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | migrations | legacy run-once data steps (used inside the 0001 baseline) |
 | schema_migrations | applied migration versions (Phase 6) |
 | audit_log | admin/security actions: actor, action, target, details |
+| billing_reminders | which subscription warnings have gone out: PK (`username`, `period_end`, `kind`) is the claim that makes the job safe to re-run |
 | visit_reminders | which reminders have gone out: PK (`visit_id`, `kind`) is the claim that makes the job safe to re-run |
 | login_events | one row per sign-in (tied to its session by `token_hash`): `at`, `last_seen_at`, `ended_at`. Feeds the Admin Board's per-account figures. Append-only; never consulted for authorization |
 
@@ -89,6 +91,9 @@ them in `schema_migrations`.
 - `0008 login_events` adds the login-history table behind the Admin
   Board's account figures (last seen, logins, average session).
 - `0009 visit_reminders` adds the sent-reminder claims table.
+- `0010 quarterly_billing` turns the landlord fee into a subscription and
+  grandfathers existing payers with a full quarter.
+- `0011 billing_reminders` adds the "payment due soon" claims table.
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
 
 ## Testing

@@ -165,6 +165,43 @@ Original scope:
   use seconds instead of two days; CI sets it, and the sweep test skips
   when it is unset rather than passing without checking anything.
 
+## Phase 11 — Landlord subscription ✅
+
+The one-time activation fee became a quarterly subscription (migration
+`0010`): **1500 HTG** to join, **1000 HTG** every 3 calendar months,
+suspension when a quarter lapses, deactivation 30 days after that, and
+**1500 HTG** to come back.
+
+- `billing_status` is pending | active | suspended | deactivated, with
+  `paid_until` and `suspended_at`. `paid_until` NULL means "never
+  expires" — tenants (free) and partner accounts.
+- **`activated` stays the single gate for "may post"**, kept in step with
+  the subscription. Every existing permission check already reads it, so
+  suspension enforces itself through code that is already tested instead
+  of a second rule nobody remembers.
+- **Suspension has teeth:** a lapsed landlord's homes leave search AND
+  stop resolving by direct link. They stay in the landlord's own library,
+  and chats and visits keep working, so paying brings everything back and
+  nobody loses a conversation over a late payment.
+- The server decides what is owed (`dueKindFor`), so a landlord cannot
+  pay the cheaper quarter when the joining fee is due. Prices come from
+  config, never from the client.
+- Time is only ever ADDED from the later of now and `paid_until`: paying
+  early never loses days bought, paying late never back-dates a quarter.
+- Transitions run from the scheduled job added in Phase 10.
+- `/api/admin/billing` lets the admin override a status (goodwill, or
+  fixing a mistake), audited.
+- **Grandfathering:** landlords who already paid the old one-time fee get
+  a full quarter from the migration, not from their original activation.
+- **A week's warning before the quarter ends** (migration `0011`): the
+  suspension notice used to be the first a landlord heard of it, by which
+  point their homes had already left the site. The warning names the
+  amount and the date, and is sent once per billing period — the claim in
+  `billing_reminders` is what stops a five-minute job becoming a
+  five-minute reminder. Renewing earns a fresh warning for the new
+  period. The job warns before it sweeps, so an account on the edge is
+  never warned and suspended in the same run.
+
 ## Phase 10 — Scheduled jobs & visit reminders ✅
 
 - **A real scheduler.** The 48-hour deletion used to run off page traffic,

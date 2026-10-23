@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
-import { getListing } from '@/lib/listings-server';
+import { getPublicListing } from '@/lib/listings-server';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
@@ -24,7 +24,7 @@ export default async function ListingDetail(props) {
   const params = await props.params;
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
-  const l = await getListing(params.id);
+  const l = await getPublicListing(params.id);
   if (!l || !['active', 'sold', 'leased'].includes(l.status)) notFound();
   // A sold or leased home stays visible, tagged, and uncontactable. The
   // deletion countdown is deliberately not shown here — only its owner

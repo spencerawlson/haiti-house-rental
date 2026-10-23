@@ -1,4 +1,4 @@
-import { getListings, getListing, getListingsForOwner, addListing, updateListing } from '@/lib/listings-server';
+import { getListings, getListing, getPublicListing, getListingsForOwner, addListing, updateListing } from '@/lib/listings-server';
 import { resolveCommune } from '@/lib/listings';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
@@ -10,7 +10,8 @@ export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const id = params.get('id') || '';
   if (id) {
-    const listing = await getListing(id);
+    // Public read: also gone if the landlord's subscription has lapsed.
+    const listing = await getPublicListing(id);
     // Sold and leased homes are still served: they stay on the site with
     // their tag until the 48-hour sweep removes them.
     if (!listing || !['active', 'sold', 'leased'].includes(listing.status)) {

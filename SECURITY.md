@@ -93,6 +93,8 @@ A nonce-based CSP is still to do.
 | Submit a payment reference | Landlord (activation: own account; advertising: own active listing) |
 | Confirm / reject a payment | Admin only; a payment can be confirmed once |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
+| Change an account's subscription state | Admin only (`/api/admin/billing`), audited. Only the four known statuses are accepted. Setting `active` never shortens a period already paid for. |
+| Submit a subscription payment | The account itself, and only the kind the SERVER says is owed (`dueKindFor`) — a landlord cannot pay the cheaper quarter when the joining or reactivation fee is due. Prices come from `lib/config.js`, never from the client. |
 | Trigger the scheduled job (`/api/cron`) | Anyone holding `CRON_SECRET`. Compared in constant time; **fail closed** — with no secret set the endpoint answers 503 rather than running. Rate-limited per IP. It is reachable through the tunnel, so the secret is the only thing in front of it; keep it out of the repo like `ADMIN_PASSWORD`. |
 | Per-account engagement figures (last seen, logins, average session, visits) | Admin only. Merged into the admin-gated `GET /api/accounts` list, never into `pub()`, so they cannot reach a public profile or `/api/accounts/me`. Tested. |
 | Public profile lookup | Anyone — username, name, role only |

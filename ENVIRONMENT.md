@@ -13,6 +13,9 @@ never in the repo.
 | `SHOW_DEMO_LISTINGS` | no | app | `true` shows the 7 seeded demo listings (previews only). Unset in production: demos stay hidden. |
 | `CRON_SECRET` | **for scheduled jobs** | app + cron | Shared secret for `POST /api/cron`, which sends visit reminders and deletes sold/leased homes whose 48 h are up. Unset = the endpoint answers 503 and nothing is scheduled. Generate with `openssl rand -hex 32`; must match on both services. |
 | `CRON_INTERVAL` | no | cron | Seconds between scheduled runs. Default 300 (5 min). |
+| `BILLING_QUARTER_MS` | no | app | Length of a paid quarter. Default: 3 **calendar** months. Only the regression tests set it (to a few seconds) — leave unset in production. |
+| `BILLING_DUE_REMINDER_MS` | no | app | How early the "payment due soon" reminder goes out. Default 7 days. Test-only; shorten it alongside `BILLING_QUARTER_MS` or every account looks permanently due. |
+| `BILLING_GRACE_MS` | no | app | How long a suspended account has before deactivation. Default 30 days. Test-only, as above. |
 | `SOLD_DELETE_AFTER_MS` | no | app | How long a home marked sold/leased waits before it is deleted for good. Default 48 h. Only the regression tests set it (to a few seconds) — leave it unset in production. |
 | `BACKUP_DIR` | no | backup service | Host folder for automatic backups (default `./backups`). |
 | `BACKUP_KEEP_DAYS` | no | backup service | Days to keep backups (default 14). |
