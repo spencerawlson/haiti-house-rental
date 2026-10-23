@@ -36,6 +36,10 @@ export default function Admin(props) {
   const [reports, setReports] = useState([]);
   const [payments, setPayments] = useState([]);
   const [paySummary, setPaySummary] = useState(null);
+  // Which slice of the payment queue the board shows. Pending is the
+  // default because that is the work queue — but a confirmed payment
+  // must be reachable too, or its delete button can never appear.
+  const [payStatus, setPayStatus] = useState('pending');
   // The permanent record of deleted transactions. Read-only: there is no
   // code path anywhere that removes an entry from it.
   const [deletions, setDeletions] = useState([]);
@@ -61,6 +65,16 @@ export default function Admin(props) {
     }
   }
 
+  async function loadPayments(status) {
+    const payres = await fetch(`/api/admin/payments?status=${status}`);
+    if (payres.ok) {
+      const data = await payres.json();
+      setPayments(data.payments || []);
+      setPaySummary(data.summary);
+      setDeletions(data.deletions || []);
+    }
+  }
+
   async function load() {
     const res = await fetch('/api/listings');
     if (res.ok) {
@@ -73,13 +87,7 @@ export default function Admin(props) {
       setRevenue(data);
       if (!convertAmount) setConvertAmount(String(data.totalHTG));
     }
-    const payres = await fetch('/api/admin/payments');
-    if (payres.ok) {
-      const data = await payres.json();
-      setPayments(data.payments || []);
-      setPaySummary(data.summary);
-      setDeletions(data.deletions || []);
-    }
+    await loadPayments(payStatus);
     const chres = await fetch('/api/admin/notify-status');
     if (chres.ok) setChannels(await chres.json());
     const audres = await fetch('/api/admin/audit');
@@ -252,7 +260,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
       {/* Summary tiles (same style as the landlord dashboard): what needs
           the admin now. Each tile jumps to its section. */}
       <div className="stat-tiles admin-tiles">
-        <a href="#payments" className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{payments.length}</strong><span>{t.dashPendingPayments}{paySummary ? ` · ${paySummary.pendingHTG.toLocaleString()} HTG` : ''}</span></a>
+        <a href="#payments" className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{paySummary ? paySummary.pendingCount : '—'}</strong><span>{t.dashPendingPayments}{paySummary ? ` · ${paySummary.pendingHTG.toLocaleString()} HTG` : ''}</span></a>
         <a href="#reports" className="stat-tile tone-purple"><span className="stat-icon">⚑</span><strong>{reports.length}</strong><span>{t.reportsTitle}</span></a>
         {/* Counted in Postgres, not by filtering a download of every
             account. Switches tabs rather than jumping to an anchor. */}
@@ -308,8 +316,19 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           <span className="chip">{t.payKindAdvertising}: {paySummary.byKind.advertising.confirmedHTG.toLocaleString()} HTG</span>
         </div>
       )}
+      {/* The queue filter. Pending is the work queue, but confirmed and
+          rejected payments must be reachable — a confirmed test payment
+          can only be deleted from a list that shows it. */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
+        <select className="input" style={{ maxWidth: 220 }} value={payStatus} onChange={(e) => { const s = e.target.value; setPayStatus(s); loadPayments(s); }} aria-label={t.paymentsTitle}>
+          <option value="pending">{t.payPending}</option>
+          <option value="confirmed">{t.payConfirmed}</option>
+          <option value="rejected">{t.payRejected}</option>
+          <option value="all">{t.all}</option>
+        </select>
+      </div>
       <div className="grid" style={{ marginBottom: 16 }}>
-        {payments.length === 0 && <p className="muted">{t.noPendingPayments}</p>}
+        {payments.length === 0 && <p className="muted">{payStatus === 'pending' ? t.noPendingPayments : '—'}</p>}
         {payments.map((p) => (
           <section key={p.id} className="card">
             <div className="card-body" style={{ display: 'grid', gap: 6 }}>
@@ -325,8 +344,14 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                 {p.accountName} · @{p.username} · {t.transferFrom} {p.accountPhone} · {new Date(p.submittedAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)}
               </p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button className="btn" type="button" onClick={() => reviewPayment(p, 'confirmed')} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.payConfirmBtn}</button>
-                <button className="btn btn-secondary" type="button" onClick={() => reviewPayment(p, 'rejected')} style={{ minHeight: 40, padding: '8px 16px' }}>{t.payRejectBtn}</button>
+                {/* Confirm/Reject only make sense on a pending payment —
+                    confirming an already-confirmed row would just 409. */}
+                {p.status === 'pending' && (
+                  <>
+                    <button className="btn" type="button" onClick={() => reviewPayment(p, 'confirmed')} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.payConfirmBtn}</button>
+                    <button className="btn btn-secondary" type="button" onClick={() => reviewPayment(p, 'rejected')} style={{ minHeight: 40, padding: '8px 16px' }}>{t.payRejectBtn}</button>
+                  </>
+                )}
                 <button className="btn btn-danger" type="button" onClick={() => deleteTransaction(p)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.payDeleteBtn}</button>
               </div>
             </div>
