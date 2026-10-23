@@ -165,6 +165,33 @@ Original scope:
   use seconds instead of two days; CI sets it, and the sweep test skips
   when it is unset rather than passing without checking anything.
 
+## Phase 10 — Scheduled jobs & visit reminders ✅
+
+- **A real scheduler.** The 48-hour deletion used to run off page traffic,
+  so it fired on the first view after the deadline and never on an idle
+  site. There is now a `cron` service (`scripts/cron-loop.sh`, the same
+  shape as the backup loop) calling `POST /api/cron` every 5 minutes.
+  The endpoint is guarded by `CRON_SECRET`, compared in constant time,
+  and **fails closed**: with no secret set it answers 503 instead of
+  running. Each job is isolated, so one failing does not stop the other,
+  and the reply says which failed. The read-path sweep stays as a
+  backstop for a deployment that has not configured cron.
+- **Visit reminders** (migration `0009`): both sides of a *confirmed*
+  visit are nudged two days before, one day before, and on the morning of
+  the day (from 06:00 Haiti time). Sent in each person's own language,
+  through whichever channels are configured, plus the in-app inbox.
+  - Reminders fire in **windows**, not at deadlines, so a visit confirmed
+    two hours beforehand gets the morning nudge only instead of all three
+    at once — and a reminder whose window has closed is skipped rather
+    than arriving absurdly late.
+  - Exactly-once comes from the claim in `visit_reminders` (PK per visit
+    per kind), taken *before* sending: a crash loses a reminder rather
+    than sending a duplicate, which is the right way round when each SMS
+    costs money.
+  - Rescheduling clears the record, so the new date gets a fresh set.
+  - Haiti observes daylight saving, so the offset is read from the date
+    rather than hardcoded (tested against January and July).
+
 ## Phase 9b — Corrections ✅
 
 - **A tenant no longer loses their chat history** when a landlord deletes

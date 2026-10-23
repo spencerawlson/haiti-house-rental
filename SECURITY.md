@@ -90,6 +90,7 @@ A nonce-based CSP is still to do.
 | Submit a payment reference | Landlord (activation: own account; advertising: own active listing) |
 | Confirm / reject a payment | Admin only; a payment can be confirmed once |
 | Full accounts list, activation, advertising, partners, revenue, settings | Admin (middleware gate) |
+| Trigger the scheduled job (`/api/cron`) | Anyone holding `CRON_SECRET`. Compared in constant time; **fail closed** — with no secret set the endpoint answers 503 rather than running. Rate-limited per IP. It is reachable through the tunnel, so the secret is the only thing in front of it; keep it out of the repo like `ADMIN_PASSWORD`. |
 | Per-account engagement figures (last seen, logins, average session, visits) | Admin only. Merged into the admin-gated `GET /api/accounts` list, never into `pub()`, so they cannot reach a public profile or `/api/accounts/me`. Tested. |
 | Public profile lookup | Anyone — username, name, role only |
 
@@ -113,6 +114,7 @@ Read and hidden markers moved with their threads.
 | Upload | 60 / hour per account |
 | Profile photo | 10 / hour per account |
 | Listing view count | 120 / hour per IP (volume ceiling), then 1 per viewer per 30 min |
+| Scheduled job (`/api/cron`) | 60 / hour per IP |
 | Chat send | 30 / min per account |
 
 The client IP comes from `cf-connecting-ip` (Cloudflare Tunnel). Per-IP
