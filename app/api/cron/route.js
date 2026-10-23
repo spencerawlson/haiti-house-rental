@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'crypto';
 import { sweepSoldListings } from '@/lib/listings-server';
 import { sendVisitReminders } from '@/lib/reminders-server';
 import { sweepBilling, sendDueReminders } from '@/lib/billing-server';
+import { snapshotDailyMetrics } from '@/lib/traffic-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 import { log } from '@/lib/log';
 
@@ -77,6 +78,15 @@ async function run(request) {
   } catch (e) {
     result.errors.push(`billing: ${e.message}`);
     log('error', 'cron.billing_failed', { message: e.message });
+  }
+  try {
+    // Last, so today's level reflects the suspensions this run just made
+    // rather than the state it found on arrival.
+    const snap = await snapshotDailyMetrics();
+    result.subsActive = snap.subs_active;
+  } catch (e) {
+    result.errors.push(`metrics: ${e.message}`);
+    log('error', 'cron.metrics_failed', { message: e.message });
   }
   result.ms = Date.now() - started;
   log('info', 'cron.ran', result);

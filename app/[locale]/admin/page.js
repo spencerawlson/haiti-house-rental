@@ -1,46 +1,44 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useCallback, useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
-import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { hashPassword } from '@/lib/account';
+import { communeName } from '@/lib/departments';
 import BackButton from '@/components/BackButton';
+import AdminUsers from '@/components/AdminUsers';
+import AdminTraffic from '@/components/AdminTraffic';
 
 // Admin: approve or remove advertising, track activation revenue, and
 // convert it. Nothing here is automatic — a landlord's advertising
 // checkbox is only a request until the admin approves, and revenue is
 // logged only when the admin activates an account.
-// Engagement figures on each account card (0008). "—" means not
-// recorded rather than zero: login history only starts at the deploy that
-// added it, so an older account genuinely has nothing to show.
-function sinceLabel(ms, t) {
-  if (!ms) return '—';
-  const mins = Math.floor((Date.now() - ms) / 60000);
-  if (mins < 1) return t.justNow;
-  if (mins < 60) return `${mins} min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} h`;
-  return `${Math.floor(hours / 24)} j`;
-}
-
-function durationLabel(ms) {
-  if (ms === null || ms === undefined) return '—';
-  const mins = Math.round(ms / 60000);
-  if (mins < 1) return '< 1 min';
-  if (mins < 60) return `${mins} min`;
-  return `${Math.floor(mins / 60)} h ${mins % 60} min`;
-}
+//
+// The board is TABBED rather than one long scroll. Accounts moved behind
+// their own tab (components/AdminUsers.jsx) because the list is a page of
+// a table that may have a hundred thousand rows behind it: it has to be
+// searched and paged on the server, and it must not be loading underneath
+// the payment queue on every visit. Each panel fetches its own data when
+// it is opened.
+const TABS = ['overview', 'users'];
 
 export default function Admin(props) {
   const params = use(props.params);
   const t = getDict(params.locale);
+  const [tab, setTab] = useState('overview');
   const [listings, setListings] = useState([]);
-  const [accounts, setAccounts] = useState([]);
-  const [resetCodes, setResetCodes] = useState({});
+  // Headline counts from the server. These used to be computed in the
+  // browser by filtering the full account list, which only worked while
+  // the whole list was being shipped to the browser.
+  const [counts, setCounts] = useState(null);
+  // Stable, because AdminTraffic's fetch depends on it: a fresh function
+  // identity each render would restart that fetch in a loop.
+  const onCounts = useCallback((c) => setCounts(c), []);
   const [reports, setReports] = useState([]);
   const [payments, setPayments] = useState([]);
   const [paySummary, setPaySummary] = useState(null);
+  // The permanent record of deleted transactions. Read-only: there is no
+  // code path anywhere that removes an entry from it.
+  const [deletions, setDeletions] = useState([]);
   const [auditEntries, setAuditEntries] = useState([]);
   const [channels, setChannels] = useState(null);
   const [reportThreads, setReportThreads] = useState({});
@@ -52,14 +50,6 @@ export default function Admin(props) {
   const [natcashNumber, setNatcashNumber] = useState('');
   const [numbersSaved, setNumbersSaved] = useState(false);
   const [presence, setPresence] = useState({ users: [], visitors: 0 });
-  const [partnerName, setPartnerName] = useState('');
-  const [partnerUsername, setPartnerUsername] = useState('');
-  const [partnerPassword, setPartnerPassword] = useState('');
-  const [partnerPhone, setPartnerPhone] = useState('');
-  const [partnerEmail, setPartnerEmail] = useState('');
-  const [partnerDepartment, setPartnerDepartment] = useState('ouest');
-  const [partnerCommune, setPartnerCommune] = useState('');
-  const [partnerMessage, setPartnerMessage] = useState('');
 
   async function loadRates(fresh) {
     const res = await fetch(`/api/rates${fresh ? '?fresh=1' : ''}`);
@@ -77,11 +67,6 @@ export default function Admin(props) {
       const data = await res.json();
       setListings(data.listings);
     }
-    const ares = await fetch('/api/accounts');
-    if (ares.ok) {
-      const data = await ares.json();
-      setAccounts(data.accounts);
-    }
     const rres = await fetch('/api/admin/revenue');
     if (rres.ok) {
       const data = await rres.json();
@@ -93,6 +78,7 @@ export default function Admin(props) {
       const data = await payres.json();
       setPayments(data.payments || []);
       setPaySummary(data.summary);
+      setDeletions(data.deletions || []);
     }
     const chres = await fetch('/api/admin/notify-status');
     if (chres.ok) setChannels(await chres.json());
@@ -171,6 +157,31 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
     load();
   }
 
+  // Delete a transaction (a test payment, a duplicate). The reason is
+  // mandatory: an empty or cancelled prompt stops here, and the server
+  // refuses a blank reason too — the deletion is recorded forever, so a
+  // record with no stated reason would be the one thing it cannot fix.
+  async function deleteTransaction(p) {
+    if (!window.confirm(`${t.payDeleteConfirm}
+${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
+    const reason = window.prompt(t.payDeleteReasonPrompt);
+    if (reason === null) return;
+    if (!reason.trim()) {
+      window.alert(t.payDeleteReasonRequired);
+      return;
+    }
+    const res = await fetch('/api/admin/payments', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: p.id, reason }),
+    });
+    if (!res.ok) {
+      window.alert(t.payDeleteFailed);
+      return;
+    }
+    load();
+  }
+
   // Moderator view of a reported conversation (toggle).
   async function viewReportedThread(report) {
     if (reportThreads[report.id]) {
@@ -203,63 +214,6 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
     load();
   }
 
-  async function setActivated(username, activated) {
-    await fetch('/api/admin/activate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, activated }),
-    });
-    load();
-  }
-
-  async function createPartner(e) {
-    e.preventDefault();
-    setPartnerMessage('');
-    const res = await fetch('/api/admin/partner', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: partnerName.trim() || partnerUsername.trim(),
-        username: partnerUsername.trim(),
-        passwordHash: await hashPassword(partnerPassword),
-        phone: partnerPhone.trim(),
-        email: partnerEmail.trim(),
-        location: { department: partnerDepartment, commune: partnerCommune },
-      }),
-    });
-    if (res.status === 409) {
-      setPartnerMessage(t.partnerExists);
-      return;
-    }
-    if (!res.ok) {
-      setPartnerMessage(t.partnerExists);
-      return;
-    }
-    setPartnerMessage(t.partnerCreated);
-    setPartnerName('');
-    setPartnerUsername('');
-    setPartnerPassword('');
-    setPartnerPhone('');
-    setPartnerEmail('');
-    setPartnerCommune('');
-    load();
-  }
-
-  // Admin-assisted recovery: confirm who is asking (call back the phone
-  // on the account) before reading the code to them.
-  async function issueResetCode(username) {
-    if (!window.confirm(t.resetCodeConfirm)) return;
-    const res = await fetch('/api/admin/reset-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setResetCodes((prev) => ({ ...prev, [username]: data.code }));
-    }
-  }
-
   async function adminLogout() {
     await fetch('/api/admin/logout', { method: 'POST' });
     window.location.href = `/${params.locale}/admin-login`;
@@ -273,21 +227,46 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
         <button className="btn btn-secondary" type="button" onClick={adminLogout} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signOut}</button>
       </header>
       <p className="muted" style={{ marginTop: 0 }}>{t.adminNote}</p>
+
+      {/* Tabs. Users is its own panel because the account list is paged
+          from the server — it must not render underneath everything else. */}
+      <div className="tabs" role="tablist" aria-label={t.adminTitle}>
+        {TABS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            className="tab"
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+          >
+            {id === 'overview' ? `📋 ${t.tabOverview}` : `👥 ${t.accountsTitle}`}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'users' && <AdminUsers locale={params.locale} t={t} />}
+
+      {tab === 'overview' && (
+      <>
       {/* Summary tiles (same style as the landlord dashboard): what needs
           the admin now. Each tile jumps to its section. */}
       <div className="stat-tiles admin-tiles">
         <a href="#payments" className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{payments.length}</strong><span>{t.dashPendingPayments}{paySummary ? ` · ${paySummary.pendingHTG.toLocaleString()} HTG` : ''}</span></a>
         <a href="#reports" className="stat-tile tone-purple"><span className="stat-icon">⚑</span><strong>{reports.length}</strong><span>{t.reportsTitle}</span></a>
-        <a href="#accounts" className="stat-tile tone-blue"><span className="stat-icon">⏳</span><strong>{accounts.filter((a) => a.role !== 'tenant' && !a.activated).length}</strong><span>{t.pendingUsers}</span></a>
+        {/* Counted in Postgres, not by filtering a download of every
+            account. Switches tabs rather than jumping to an anchor. */}
+        <button type="button" className="stat-tile tone-blue" onClick={() => setTab('users')}><span className="stat-icon">⏳</span><strong>{counts ? counts.pendingActivation : '—'}</strong><span>{t.pendingUsers}</span></button>
         <a href="#listings" className="stat-tile tone-green"><span className="stat-icon">🏠</span><strong>{listings.length}</strong><span>{t.statusLive}</span></a>
         <a href="#revenue" className="stat-tile tone-green"><span className="stat-icon">💰</span><strong>{(paySummary?.confirmedHTG || 0).toLocaleString()}</strong><span>HTG · {t.payConfirmedTotal}</span></a>
         <a href="#live" className="stat-tile tone-blue"><span className="stat-icon">🟢</span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
       </div>
       <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
-        {[['payments', `💳 ${t.paymentsTitle}`], ['reports', `⚑ ${t.reportsTitle}`], ['accounts', `👥 ${t.accountsTitle}`], ['listings', `🏠 ${t.advertisedTitle || t.adminTitle}`], ['revenue', `💰 ${t.revenueTitle}`], ['settings', `⚙️ ${t.paymentNumbers}`], ['live', `🟢 ${t.liveNow}`]].map(([id, label]) => (
+        {[['traffic', `📈 ${t.trafficTitle}`], ['payments', `💳 ${t.paymentsTitle}`], ['reports', `⚑ ${t.reportsTitle}`], ['listings', `🏠 ${t.advertisedTitle || t.adminTitle}`], ['revenue', `💰 ${t.revenueTitle}`], ['settings', `⚙️ ${t.paymentNumbers}`], ['live', `🟢 ${t.liveNow}`]].map(([id, label]) => (
           <a key={id} className="chip" href={`#${id}`}>{label}</a>
         ))}
       </nav>
+      <AdminTraffic locale={params.locale} t={t} onCounts={onCounts} />
       <h2 id="live" className="admin-h2">🟢 {t.liveNow}</h2>
       <p className="muted">{t.liveNowNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -335,7 +314,9 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           <section key={p.id} className="card">
             <div className="card-body" style={{ display: 'grid', gap: 6 }}>
               <p style={{ margin: 0 }}>
-                <strong>{p.amountHTG.toLocaleString()} HTG</strong> · {p.provider === 'natcash' ? 'NatCash' : 'MonCash'} · <code style={{ fontSize: '1rem' }}>{p.reference}</code>
+                {/* The phone the transfer was sent from — what you match
+                    against the MonCash/NatCash statement. */}
+                <strong>{p.amountHTG.toLocaleString()} HTG</strong> · {p.provider === 'natcash' ? 'NatCash' : 'MonCash'} · <code style={{ fontSize: '1rem' }}>{p.senderPhone || p.reference}</code>
               </p>
               <p className="muted" style={{ margin: 0 }}>
                 {p.kind === 'advertising' ? `${t.payKindAdvertising} · ${p.months} ${t.payMonthUnit} · ${p.listingTitle || p.listingId}` : t.payKindActivation}
@@ -346,11 +327,36 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="btn" type="button" onClick={() => reviewPayment(p, 'confirmed')} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.payConfirmBtn}</button>
                 <button className="btn btn-secondary" type="button" onClick={() => reviewPayment(p, 'rejected')} style={{ minHeight: 40, padding: '8px 16px' }}>{t.payRejectBtn}</button>
+                <button className="btn btn-danger" type="button" onClick={() => deleteTransaction(p)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.payDeleteBtn}</button>
               </div>
             </div>
           </section>
         ))}
       </div>
+      {/* Deleted transactions. Kept forever and on purpose: a deletion
+          that leaves no trace is worse than the test payment it removed.
+          Nothing on this screen — or anywhere in the app — can clear an
+          entry from this list. */}
+      <details className="card" style={{ marginBottom: 16 }}>
+        <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}>🗑 {t.payDeletedTitle} ({deletions.length})</summary>
+        <div className="card-body" style={{ display: 'grid', gap: 8, paddingTop: 4 }}>
+          <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>{t.payDeletedNote}</p>
+          {deletions.length === 0 && <p className="muted" style={{ margin: 0 }}>—</p>}
+          {deletions.map((d) => (
+            <div key={d.id} style={{ borderTop: '1px solid var(--line)', paddingTop: 8 }}>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                <strong>{d.amountHTG.toLocaleString()} HTG</strong> · {d.provider === 'natcash' ? 'NatCash' : 'MonCash'}
+                {d.senderPhone ? ` · ${d.senderPhone}` : ''} · @{d.username}
+                {' · '}<span className="muted">{{ confirmed: t.payConfirmed, rejected: t.payRejected, pending: t.payPending }[d.status] || d.status}</span>
+              </p>
+              <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
+                {new Date(d.deletedAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)} · {d.deletedBy}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.9rem' }}>💬 {d.reason}</p>
+            </div>
+          ))}
+        </div>
+      </details>
       <h2 id="reports" className="admin-h2">⚑ {t.reportsTitle} ({reports.length})</h2>
       <div className="grid" style={{ marginBottom: 16 }}>
         {reports.length === 0 && <p className="muted">{t.noReports}</p>}
@@ -400,99 +406,6 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           ))}
         </div>
       </details>
-      <h2 id="accounts" className="admin-h2">👥 {t.accountsTitle}</h2>
-      <p className="muted">{t.accountsNote}</p>
-      <p className="muted" style={{ marginTop: -6 }}>{t.metricsNote}</p>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        <span className="chip">{t.totalUsers}: {accounts.length}</span>
-        <span className="chip">{t.liveUsers}: {accounts.filter((a) => a.activated).length}</span>
-        <span className="chip">{t.pendingUsers}: {accounts.filter((a) => !a.activated).length}</span>
-      </div>
-      <div className="grid">
-        {accounts.map((a) => (
-          <section key={a.username} className="card">
-            <div className="card-body">
-              <h3 style={{ margin: '0 0 4px' }}>{a.id ? `${a.id} · ` : ''}{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? ` · 🤝 ${t.partner}` : ''}</h3>
-              <p className="muted" style={{ margin: '0 0 4px' }}>
-                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${communeName(a.location.commune, params.locale)}, ${departmentName(a.location.department, params.locale)}` : ''}
-              </p>
-              <p className="muted" style={{ margin: '0 0 8px' }}>
-                {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
-                {a.role === 'landlord' && !a.partner && (
-                  <>
-                    {' · '}
-                    {{ pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[a.billingStatus || 'pending']}
-                    {a.paidUntil ? ` · ${t.paidUntilLabel} ${new Date(a.paidUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}` : ''}
-                  </>
-                )}
-              </p>
-              <div className="metric-row">
-                <span title={t.lastSeenHelp}>
-                  👁 {t.lastSeen}: <strong>{sinceLabel(a.metrics?.lastSeenAt, t)}</strong>
-                  {a.metrics?.activeSessions > 0 && <span className="live-dot" title={t.liveNow} />}
-                </span>
-                <span title={t.loginsHelp}>🔑 {t.logins}: <strong>{a.metrics?.logins ?? 0}</strong></span>
-                <span title={t.avgSessionHelp}>⏱ {t.avgSession}: <strong>{durationLabel(a.metrics?.avgSessionMs)}</strong></span>
-                <span title={t.visitsCountHelp}>
-                  📅 {t.visitsCount}: <strong>{a.metrics?.visits ?? 0}</strong>
-                  {' '}<span className="muted">({a.metrics?.visitsActive ?? 0} {t.visitsLive})</span>
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {a.role !== 'tenant' && !a.activated && (
-                  <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
-                )}
-                {a.role !== 'tenant' && a.activated && (
-                  <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
-                )}
-                <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}>🔑 {t.resetCodeButton}</button>
-              </div>
-              {resetCodes[a.username] && (
-                <p style={{ margin: '8px 0 0' }}>{t.resetCodeIssued} <strong style={{ fontFamily: 'monospace', fontSize: 18 }}>{resetCodes[a.username]}</strong></p>
-              )}
-            </div>
-          </section>
-        ))}
-        {accounts.length === 0 && <p className="muted">{t.noAccounts}</p>}
-      </div>
-      <h2 className="admin-h2">🤝 {t.createPartnerAccount}</h2>
-      <p className="muted">{t.partnerNote}</p>
-      <form className="card" onSubmit={createPartner}>
-        <div className="card-body" style={{ display: 'grid', gap: 14 }}>
-          <div className="field"><label>{t.fullName}</label>
-            <input className="input" value={partnerName} onChange={(e) => setPartnerName(e.target.value)} placeholder={t.username} />
-          </div>
-          <div className="field"><label>{t.username}</label>
-            <input className="input" value={partnerUsername} onChange={(e) => setPartnerUsername(e.target.value)} required />
-          </div>
-          <div className="field"><label>{t.password}</label>
-            <input className="input" type="password" value={partnerPassword} onChange={(e) => setPartnerPassword(e.target.value)} required />
-          </div>
-          <div className="field"><label>{t.phoneLabel}</label>
-            <input className="input" type="tel" value={partnerPhone} onChange={(e) => setPartnerPhone(e.target.value)} placeholder="+509 ____ ____" />
-          </div>
-          <div className="field"><label>{t.email}</label>
-            <input className="input" type="email" value={partnerEmail} onChange={(e) => setPartnerEmail(e.target.value)} />
-          </div>
-          <div className="field"><label>{t.department}</label>
-            <select className="input" value={partnerDepartment} onChange={(e) => { setPartnerDepartment(e.target.value); setPartnerCommune(''); }}>
-              {DEPARTMENTS.map((d) => (
-                <option key={d.id} value={d.id}>{departmentName(d.id, params.locale)}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field"><label>{t.commune}</label>
-            <select className="input" value={partnerCommune} onChange={(e) => setPartnerCommune(e.target.value)} required>
-              <option value=""></option>
-              {(DEPARTMENTS.find((d) => d.id === partnerDepartment)?.communes || []).map((c) => (
-                <option key={c} value={c}>{communeName(c, params.locale)}</option>
-              ))}
-            </select>
-          </div>
-          <button className="btn" type="submit" style={{ minHeight: 40, padding: '8px 16px' }}>{t.createPartnerAccount}</button>
-          {partnerMessage && <p style={{ margin: 0 }}>{partnerMessage}</p>}
-        </div>
-      </form>
       <h2 id="revenue" className="admin-h2">💰 {t.revenueTitle}</h2>
       <div className="card">
         <div className="card-body">
@@ -568,6 +481,8 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
           </section>
         ))}
       </div>
+      </>
+      )}
     </main>
   );
 }

@@ -63,7 +63,7 @@ test('visit appointments are counted for both sides, live and not', { skip }, as
   // Activate the landlord so it can post.
   const pay = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', reference: `MT${run}`.toUpperCase() },
+    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000010' },
   });
   await admin('/api/admin/payments', { method: 'POST', body: { id: pay.data.payment.id, decision: 'confirmed' } });
   const made = await as.L('/api/listings', {

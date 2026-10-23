@@ -53,7 +53,7 @@ before(async () => {
   admin = await adminClient();
   const p = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', reference: `RM${run}`.toUpperCase() },
+    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000012' },
   });
   await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
 });

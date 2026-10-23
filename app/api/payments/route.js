@@ -3,9 +3,14 @@ import { getListing } from '@/lib/listings-server';
 import { getSessionAccount, unauthorized } from '@/lib/session-server';
 import { rateLimit, tooMany } from '@/lib/rate-limit';
 
-// A landlord submits the MonCash/NatCash reference of a transfer they
-// made (activation or advertising). The amount comes from lib/config.js,
-// never from the request. GET lists the caller's own payments.
+// A landlord submits the phone number they made a MonCash/NatCash
+// transfer from (subscription or advertising). The amount comes from
+// lib/config.js, never from the request. GET lists the caller's own
+// payments.
+//
+// `senderPhone` replaced the typed-in transaction id (0013). The old
+// field name is still accepted so a page left open across the deploy
+// does not fail silently on submit.
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
@@ -24,7 +29,7 @@ export async function POST(request) {
     account: me,
     kind: data.kind,
     provider: data.provider,
-    reference: data.reference,
+    senderPhone: data.senderPhone ?? data.reference,
     listing,
     months: Number(data.months),
   });

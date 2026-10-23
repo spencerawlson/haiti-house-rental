@@ -503,3 +503,48 @@ a:hover { text-decoration: underline; }
 .admin-nav { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 10px 0; margin-bottom: 4px; }
 .admin-h2 { margin: 34px 0 12px; padding-top: 8px; font-size: 1.15rem; scroll-margin-top: 64px; border-top: 1px solid var(--line); }
 .admin .card + .card { margin-top: 0; }
+
+/* Admin tabs. The board's panels are swapped, not scrolled: the accounts
+   list is a page of a table that may have 100 000 rows behind it, so it
+   must not be sitting underneath the payment queue. */
+.tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin: 16px 0 4px; overflow-x: auto; }
+.tab {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected='true'] { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* Report table: a wide grid on a narrow phone scrolls sideways rather
+   than squeezing the numbers into two characters. */
+.report-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.report-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.report-table th, .report-table td { padding: 8px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.report-table th:first-child, .report-table td:first-child { text-align: left; position: sticky; left: 0; background: var(--card); }
+.report-table thead th { color: var(--muted); font-weight: 700; }
+.report-table tfoot td { font-weight: 800; border-top: 2px solid var(--line); border-bottom: none; }
+.report-table tbody tr:hover td { background: var(--primary-soft); }
+
+/* Chart fill. Deliberately NOT var(--primary): in dark mode that token is
+   #93c5fd, which is tuned for text and fails the chart checks for a fill
+   (too light, too desaturated — it reads grey next to the surface). These
+   two steps were each validated against their own mode's surface, which
+   is why dark is a chosen step rather than an automatic flip. */
+.chart { --chart-fill: #1d4ed8; }
+[data-theme='dark'] .chart { --chart-fill: #3b82f6; }
+.chart { width: 100%; height: auto; display: block; }
+/* 4px rounded data-ends, anchored to the baseline. */
+.chart .bar { fill: var(--chart-fill); rx: 4px; }
+.chart .bar:hover { fill: var(--primary-dark); }
+/* Recessive axis and grid: they orient, they do not compete. */
+.chart .axis { stroke: var(--line); stroke-width: 1; }
+.chart .tick { fill: var(--muted); font-size: 10px; }
+.chart .value { fill: var(--ink); font-size: 10px; font-weight: 700; }

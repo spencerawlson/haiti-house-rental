@@ -73,6 +73,9 @@ admin pages/APIs ──cookie kay_admin──▶ middleware (isAdminCookie)
 | billing_reminders | which subscription warnings have gone out: PK (`username`, `period_end`, `kind`) is the claim that makes the job safe to re-run |
 | visit_reminders | which reminders have gone out: PK (`visit_id`, `kind`) is the claim that makes the job safe to re-run |
 | login_events | one row per sign-in (tied to its session by `token_hash`): `at`, `last_seen_at`, `ended_at`. Feeds the Admin Board's per-account figures. Append-only; never consulted for authorization |
+| traffic_visitors | one row per visitor per Haiti day: PK (`day`, `visitor`) is what makes a once-a-minute heartbeat count as one visitor. Signed-in people key on `u:<username>`, everyone else on the anonymous id — never on IP, which on Haitian carriers merges strangers |
+| metrics_daily | daily rollups that cannot be recomputed after the fact: PK (`day`, `metric`). `subs_active` is a level snapshotted by cron; the churn counters are incremented by the billing sweep, the only moment those events exist. Signups, new subscribers and revenue are NOT here — they are derived live from `accounts` and `payments`, which already have the dates |
+| payment_deletions | the permanent record of every deleted transaction: the whole row, plus who deleted it and a reason that a `CHECK` constraint makes mandatory. Nothing in the app removes from this table, and migration `0013`'s `down()` does not drop it |
 
 The schema is managed by versioned migrations in `lib/migrations/`. The
 runner (`lib/migrate.js`) applies pending ones at the first query, in
@@ -94,7 +97,15 @@ them in `schema_migrations`.
 - `0010 quarterly_billing` turns the landlord fee into a subscription and
   grandfathers existing payers with a full quarter.
 - `0011 billing_reminders` adds the "payment due soon" claims table.
-- Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md).
+- `0012 traffic_metrics` adds `traffic_visitors` and `metrics_daily` for
+  the Admin Board's traffic reports, plus indexes on `accounts.created_at`
+  and `payments (status, reviewed_at)` for the series derived live.
+- `0013 payment_deletions` adds `payments.sender_phone` (the number the
+  transfer came from, which replaced the typed-in transaction id) and the
+  permanent deletion record. Its `down()` drops the column but
+  deliberately NOT the record table.
+- Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md). Note that rolling back
+  past `0013` leaves `payment_deletions` in place, on purpose.
 
 ## Testing
 

@@ -1,4 +1,4 @@
-import { createServerAccount, listServerAccounts, getPublicProfile, setAccountLocale } from '@/lib/accounts-server';
+import { createServerAccount, listServerAccountsPage, getPublicProfile, setAccountLocale } from '@/lib/accounts-server';
 import { createSession } from '@/lib/session-server';
 import { getAccountMetrics } from '@/lib/account-metrics-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
@@ -16,13 +16,26 @@ export async function GET(request) {
     if (!account) return Response.json({ error: 'Not found' }, { status: 404 });
     return Response.json({ account });
   }
-  // The full list reaches here only through the admin gate in
-  // middleware.js, so it is the one place engagement figures belong. They
-  // are merged in rather than added to pub(), which every signed-in
-  // user's own profile uses.
-  const [accounts, metrics] = await Promise.all([listServerAccounts(), getAccountMetrics()]);
+  // The list reaches here only through the admin gate in middleware.js,
+  // so it is the one place engagement figures belong. They are merged in
+  // rather than added to pub(), which every signed-in user's own profile
+  // uses.
+  //
+  // Paginated and searched in Postgres. The metrics are then fetched for
+  // THIS PAGE's usernames only — the figures used to be aggregated across
+  // every login event in the database to answer a question about the
+  // twenty-five rows on screen.
+  const pageData = await listServerAccountsPage({
+    page: searchParams.get('page'),
+    per: searchParams.get('per'),
+    q: searchParams.get('q') || '',
+    role: searchParams.get('role') || '',
+    billing: searchParams.get('billing') || '',
+  });
+  const metrics = await getAccountMetrics(pageData.accounts.map((a) => a.username));
   return Response.json({
-    accounts: accounts.map((a) => ({ ...a, metrics: metrics[a.username] || null })),
+    ...pageData,
+    accounts: pageData.accounts.map((a) => ({ ...a, metrics: metrics[a.username] || null })),
   });
 }
 

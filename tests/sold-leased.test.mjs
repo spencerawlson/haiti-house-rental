@@ -39,7 +39,7 @@ before(async () => {
   admin = await adminClient();
   const p = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', reference: `SLL${run}`.toUpperCase() },
+    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000030' },
   });
   await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
@@ -153,7 +153,7 @@ test('a home with a pending payment survives its deadline', { skip: sweepSkip },
   const id = await newListing(`Pending ${run}`);
   const pay = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', reference: `SLLAD${run}`.toUpperCase() },
+    body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', senderPhone: '30000031' },
   });
   assert.equal(pay.status, 200);
   await as.L('/api/listings/sold', { method: 'POST', body: { id, status: 'leased' } });
