@@ -125,7 +125,12 @@ container `kayayiti-web` on FedServ host port 8097.
 
 ## Pricing (decided 2026-10-21)
 
-- Account activation (one-time, MonCash/NatCash): **1000 HTG**.
+- Landlord fees are a SUBSCRIPTION (changed 2026-10-23):
+  **1500 HTG** to join, then **1000 HTG every 3 months**. A lapsed quarter
+  suspends the account (its homes leave the site); 30 days later it is
+  deactivated and coming back costs the joining price again, **1500 HTG**.
+  Tenants remain free, and partner accounts never pay.
+- Superseded: account activation as a one-time **1000 HTG** fee.
 - Advertising (rent or sale): **75 HTG/month**. This buys VISIBILITY, not
   rank: the home appears in the advertised carousel on the home page, with
   its price, where people see it without typing anything. Search order stays

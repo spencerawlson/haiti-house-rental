@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
-import { ACTIVATION_FEE_HTG } from '@/lib/config';
+import { JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
 
 // Onboarding (design: docs/design/app-showcase.png, screen 2): three short
 // slides after the first-visit splash — find a home, talk and visit,
@@ -19,7 +19,12 @@ export default function Welcome(props) {
   const slides = [
     { title: t.onb1Title, text: t.onb1Text },
     { title: t.onb2Title, text: t.onb2Text },
-    { title: t.onb3Title, text: t.onb3Text.replace('{fee}', ACTIVATION_FEE_HTG.toLocaleString()) },
+    {
+      title: t.onb3Title,
+      text: t.onb3Text
+        .replace('{fee}', JOIN_FEE_HTG.toLocaleString())
+        .replace('{quarter}', QUARTER_FEE_HTG.toLocaleString()),
+    },
   ];
   const last = i === slides.length - 1;
   const home = `/${params.locale}`;

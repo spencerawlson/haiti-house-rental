@@ -156,8 +156,12 @@ test('the job also deletes sold homes whose time is up', { skip: cronSkip }, asy
   const wait = Number(process.env.SOLD_DELETE_AFTER_MS);
   if (!Number.isFinite(wait)) return; // the 48 h default cannot be waited out
   await new Promise((r) => setTimeout(r, wait + 1500));
-  const res = await cron(CRON_SECRET);
-  assert.equal(res.status, 200);
-  assert.ok(res.data.deletedListings >= 1, `the job deleted it, got ${res.data.deletedListings}`);
-  assert.equal(await mine(), undefined, 'gone');
+  // Other test files share this endpoint, so one of their cron calls may
+  // already have swept it. Assert it is GONE, not that this call is the
+  // one that removed it.
+  for (let i = 0; i < 20 && (await mine()); i++) {
+    await cron(CRON_SECRET);
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  assert.equal(await mine(), undefined, 'the scheduled job deleted it');
 });

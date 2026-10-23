@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
-import { ACTIVATION_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
+import { JOIN_FEE_HTG, QUARTER_FEE_HTG, ADVERTISED_FEE_HTG_MONTH, PAYMENT_PROVIDERS } from '@/lib/config';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -90,7 +90,7 @@ export default function ListHome(props) {
         <li>{t.landlordStep2}</li>
         <li>{t.landlordStep3}</li>
       </ol>
-      <p>{t.activationFee}: <strong>{ACTIVATION_FEE_HTG.toLocaleString()} HTG</strong></p>
+      <p>{t.activationFee}: <strong>{JOIN_FEE_HTG.toLocaleString()} HTG</strong> ({t.oneTime}) · <strong>{QUARTER_FEE_HTG.toLocaleString()} HTG</strong> {t.quarterFeeLabel}</p>
       <p className="muted">{t.advertisedFee}: <strong>{ADVERTISED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
       {myUsername && <p>{t.postingAs} <strong>@{myUsername}</strong></p>}
       {meLoaded && !me && (

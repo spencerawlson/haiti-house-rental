@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
+import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, REACTIVATION_FEE_HTG } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
 import AvatarUpload from '@/components/AvatarUpload';
@@ -67,7 +67,20 @@ export default function Account(props) {
   const unread = threads.reduce((sum, th) => sum + th.unread, 0);
   const upcomingVisits = visits.filter((v) => ['proposed', 'confirmed'].includes(v.status)).length;
   const pendingPayments = payments.filter((p) => p.status === 'pending').length;
-  const activationPending = payments.some((p) => p.kind === 'activation' && p.status === 'pending');
+  // One subscription payment can be in flight at a time.
+  const BILLING_KINDS = ['join', 'quarter', 'reactivation', 'activation'];
+  const activationPending = payments.some((p) => BILLING_KINDS.includes(p.kind) && p.status === 'pending');
+  // What the server says is owed. Mirrors dueKindFor() on the server,
+  // which is the authority — this only decides what to show.
+  const billing = me?.billingStatus || 'pending';
+  const dueKind = !isLandlord || me?.partner ? null
+    : billing === 'pending' ? 'join'
+    : billing === 'deactivated' ? 'reactivation'
+    : 'quarter';
+  const dueAmount = { join: JOIN_FEE_HTG, quarter: QUARTER_FEE_HTG, reactivation: REACTIVATION_FEE_HTG }[dueKind];
+  const dueLabel = { join: t.payJoin, quarter: t.payQuarter, reactivation: t.payReactivation }[dueKind];
+  const statusLabel = { pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[billing];
+  const dateFmt = (ms) => new Date(ms).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale);
 
   return (
     <>
@@ -103,15 +116,34 @@ export default function Account(props) {
           </section>
         )}
 
-        {isLandlord && !me.activated && (
+        {isLandlord && !me.partner && (
           <section className="card" style={{ marginBottom: 20 }}>
             <div className="card-body" style={{ display: 'grid', gap: 10 }}>
-              <p style={{ margin: 0 }}><strong>{t.accountPending}</strong> {t.sendTransfer}</p>
+              <p style={{ margin: 0 }}>
+                <strong>{statusLabel}</strong>
+                {billing === 'active' && me.paidUntil && (
+                  <span className="muted"> · {t.paidUntilLabel} {dateFmt(me.paidUntil)}</span>
+                )}
+              </p>
+              {billing === 'suspended' && <p className="notice" style={{ margin: 0 }}>{t.suspendedNotice}</p>}
+              {billing === 'deactivated' && <p className="notice" style={{ margin: 0 }}>{t.deactivatedNotice}</p>}
               {activationPending ? (
                 <p style={{ margin: 0 }}>⏳ {t.waitingActivation}</p>
-              ) : (
-                <PaymentForm kind="activation" amountHTG={ACTIVATION_FEE_HTG} destination={destination} strings={t} onSubmitted={(p) => setPayments((prev) => [p, ...prev])} />
-              )}
+              ) : dueKind && (billing !== 'active' || me.paidUntil) ? (
+                <>
+                  <p style={{ margin: 0 }}>{t.sendTransfer}</p>
+                  <p className="muted" style={{ margin: 0 }}>
+                    {dueLabel}: <strong>{dueAmount.toLocaleString()} HTG</strong>
+                  </p>
+                  <PaymentForm
+                    kind={dueKind}
+                    amountHTG={dueAmount}
+                    destination={destination}
+                    strings={t}
+                    onSubmitted={(p) => setPayments((prev) => [p, ...prev])}
+                  />
+                </>
+              ) : null}
             </div>
           </section>
         )}

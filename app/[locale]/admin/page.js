@@ -401,6 +401,13 @@ ${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
               </p>
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
+                {a.role === 'landlord' && !a.partner && (
+                  <>
+                    {' · '}
+                    {{ pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[a.billingStatus || 'pending']}
+                    {a.paidUntil ? ` · ${t.paidUntilLabel} ${new Date(a.paidUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}` : ''}
+                  </>
+                )}
               </p>
               <div className="metric-row">
                 <span title={t.lastSeenHelp}>

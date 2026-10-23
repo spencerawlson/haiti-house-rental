@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { getSessionAccount } from '@/lib/session-server';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
-import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
+import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
 import Splash from '@/components/Splash';
 
@@ -73,7 +73,9 @@ export default async function Landing() {
           <div className="card">
             <div className="card-body">
               <h3 style={{ margin: '0 0 4px' }}>{t.landlordTitle}</h3>
-              <p className="muted" style={{ margin: '0 0 12px' }}>{t.activationOnce} {ACTIVATION_FEE_HTG.toLocaleString()} HTG · {t.payNote}</p>
+              <p className="muted" style={{ margin: '0 0 12px' }}>
+                {t.activationOnce} {JOIN_FEE_HTG.toLocaleString()} HTG · {t.quarterFeeLabel}: {QUARTER_FEE_HTG.toLocaleString()} HTG · {t.payNote}
+              </p>
               <Link className="btn" href={`/${lang}/list`}>{t.postHome}</Link>
             </div>
           </div>
