@@ -2,12 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- App Store distribution. Replace YOUR_TEAM_ID with the real Apple
-	     Developer Team ID before the first signed build (see MOBILE.md). -->
+	<!-- App Store distribution. Team ID set for the first signed build
+	     (see MOBILE.md). -->
 	<key>method</key>
 	<string>app-store-connect</string>
 	<key>teamID</key>
-	<string>YOUR_TEAM_ID</string>
+	<string>RAXA72UKAC</string>
 	<key>uploadSymbols</key>
 	<true/>
 	<key>signingStyle</key>
