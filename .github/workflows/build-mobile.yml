@@ -127,10 +127,10 @@ jobs:
         if: steps.secrets-check.outputs.present == 'true'
         working-directory: ios/App
         run: |
-          # No App.xcworkspace / shared scheme in the scaffold, so build the
-          # App target directly instead of via -workspace/-scheme.
+          # Archive requires a scheme; the scaffold shipped none, so the repo
+          # now carries a shared App scheme — build via -project/-scheme.
           xcodebuild -project App.xcodeproj \
-            -target App \
+            -scheme App \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/KayAyiti.xcarchive" \
             archive
