@@ -144,3 +144,14 @@ jobs:
         with:
           name: kay-ayiti-ios-ipa
           path: ${{ runner.temp }}/ipa/*.ipa
+      - name: Upload IPA to App Store Connect
+        if: steps.secrets-check.outputs.present == 'true'
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+          API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          printf '%s' "$API_KEY_P8" > ~/.appstoreconnect/private_keys/AuthKey_${API_KEY_ID}.p8
+          IPA=$(ls "$RUNNER_TEMP"/ipa/*.ipa | head -n 1)
+          xcrun altool --upload-app -f "$IPA" -t ios --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER_ID"
