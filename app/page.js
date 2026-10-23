@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+import { getSessionAccount } from '@/lib/session-server';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { LOCALES, ACTIVATION_FEE_HTG } from '@/lib/config';
@@ -11,12 +12,19 @@ import Splash from '@/components/Splash';
 // no language links here. Language is chosen once, in Account → Settings,
 // and remembered in the kay_locale cookie, which this page reads.
 export default async function Landing() {
-  const saved = (await cookies()).get('kay_locale')?.value;
+  const jar = await cookies();
+  const saved = jar.get('kay_locale')?.value;
   // First visit (no language saved yet): the screen-1 splash with the
   // language choice, then onboarding. Every later visit lands here.
   if (!LOCALES.includes(saved)) return <Splash />;
   const lang = LOCALES.includes(saved) ? saved : 'ht';
   const t = getDict(lang);
+  // Offering "Konekte" to somebody who is already signed in sent them to
+  // a sign-in form for an account they were using. The real session is
+  // checked here (this is a server component, so it can), and the button
+  // becomes "Kont". getSessionAccount only needs something with
+  // .cookies.get, which the next/headers jar provides.
+  const me = await getSessionAccount({ cookies: jar }).catch(() => null);
   const backgrounds = [
     '/images/landing-mountain.jpg',
     '/images/landing-beach.jpg',
@@ -35,7 +43,11 @@ export default async function Landing() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <p style={{ fontWeight: 800, fontSize: '1.25rem', margin: 0 }}>Kay <span style={{ color: '#1d4ed8' }}>Ayiti</span></p>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link className="btn btn-secondary" href={`/${lang}/signin`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signIn}</Link>
+            {me ? (
+              <Link className="btn btn-secondary" href={`/${lang}/account`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.tabAccount}</Link>
+            ) : (
+              <Link className="btn btn-secondary" href={`/${lang}/signin`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signIn}</Link>
+            )}
             <LandingLangSwitch current={lang} />
           </div>
         </div>

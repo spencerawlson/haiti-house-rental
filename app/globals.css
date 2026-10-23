@@ -366,6 +366,11 @@ a:hover { text-decoration: underline; }
    sweep removes it. Red-grey so it reads as "gone", not as a feature. */
 /* Engagement figures on an admin account card: wraps on a phone, stays
    one line on a desktop board. */
+/* The Account tab's profile photo. Exactly the size of the icon it
+   replaces, so the bar does not shift when it loads. Ringed when active,
+   which is what the icon's colour change did. */
+.tab-avatar { width: 24px; height: 24px; border-radius: 999px; object-fit: cover; display: block; background: var(--primary-soft); }
+.tabbar a.active .tab-avatar { box-shadow: 0 0 0 2px var(--primary); }
 .metric-row { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 10px; font-size: 0.82rem; color: var(--muted); }
 .metric-row strong { color: var(--ink); font-weight: 800; }
 .live-dot { display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 999px; background: #16a34a; vertical-align: middle; }

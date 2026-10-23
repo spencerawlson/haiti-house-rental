@@ -12,9 +12,12 @@
   senders in a request body or query are never trusted for authorization.
 - Sign-out deletes the session row. A password reset deletes every session
   of that account.
-- The browser keeps a `kay-session` localStorage hint (`{ username }`) only
-  to render owner-only buttons quickly. It grants nothing. `/api/presence`
-  and `/api/accounts/me` correct it when the server session is gone.
+- The browser keeps a `kay-session` localStorage hint
+  (`{ username, avatarUrl }`) only to render owner-only buttons quickly
+  and to show the profile photo on the Account tab without an extra
+  request per page. It grants nothing — the server never reads it.
+  `/api/presence` and `/api/accounts/me` correct it when the server
+  session is gone, and sign-out clears it.
 
 ## Admin sessions
 

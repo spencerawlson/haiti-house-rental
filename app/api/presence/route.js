@@ -13,5 +13,13 @@ export async function POST(request) {
   // Persisted alongside the in-memory presence: that Map resets on every
   // restart and prunes after 10 minutes, so it cannot answer "last seen".
   if (me?.username) await touchSessionActivity(request);
-  return Response.json({ ok: true, signedIn: !!me, username: me?.username || null });
+  // The avatar rides along here on purpose: the account row is already
+  // loaded for this request, so the tab bar can show a profile picture
+  // without any page paying for an extra round trip.
+  return Response.json({
+    ok: true,
+    signedIn: !!me,
+    username: me?.username || null,
+    avatarUrl: me?.avatarUrl || null,
+  });
 }

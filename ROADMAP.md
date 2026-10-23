@@ -192,6 +192,21 @@ Original scope:
   - Haiti observes daylight saving, so the offset is read from the date
     rather than hardcoded (tested against January and July).
 
+## Phase 10b — Signed-in state in the chrome ✅
+
+- **Fixed:** the landing page offered "Konekte" to somebody who was
+  already signed in, sending them to a sign-in form for the account they
+  were using. It is a server component, so the real session is checked
+  there and the button becomes "Kont" (→ Account). A stale or forged
+  session cookie falls back to "Konekte" rather than a dead link.
+- The Account tab shows the signed-in person's **profile photo**, with
+  the outline avatar as the placeholder when signed out or when no photo
+  is set (and if the image 404s). The photo rides along on the
+  `/api/presence` reply, which already had the account row loaded, and is
+  cached in the `kay-session` hint — so no page pays for an extra request
+  to render the tab bar. Uploading or removing a photo updates the tab
+  immediately instead of waiting for the next ping.
+
 ## Phase 9b — Corrections ✅
 
 - **A tenant no longer loses their chat history** when a landlord deletes
