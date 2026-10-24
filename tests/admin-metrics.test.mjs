@@ -65,7 +65,7 @@ test('visit appointments are counted for both sides, live and not', { skip }, as
     method: 'POST',
     body: { kind: 'activation', provider: 'moncash', senderPhone: '30000010' },
   });
-  await admin('/api/admin/payments', { method: 'POST', body: { id: pay.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: pay.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const made = await as.L('/api/listings', {
     method: 'POST',
     body: { title: `Metrics ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 1000, purpose: 'rent' },

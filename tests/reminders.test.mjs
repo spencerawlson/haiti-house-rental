@@ -55,7 +55,7 @@ before(async () => {
     method: 'POST',
     body: { kind: 'activation', provider: 'moncash', senderPhone: '30000012' },
   });
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
 });
 
 test('the scheduled job refuses anyone without the secret', { skip: cronSkip }, async () => {
