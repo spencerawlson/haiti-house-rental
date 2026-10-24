@@ -47,12 +47,12 @@ test('activation: sender phone submitted, amount fixed by the server, admin conf
   // Submitting is not activating.
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, false);
   // Only the admin reviews.
-  assert.equal((await as.L('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } })).status, 401);
-  const c = await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
+  assert.equal((await as.L('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } })).status, 401);
+  const c = await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal(c.status, 200);
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
   // Double confirmation is refused.
-  assert.equal((await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } })).status, 409);
+  assert.equal((await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } })).status, 409);
   const mine = await as.L('/api/payments');
   assert.deepEqual(mine.data.payments[0].events.map((e) => e.action), ['submitted', 'confirmed']);
 });
@@ -91,13 +91,13 @@ test('advertising: owner only, 75 HTG per month, confirmed months set an end dat
   const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 3, provider: 'natcash', senderPhone: PHONE } });
   assert.equal(p.data.payment.amountHTG, 225);
   assert.equal((await as.T(`/api/listings?id=${id}`)).data.listing.advertised, false, 'not advertised before confirmation');
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const after = (await as.T(`/api/listings?id=${id}`)).data.listing;
   assert.equal(after.advertised, true);
   const days = (after.advertisedUntil - Date.now()) / 86400000;
   assert.ok(days > 88 && days < 93, `about 3 months, got ${days.toFixed(1)} days`);
   const p2 = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', senderPhone: PHONE } });
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p2.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: p2.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const extended = (await as.T(`/api/listings?id=${id}`)).data.listing;
   const more = (extended.advertisedUntil - after.advertisedUntil) / 86400000;
   assert.ok(more > 27 && more < 32, `extended by about a month, got ${more.toFixed(1)} days`);
@@ -130,7 +130,7 @@ test('deleting a transaction removes it but records it forever', { skip }, async
   const amount = p.data.payment.amountHTG;
   // Confirm it first: deleting CONFIRMED money is the case that actually
   // moves the revenue figures, so that is the one worth testing.
-  assert.equal((await admin('/api/admin/payments', { method: 'POST', body: { id, decision: 'confirmed' } })).status, 200);
+  assert.equal((await admin('/api/admin/payments', { method: 'POST', body: { id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } })).status, 200);
   const confirmedBefore = (await admin('/api/admin/payments')).data.summary.confirmedHTG;
 
   const why = `test transaction from run ${run}`;

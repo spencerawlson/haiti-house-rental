@@ -27,7 +27,7 @@ test('a confirmed payment is listable by status and deletable from the board', {
   assert.equal(sub.status, 200, 'activation submitted');
   const id = sub.data.payment.id;
 
-  const c = await admin('/api/admin/payments', { method: 'POST', body: { id, decision: 'confirmed' } });
+  const c = await admin('/api/admin/payments', { method: 'POST', body: { id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal(c.status, 200, 'admin confirmed it');
 
   const pending = await admin('/api/admin/payments');

@@ -40,6 +40,9 @@ export default function Admin(props) {
   // default because that is the work queue — but a confirmed payment
   // must be reachable too, or its delete button can never appear.
   const [payStatus, setPayStatus] = useState('pending');
+  // Receiver transaction ID typed per pending payment, and per-payment errors.
+  const [txnInputs, setTxnInputs] = useState({});
+  const [txnErrors, setTxnErrors] = useState({});
   // The permanent record of deleted transactions. Read-only: there is no
   // code path anywhere that removes an entry from it.
   const [deletions, setDeletions] = useState([]);
@@ -66,10 +69,10 @@ export default function Admin(props) {
   }
 
   async function loadPayments(status) {
-    const payres = await fetch(`/api/admin/payments?status=${status}`);
+    const payres = await fetch(`/api/admin/payments?status=${status === 'noTxn' ? 'confirmed' : status}`);
     if (payres.ok) {
       const data = await payres.json();
-      setPayments(data.payments || []);
+      setPayments(status === 'noTxn' ? (data.payments || []).filter((x) => !x.receiverTxn) : data.payments || []);
       setPaySummary(data.summary);
       setDeletions(data.deletions || []);
     }
@@ -146,22 +149,44 @@ export default function Admin(props) {
     load();
   }
 
-  // Confirm only after matching the reference and amount on the
-  // MonCash/NatCash statement. A confirmation activates the account or
-  // starts/extends advertising, exactly once.
+  // Confirm only after finding the transfer on YOUR MonCash/NatCash
+  // statement (sender phone + amount) and copying that line's transaction
+  // ID — the receiver's ID, not the one the landlord sees. An ID already
+  // used by a confirmed payment is refused, so one transfer can never pay
+  // twice. Confirming without an ID is possible but must be chosen, and
+  // the payment stays flagged.
   async function reviewPayment(p, decision) {
     let note = '';
-    if (decision === 'confirmed' && !window.confirm(`${t.payConfirmPrompt}
-${p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
+    const receiverTxn = (txnInputs[p.id] || '').trim();
+    let allowNoTxn = false;
+    if (decision === 'confirmed') {
+      if (!receiverTxn) {
+        if (!window.confirm(`${t.payNoTxnConfirm}\n${p.senderPhone || p.reference} · ${p.amountHTG.toLocaleString()} HTG`)) return;
+        allowNoTxn = true;
+      } else if (!window.confirm(`${t.payConfirmPrompt}\n${p.senderPhone || p.reference} · ${p.amountHTG.toLocaleString()} HTG · ID ${receiverTxn}`)) {
+        return;
+      }
+    }
     if (decision === 'rejected') {
       note = window.prompt(t.payRejectPrompt) ?? null;
       if (note === null) return;
     }
-    await fetch('/api/admin/payments', {
+    const res = await fetch('/api/admin/payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: p.id, decision, note }),
+      body: JSON.stringify({ id: p.id, decision, note, receiverTxn, allowNoTxn }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const u = data.usedBy;
+      const msg = data.error === 'txn_used'
+        ? `${t.payTxnUsed}${u ? ` @${u.username} · ${Number(u.amountHTG).toLocaleString()} HTG · ${new Date(u.confirmedAt).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}` : ''}`
+        : t.payError;
+      setTxnErrors((prev) => ({ ...prev, [p.id]: msg }));
+      return;
+    }
+    setTxnErrors((prev) => ({ ...prev, [p.id]: '' }));
+    setTxnInputs((prev) => ({ ...prev, [p.id]: '' }));
     load();
   }
 
@@ -323,6 +348,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         <select className="input" style={{ maxWidth: 220 }} value={payStatus} onChange={(e) => { const s = e.target.value; setPayStatus(s); loadPayments(s); }} aria-label={t.paymentsTitle}>
           <option value="pending">{t.payPending}</option>
           <option value="confirmed">{t.payConfirmed}</option>
+          <option value="noTxn">⚠ {t.payNoTxnFilter}</option>
           <option value="rejected">{t.payRejected}</option>
           <option value="all">{t.all}</option>
         </select>
@@ -340,6 +366,13 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
               <p className="muted" style={{ margin: 0 }}>
                 {p.kind === 'advertising' ? `${t.payKindAdvertising} · ${p.months} ${t.payMonthUnit} · ${p.listingTitle || p.listingId}` : t.payKindActivation}
               </p>
+              {p.status === 'confirmed' && (
+                <p style={{ margin: 0 }}>
+                  {p.receiverTxn
+                    ? <span className="muted">{t.payTxnLabel}: <code>{p.receiverTxn}</code></span>
+                    : <span className="badge">⚠ {t.payNoTxnBadge}</span>}
+                </p>
+              )}
               <p className="muted" style={{ margin: 0 }}>
                 {p.accountName} · @{p.username} · {t.transferFrom} {p.accountPhone} · {new Date(p.submittedAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)}
               </p>
@@ -348,6 +381,16 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                     confirming an already-confirmed row would just 409. */}
                 {p.status === 'pending' && (
                   <>
+                    <input
+                      className="input"
+                      style={{ flex: '1 1 100%' }}
+                      value={txnInputs[p.id] || ''}
+                      onChange={(e) => setTxnInputs((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                      placeholder={t.payTxnPlaceholder}
+                      aria-label={t.payTxnPlaceholder}
+                      autoCapitalize="characters"
+                    />
+                    {txnErrors[p.id] && <p style={{ flex: '1 1 100%', margin: 0, color: '#dc2626', fontWeight: 700 }}>{txnErrors[p.id]}</p>}
                     <button className="btn" type="button" onClick={() => reviewPayment(p, 'confirmed')} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.payConfirmBtn}</button>
                     <button className="btn btn-secondary" type="button" onClick={() => reviewPayment(p, 'rejected')} style={{ minHeight: 40, padding: '8px 16px' }}>{t.payRejectBtn}</button>
                   </>

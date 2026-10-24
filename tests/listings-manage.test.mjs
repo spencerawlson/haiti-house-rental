@@ -42,7 +42,7 @@ before(async () => {
     body: { kind: 'activation', provider: 'moncash', senderPhone: '30000020' },
   });
   assert.equal(p.status, 200);
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
 });
 
@@ -137,7 +137,7 @@ test('the payment ledger survives a deleted listing', { skip }, async () => {
   assert.equal(blocked.status, 409);
   assert.equal(blocked.data.error, 'payment_pending');
 
-  await admin('/api/admin/payments', { method: 'POST', body: { id: pay.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: pay.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const before = (await admin('/api/admin/payments')).data.summary.byKind.advertising.confirmedHTG;
 
   assert.equal((await as.L('/api/listings/delete', { method: 'POST', body: { id } })).status, 200);

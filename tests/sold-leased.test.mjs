@@ -41,7 +41,7 @@ before(async () => {
     method: 'POST',
     body: { kind: 'activation', provider: 'moncash', senderPhone: '30000030' },
   });
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
 });
 

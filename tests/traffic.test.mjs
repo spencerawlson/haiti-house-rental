@@ -152,7 +152,7 @@ test('a confirmed joining fee shows up as a new subscriber and as revenue', { sk
   });
   assert.equal(sub.status, 200, 'joining fee submitted');
   const amount = sub.data.payment.amountHTG;
-  const conf = await admin('/api/admin/payments', { method: 'POST', body: { id: sub.data.payment.id, decision: 'confirmed' } });
+  const conf = await admin('/api/admin/payments', { method: 'POST', body: { id: sub.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal(conf.status, 200, 'admin confirmed it');
 
   const after = await report(`?grain=daily&from=${today}&to=${today}`);
