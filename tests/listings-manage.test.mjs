@@ -6,7 +6,7 @@
 // ledger has to survive, because money is a ledger.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { ADMIN_PASSWORD, client, signup, adminClient, uniq, haitiDate } from './helpers.mjs';
+import { BASE, ADMIN_PASSWORD, client, signup, adminClient, uniq, haitiDate } from './helpers.mjs';
 
 const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const run = uniq();
@@ -172,14 +172,17 @@ test('views: counted once per viewer, never the owner', { skip }, async () => {
   assert.equal((await anon('/api/listings/view', { method: 'POST', body: { id: 'nope' } })).status, 200);
 });
 
-test('view counts are private to the owner', { skip }, async () => {
-  const id = await newListing(`Private ${run}`);
+test('view counts are public: everyone sees the number the owner sees', { skip }, async () => {
+  const id = await newListing(`Seen-public ${run}`);
   const anon = client();
   await anon('/api/listings/view', { method: 'POST', body: { id, visitor: `v-p-${run}` } });
-  // The public shapes must not carry the number.
-  assert.equal((await as.T(`/api/listings?id=${id}`)).data.listing.views, undefined);
-  const pub = (await as.T('/api/listings')).data.listings.find((l) => l.id === id);
-  assert.equal(pub?.views, undefined, 'not in the public list either');
-  // The owner does see it.
+  // The owner's library and every public shape carry the same number.
   assert.equal((await myHomes()).find((h) => h.id === id)?.views, 1);
+  assert.equal((await anon(`/api/listings?id=${id}`)).data.listing.views, 1, 'public detail');
+  const pub = (await anon('/api/listings')).data.listings.find((l) => l.id === id);
+  assert.equal(pub?.views, 1, 'public list');
+  // The detail page shows it; the sold-home deletion clock stays private.
+  const page = (await (await fetch(`${BASE}/en/listings/${id}`)).text()).replace(/<!-- -->/g, '');
+  assert.match(page, /👁 1 views/);
+  assert.equal((await anon(`/api/listings?id=${id}`)).data.listing.deletesAt, undefined);
 });
