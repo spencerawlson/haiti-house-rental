@@ -548,3 +548,6 @@ a:hover { text-decoration: underline; }
 .chart .axis { stroke: var(--line); stroke-width: 1; }
 .chart .tick { fill: var(--muted); font-size: 10px; }
 .chart .value { fill: var(--ink); font-size: 10px; font-weight: 700; }
+
+/* Admin: per-account listing limit (0015) */
+.limit-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }

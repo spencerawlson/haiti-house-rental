@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { getSession } from '@/lib/account';
+import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import PaymentForm from '@/components/PaymentForm';
 import { ADVERTISED_FEE_HTG_MONTH } from '@/lib/config';
@@ -34,8 +34,11 @@ export default function Library(props) {
   const [pendingAds, setPendingAds] = useState({});
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
   const [error, setError] = useState('');
+  // { limit, used } from /api/accounts/me — limit null = no limit.
+  const [usage, setUsage] = useState(null);
 
   function load(username) {
+    refreshUsage(); // a take-down, sale or restore changes the count
     fetch(`/api/listings?owner=${encodeURIComponent(username)}&all=1`)
       .then((r) => r.json())
       .then((d) => setHomes(d.listings || []))
@@ -72,7 +75,16 @@ export default function Library(props) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) load(me.username);
+    if (res.ok) {
+      load(me.username);
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    setError(data.error === 'listing_limit' ? t.listingLimitReached.replace('{limit}', data.limit) : t.deleteListingFailed);
+  }
+
+  function refreshUsage() {
+    getMyAccount().then((a) => setUsage(a?.listings || null)).catch(() => {});
   }
 
   // Sold / leased: out of search now, deleted for good in 48 hours. That
@@ -114,6 +126,13 @@ export default function Library(props) {
       <main className="container">
         <Link href={`/${params.locale}/account`}>← {t.account}</Link>
         <h1>{t.library}</h1>
+        {usage && usage.limit !== null && (
+          <p className={usage.used >= usage.limit ? 'notice' : 'muted'} style={{ margin: '0 0 12px' }}>
+            🏠 {usage.used >= usage.limit
+              ? t.listingLimitReached.replace('{limit}', usage.limit)
+              : t.listingLimitUsage.replace('{used}', usage.used).replace('{limit}', usage.limit)}
+          </p>
+        )}
         {loaded && !me && (
           <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link className="btn" href={`/${params.locale}/signup`}>{t.createAccount}</Link>

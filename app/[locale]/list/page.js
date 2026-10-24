@@ -71,9 +71,18 @@ export default function ListHome(props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details }),
       });
-      if (!res.ok) throw new Error('Create failed');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (err.error === 'listing_limit') {
+          setStatus(t.listingLimitReached.replace('{limit}', err.limit));
+          return;
+        }
+        throw new Error('Create failed');
+      }
       const data = await res.json();
       setCreatedId(data.listing.id);
+      // One more home live: keep the usage line honest without a reload.
+      setMe((m) => (m?.listings ? { ...m, listings: { ...m.listings, used: m.listings.used + 1 } } : m));
       setStatus(t.listingCreated);
     } catch {
       setStatus(t.listingError);
@@ -125,7 +134,17 @@ export default function ListHome(props) {
           </div>
         </div>
       )}
-      {meLoaded && me && me.role === 'landlord' && me.activated && (
+      {/* Listing limit (set by the admin, e.g. for partner accounts):
+          show the usage, and hide the form once it is full — before any
+          photo is uploaded. The server enforces it either way. */}
+      {meLoaded && me?.activated && me.listings?.limit !== null && me.listings?.limit !== undefined && (
+        <p className={me.listings.used >= me.listings.limit ? 'notice' : 'muted'} style={{ marginTop: 20 }}>
+          🏠 {me.listings.used >= me.listings.limit
+            ? t.listingLimitReached.replace('{limit}', me.listings.limit)
+            : t.listingLimitUsage.replace('{used}', me.listings.used).replace('{limit}', me.listings.limit)}
+        </p>
+      )}
+      {meLoaded && me && me.role === 'landlord' && me.activated && !(me.listings?.limit !== null && me.listings?.limit !== undefined && me.listings.used >= me.listings.limit) && (
       <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
         <div className="field"><label>{t.titleLabel}</label>

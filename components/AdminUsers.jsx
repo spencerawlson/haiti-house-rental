@@ -54,6 +54,9 @@ export default function AdminUsers({ locale, t }) {
   const [data, setData] = useState({ accounts: [], total: 0, pages: 1, page: 1 });
   const [loading, setLoading] = useState(true);
   const [resetCodes, setResetCodes] = useState({});
+  // Typed listing limits per account, and the last save message.
+  const [limits, setLimits] = useState({});
+  const [limitMsg, setLimitMsg] = useState({});
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -92,6 +95,23 @@ export default function AdminUsers({ locale, t }) {
 
   // Admin-assisted recovery: confirm who is asking (call back the phone
   // on the account) before reading the code to them.
+  // Set or clear how many homes an account may have live at once (0015).
+  // Empty = no limit. Lowering it removes nothing already posted.
+  async function saveLimit(a, clear = false) {
+    const value = clear ? null : (limits[a.username] ?? a.listingLimit ?? '');
+    const res = await fetch('/api/admin/listing-limit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: a.username, limit: value === '' ? null : value }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setLimitMsg((prev) => ({ ...prev, [a.username]: res.ok ? `✓ ${t.listingLimitSaved}` : t.listingLimitInvalid }));
+    if (res.ok) {
+      setLimits((prev) => ({ ...prev, [a.username]: undefined }));
+      load();
+    }
+  }
+
   async function issueResetCode(username) {
     if (!window.confirm(t.resetCodeConfirm)) return;
     const res = await fetch('/api/admin/reset-code', {
@@ -192,6 +212,27 @@ export default function AdminUsers({ locale, t }) {
                 )}
                 <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}>🔑 {t.resetCodeButton}</button>
               </div>
+              {a.role !== 'tenant' && (
+                <div className="limit-row">
+                  <span>🏠 {t.listingLimitLabel}: <strong>{a.liveListings ?? 0}{a.listingLimit !== null && a.listingLimit !== undefined ? ` / ${a.listingLimit}` : ''}</strong>{a.listingLimit === null || a.listingLimit === undefined ? <span className="muted"> · {t.listingLimitNone}</span> : ''}</span>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={limits[a.username] ?? (a.listingLimit ?? '')}
+                    onChange={(e) => setLimits((prev) => ({ ...prev, [a.username]: e.target.value }))}
+                    placeholder={t.listingLimitNone}
+                    aria-label={t.listingLimitLabel}
+                    style={{ width: 110 }}
+                  />
+                  <button className="btn btn-secondary" type="button" onClick={() => saveLimit(a)} style={{ minHeight: 40, padding: '8px 14px' }}>{t.listingLimitSave}</button>
+                  {a.listingLimit !== null && a.listingLimit !== undefined && (
+                    <button className="btn btn-secondary" type="button" onClick={() => saveLimit(a, true)} style={{ minHeight: 40, padding: '8px 14px' }}>{t.listingLimitClear}</button>
+                  )}
+                  {limitMsg[a.username] && <span className="muted">{limitMsg[a.username]}</span>}
+                </div>
+              )}
               {resetCodes[a.username] && (
                 <p style={{ margin: '8px 0 0' }}>{t.resetCodeIssued} <strong style={{ fontFamily: 'monospace', fontSize: 18 }}>{resetCodes[a.username]}</strong></p>
               )}
