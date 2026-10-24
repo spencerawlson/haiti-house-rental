@@ -52,7 +52,7 @@ async function pay(tag, kind, amountGuess) {
 async function payAndConfirm(tag, kind) {
   const r = await pay(tag, kind);
   assert.equal(r.status, 200, `${kind} submitted`);
-  const c = await admin('/api/admin/payments', { method: 'POST', body: { id: r.data.payment.id, decision: 'confirmed' } });
+  const c = await admin('/api/admin/payments', { method: 'POST', body: { id: r.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal(c.status, 200, `${kind} confirmed`);
   return r.data.payment;
 }
@@ -142,7 +142,7 @@ test('the confirmed joining fee activates the account for a quarter', { skip }, 
   const list = await admin('/api/admin/payments');
   const pending = list.data.payments.find((p) => p.username === `blA_${run}` && p.status === 'pending');
   assert.ok(pending, 'the join payment is waiting');
-  assert.equal((await admin('/api/admin/payments', { method: 'POST', body: { id: pending.id, decision: 'confirmed' } })).status, 200);
+  assert.equal((await admin('/api/admin/payments', { method: 'POST', body: { id: pending.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } })).status, 200);
 
   const a = await me('A');
   assert.equal(a.billingStatus, 'active');
@@ -156,7 +156,7 @@ test('paying early adds to the period instead of restarting it', { skip }, async
   const q = await pay('A', 'quarter');
   assert.equal(q.status, 200);
   assert.equal(q.data.payment.amountHTG, QUARTER, 'the renewal price, not the joining price');
-  await admin('/api/admin/payments', { method: 'POST', body: { id: q.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: q.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const after = (await me('A')).paidUntil;
   assert.ok(after > before, `extended (${before} -> ${after})`);
 });
@@ -222,7 +222,7 @@ test('paying the quarter lifts the suspension and relists the homes', { skip: ti
   const due = await pay('S', 'quarter');
   assert.equal(due.status, 200);
   assert.equal(due.data.payment.amountHTG, QUARTER, 'the quarter price, not the joining price');
-  await admin('/api/admin/payments', { method: 'POST', body: { id: due.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: due.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
 
   const a = await me('S');
   assert.equal(a.billingStatus, 'active');
@@ -248,7 +248,7 @@ test('a month of silence deactivates the account, and coming back costs the join
   const back = await pay('D', 'reactivation');
   assert.equal(back.status, 200);
   assert.equal(back.data.payment.amountHTG, REACTIVATION, 'reactivation costs the joining price');
-  await admin('/api/admin/payments', { method: 'POST', body: { id: back.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: back.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const after = await me('D');
   assert.equal(after.billingStatus, 'active');
   assert.equal(after.activated, true);
@@ -283,7 +283,7 @@ test('renewing earns a fresh warning for the new period', { skip: dueSkip }, asy
   // about separately instead of being treated as already-warned.
   const q = await pay('W', 'quarter');
   assert.equal(q.status, 200);
-  await admin('/api/admin/payments', { method: 'POST', body: { id: q.data.payment.id, decision: 'confirmed' } });
+  await admin('/api/admin/payments', { method: 'POST', body: { id: q.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const got = await waitForNotes('W', 2);
   assert.equal(got.length, 2, 'one warning per billing period');
   await stillOnce('W', 2);
