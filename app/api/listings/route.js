@@ -1,4 +1,4 @@
-import { getListings, getListing, getPublicListing, getListingsForOwner, addListing, updateListing } from '@/lib/listings-server';
+import { getListings, getListing, getPublicListing, getListingsForOwner, addListing, updateListing, withListingSlot } from '@/lib/listings-server';
 import { resolveCommune } from '@/lib/listings';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
@@ -62,7 +62,10 @@ export async function POST(request) {
     const coords = await geocode(data.commune);
     if (coords) Object.assign(data, coords);
   }
-  const listing = await addListing(data);
+  // The account's listing limit (0015), checked atomically with the insert.
+  const slot = await withListingSlot(owner.username, (db) => addListing(data, db));
+  if (slot.error) return Response.json({ error: slot.error, limit: slot.limit, used: slot.used }, { status: 403 });
+  const listing = slot.value;
   if (!listing) return Response.json({ error: 'Title and commune are required' }, { status: 400 });
   return Response.json({ listing });
 }

@@ -1,4 +1,4 @@
-import { getListing, setListingActive } from '@/lib/listings-server';
+import { getListing, setListingActive, withListingSlot } from '@/lib/listings-server';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
 import { audit } from '@/lib/audit';
@@ -19,7 +19,16 @@ export async function POST(request) {
   if (!admin && (!me || !listing.owner || listing.owner !== me.username)) {
     return Response.json({ error: 'Not allowed' }, { status: 403 });
   }
-  const restored = await setListingActive(data.id);
+  // Back online = live again, so the owner's listing limit applies. The
+  // admin, who sets limits, is not bound by them.
+  let restored;
+  if (admin) {
+    restored = await setListingActive(data.id);
+  } else {
+    const slot = await withListingSlot(listing.owner, (db) => setListingActive(data.id, db));
+    if (slot.error) return Response.json({ error: slot.error, limit: slot.limit, used: slot.used }, { status: 403 });
+    restored = slot.value;
+  }
   await audit(admin ? 'admin' : me.username, 'listing.restore', data.id);
   return Response.json({ listing: restored });
 }
