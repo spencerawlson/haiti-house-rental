@@ -47,9 +47,19 @@ export async function DELETE(request) {
 
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
-  const result = await reviewPayment(String(data.id || ''), data.decision, data.note);
-  if (result.error) return Response.json({ error: result.error }, { status: result.error === 'not_pending' ? 409 : 400 });
-  await audit('admin', `payment.${result.payment.status}`, result.payment.id, { kind: result.payment.kind, amountHTG: result.payment.amountHTG, username: result.payment.username, reference: result.payment.reference });
+  const result = await reviewPayment(String(data.id || ''), data.decision, data.note, 'admin', {
+    receiverTxn: data.receiverTxn,
+    allowNoTxn: data.allowNoTxn === true,
+  });
+  if (result.error) {
+    const status = result.error === 'not_pending' || result.error === 'txn_used' ? 409 : 400;
+    return Response.json({ error: result.error, usedBy: result.usedBy || null }, { status });
+  }
+  await audit('admin', `payment.${result.payment.status}`, result.payment.id, {
+    kind: result.payment.kind, amountHTG: result.payment.amountHTG, username: result.payment.username,
+    reference: result.payment.reference, receiverTxn: result.payment.receiverTxn || undefined,
+    noTxn: result.payment.status === 'confirmed' && !result.payment.receiverTxn ? true : undefined,
+  });
   const p = result.payment;
   // The notice names the phone the transfer came from, which is what the
   // payer recognises — `reference` is now a server-generated id.
