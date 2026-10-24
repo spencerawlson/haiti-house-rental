@@ -36,6 +36,7 @@ export default function ListingCard({ listing, locale, t }) {
             {(d.internet === 'included' || d.internet === 'available') && <span>📶 WiFi</span>}
             {d.power24 && <span>⚡ 24/24</span>}
             {d.parking > 0 && <span>🚗 {d.parking}</span>}
+            {listing.views > 0 && <span title={t.viewsLabel}>👁 {listing.views.toLocaleString()}</span>}
           </div>
           {(listing.verified || listing.advertised || listing.status === 'sold' || listing.status === 'leased') && (
             <div className="lcard-badges">

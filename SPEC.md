@@ -123,6 +123,13 @@ container `kayayiti-web` on FedServ host port 8097.
   shows them for previews. While fewer than 4 real homes exist, the home
   page shows a "just launched — list your home" card instead.
 
+## Public view counts (decided 2026-10-24)
+
+- Everyone sees how many times a home was looked at, the same number the
+  landlord sees in their library: "👁 24 moun gade" on the listing page
+  and "👁 24" on cards. Hidden while a home has 0 views. Counted by
+  /api/listings/view: never the owner, once per viewer per half hour.
+
 ## Pricing (decided 2026-10-21)
 
 - Landlord fees are a SUBSCRIPTION (changed 2026-10-23):

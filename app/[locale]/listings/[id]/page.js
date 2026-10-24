@@ -72,6 +72,11 @@ export default async function ListingDetail(props) {
             <span>🏠 {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</span>
             {(d.internet === 'included' || d.internet === 'available') && <span>📶 WiFi</span>}
           </div>
+          {/* Public view count (same number the landlord sees in their
+              library); hidden at zero rather than showing "0". */}
+          {l.views > 0 && (
+            <p className="muted" style={{ margin: '8px 0 0', fontWeight: 700 }}>👁 {l.views.toLocaleString()} {t.viewsLabel}</p>
+          )}
           <ListingFacts details={l.details} t={t} locale={params.locale} />
           {l.description && (
             <>
