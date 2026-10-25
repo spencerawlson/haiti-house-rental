@@ -88,8 +88,9 @@ export async function PATCH(request) {
   if (!String(data.title || '').trim() || !String(data.commune || '').trim()) {
     return Response.json({ error: 'Title and commune are required' }, { status: 400 });
   }
-  // New commune, new map pin: re-geocode only when the commune changed.
-  if (data.commune && resolveCommune(data.commune) !== listing.commune) {
+  // New commune, new map pin: re-geocode only when the commune changed
+  // and no explicit pin was placed — an explicit pin always wins.
+  if (data.commune && resolveCommune(data.commune) !== listing.commune && typeof data.lat !== 'number') {
     const coords = await geocode(data.commune);
     if (coords) Object.assign(data, coords);
   }
