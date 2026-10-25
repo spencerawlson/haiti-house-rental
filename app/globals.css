@@ -44,7 +44,7 @@ body::before {
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-.container { max-width: 860px; margin: 0 auto; padding: 20px 20px 96px; }
+.container { max-width: 860px; margin: 0 auto; padding: calc(20px + env(safe-area-inset-top)) 20px 96px; }
 
 /* Bottom tab bar: Akèy / Rechèch / Favori / Mesaj / Kont. */
 .tabbar {
@@ -381,8 +381,8 @@ a:hover { text-decoration: underline; }
 [data-theme="dark"] .badge-verified { background: #14532d; color: #bbf7d0; }
 
 /* Phase 5 — showcase components (docs/design/app-showcase.png) */
-.page-title { font-size: 1.5rem; margin: 4px 0 16px; }
-.topbar { position: sticky; top: 0; z-index: 10; background: var(--bg); display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; padding-top: env(safe-area-inset-top); /* below the iPhone status bar / Dynamic Island */ }
+.page-title { font-size: 1.25rem; margin: 4px 0 16px; }
+.topbar { position: sticky; top: env(safe-area-inset-top); z-index: 10; background: var(--bg); display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; /* container supplies the top inset when unstuck; top parks below the status bar when stuck */ }
 /* Fade strip under the frozen header: scrolling content dissolves out as it
    slides up beneath the bar, instead of hard-clipping at its bottom edge. */
 .topbar::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 24px; background: linear-gradient(180deg, var(--bg), transparent); pointer-events: none; }

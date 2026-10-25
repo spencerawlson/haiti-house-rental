@@ -33,7 +33,7 @@ export default function SignIn(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1>{t.signIn}</h1>
+        <h1 className="page-title">{t.signIn}</h1>
         <p>
           <Link href={`/${params.locale}/tenants`}>{t.tenantLink}</Link>
         </p>

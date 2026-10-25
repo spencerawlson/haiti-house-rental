@@ -94,7 +94,7 @@ export default function ListHome(props) {
     <>
       <main className="container">
       <Link href={`/${params.locale}`}>{t.back}</Link>
-      <h1>{t.landlordTitle}</h1>
+      <h1 className="page-title">{t.landlordTitle}</h1>
       <ol className="muted">
         <li>{t.landlordStep1}</li>
         <li>{t.landlordStep2}</li>

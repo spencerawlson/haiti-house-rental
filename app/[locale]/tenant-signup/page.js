@@ -57,7 +57,7 @@ export default function TenantSignup(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1>{t.createTenantAccount}</h1>
+        <h1 className="page-title">{t.createTenantAccount}</h1>
         <p className="muted">{t.tenantFree}</p>
         <form className="card" onSubmit={submit}>
           <div className="card-body" style={{ display: 'grid', gap: 14 }}>

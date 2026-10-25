@@ -80,7 +80,7 @@ export default function Chats(props) {
   return (
     <>
       <main className="container">
-        <h1>{t.chat}</h1>
+        <h1 className="page-title">{t.chat}</h1>
         {loaded && !me && !selectedId && (
           <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link className="btn" href={`/${params.locale}/signup`}>{t.createAccount}</Link>

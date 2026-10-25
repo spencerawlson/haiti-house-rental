@@ -13,7 +13,7 @@ export default async function Tenants(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1>{t.tenantLandingTitle}</h1>
+        <h1 className="page-title">{t.tenantLandingTitle}</h1>
         <p className="muted">{t.tenantLandingNote}</p>
         <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>
           <Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link>

@@ -24,7 +24,7 @@ export default function Favorites(props) {
   return (
     <>
       <main className="container">
-        <h1><Icon name="heart" /> {t.favorites}</h1>
+        <h1 className="page-title"><Icon name="heart" /> {t.favorites}</h1>
         {listings === null && <p>...</p>}
         {listings?.length === 0 && <p>{t.favoritesEmpty}</p>}
         <div className="grid grid-2">
