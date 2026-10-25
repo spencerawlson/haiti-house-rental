@@ -6,6 +6,11 @@ const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800']
 
 export const metadata = { title: 'Kay Ayiti — House rentals in Haiti' };
 
+// viewport-fit=cover lets the safe-area env() vars report the real iPhone
+// notch/Dynamic Island insets inside the Capacitor webview; without it
+// safe-area-inset-top is 0 and the top bar slides under the status bar.
+export const viewport = { viewportFit: 'cover' };
+
 export default function RootLayout({ children }) {
   return (
     <html lang="ht">

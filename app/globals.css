@@ -382,7 +382,7 @@ a:hover { text-decoration: underline; }
 
 /* Phase 5 — showcase components (docs/design/app-showcase.png) */
 .page-title { font-size: 1.5rem; margin: 4px 0 16px; }
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; padding-top: env(safe-area-inset-top); /* below the iPhone status bar / Dynamic Island */ }
 .logo { display: inline-flex; align-items: center; gap: 8px; font-weight: 900; font-size: 1.35rem; color: var(--primary); letter-spacing: -0.02em; }
 .logo:hover { text-decoration: none; }
 .icon-btn { position: relative; display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); color: var(--ink); }
