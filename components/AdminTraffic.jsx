@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Icon from '@/components/Icon';
 
 // Traffic and subscriber reports: daily, weekly, monthly (migration 0012).
 //
@@ -19,14 +20,14 @@ import { useCallback, useEffect, useState } from 'react';
 // are levels and show where the period ENDED. The server already makes
 // this distinction; the UI repeats it so the total line reads correctly.
 const SERIES = [
-  { key: 'visitors', icon: '👣', kind: 'flow' },
-  { key: 'signups', icon: '✍️', kind: 'flow' },
-  { key: 'subs_new', icon: '⭐', kind: 'flow' },
-  { key: 'subs_returning', icon: '↩️', kind: 'flow' },
-  { key: 'subs_active', icon: '✅', kind: 'stock' },
-  { key: 'subs_suspended', icon: '⏸️', kind: 'flow' },
-  { key: 'subs_deactivated', icon: '⛔', kind: 'flow' },
-  { key: 'revenue_htg', icon: '💰', kind: 'flow' },
+  { key: 'visitors', icon: 'footprints', kind: 'flow' },
+  { key: 'signups', icon: 'signup', kind: 'flow' },
+  { key: 'subs_new', icon: 'star', kind: 'flow' },
+  { key: 'subs_returning', icon: 'returning', kind: 'flow' },
+  { key: 'subs_active', icon: 'check', kind: 'stock' },
+  { key: 'subs_suspended', icon: 'pause', kind: 'flow' },
+  { key: 'subs_deactivated', icon: 'stop', kind: 'flow' },
+  { key: 'revenue_htg', icon: 'money', kind: 'flow' },
 ];
 
 const GRAINS = ['daily', 'weekly', 'monthly'];
@@ -86,7 +87,7 @@ export default function AdminTraffic({ locale, t, onCounts }) {
 
   return (
     <>
-      <h2 id="traffic" className="admin-h2">📈 {t.trafficTitle}</h2>
+      <h2 id="traffic" className="admin-h2"><Icon name="chart" /> {t.trafficTitle}</h2>
       <p className="muted">{t.trafficNote}</p>
 
       <div className="chip-row" style={{ marginBottom: 8 }} role="group" aria-label={t.trafficGrain}>
@@ -103,7 +104,7 @@ export default function AdminTraffic({ locale, t, onCounts }) {
           </button>
         ))}
         {report && (
-          <a className="chip" href={`/api/admin/traffic?grain=${grain}&format=csv`}>⬇️ {t.downloadCsv}</a>
+          <a className="chip" href={`/api/admin/traffic?grain=${grain}&format=csv`}><Icon name="download" /> {t.downloadCsv}</a>
         )}
       </div>
 
@@ -117,7 +118,7 @@ export default function AdminTraffic({ locale, t, onCounts }) {
             onClick={() => setMetric(s.key)}
             style={metric === s.key ? { borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: 800 } : undefined}
           >
-            {s.icon} {label(s.key)}
+            <Icon name={s.icon} /> {label(s.key)}
           </button>
         ))}
       </div>
@@ -138,7 +139,7 @@ export default function AdminTraffic({ locale, t, onCounts }) {
                 {fmt(report.totals?.[metric], metric)}{metric === 'revenue_htg' ? ' HTG' : ''}
               </strong>
             </p>
-            {startsAtDeploy && <p className="muted" style={{ margin: '0 0 10px', fontSize: '0.84rem' }}>⚠️ {t.metricFromDeploy}</p>}
+            {startsAtDeploy && <p className="muted" style={{ margin: '0 0 10px', fontSize: '0.84rem' }}><Icon name="warning" /> {t.metricFromDeploy}</p>}
 
             {rows.length === 0 ? (
               <p className="muted" style={{ margin: 0 }}>{t.noTrafficYet}</p>

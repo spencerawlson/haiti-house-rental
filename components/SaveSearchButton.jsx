@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Icon from '@/components/Icon';
 
 // Centris-style saved search: stores the current filter URL in the browser.
 // The saved-searches page matches new listings against it.
@@ -44,7 +45,7 @@ export default function SaveSearchButton({ savedLabel }) {
 
   return (
     <button className="btn btn-secondary" type="button" onClick={save} disabled={saved}>
-      {saved ? '✓ ' : '🔔 '}{savedLabel}
+      {saved ? '✓ ' : <><Icon name="bell" /> </>}{savedLabel}
     </button>
   );
 }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import FavoriteButton from './FavoriteButton';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
+import Icon from '@/components/Icon';
 
 // Listing card (design: docs/design/app-showcase.png, screen 4): photo
 // with the heart on top, title, place, blue price with its rent period,
@@ -26,25 +27,25 @@ export default function ListingCard({ listing, locale, t }) {
           </p>
           <div className="icon-row">
             {listing.type === 'land' ? (
-              <span>📐 {listing.areaM2 ? `${listing.areaM2.toLocaleString()} m²` : t.land}</span>
+              <span><Icon name="area" /> {listing.areaM2 ? `${listing.areaM2.toLocaleString()} m²` : t.land}</span>
             ) : (
               <>
-                <span title={t.bedrooms}>🛏 {listing.bedrooms}</span>
-                <span title={t.bathrooms}>🛁 {listing.bathrooms}</span>
+                <span title={t.bedrooms}><Icon name="bed" /> {listing.bedrooms}</span>
+                <span title={t.bathrooms}><Icon name="bath" /> {listing.bathrooms}</span>
               </>
             )}
-            {(d.internet === 'included' || d.internet === 'available') && <span>📶 WiFi</span>}
-            {d.power24 && <span>⚡ 24/24</span>}
-            {d.parking > 0 && <span>🚗 {d.parking}</span>}
-            {listing.views > 0 && <span title={t.viewsLabel}>👁 {listing.views.toLocaleString()}</span>}
+            {(d.internet === 'included' || d.internet === 'available') && <span><Icon name="wifi" /> WiFi</span>}
+            {d.power24 && <span><Icon name="power" /> 24/24</span>}
+            {d.parking > 0 && <span><Icon name="car" /> {d.parking}</span>}
+            {listing.views > 0 && <span title={t.viewsLabel}><Icon name="eye" /> {listing.views.toLocaleString()}</span>}
           </div>
           {(listing.verified || listing.advertised || listing.status === 'sold' || listing.status === 'leased') && (
             <div className="lcard-badges">
               {(listing.status === 'sold' || listing.status === 'leased') && (
-                <span className="badge-taken">🏷 {listing.status === 'sold' ? t.statusSold : t.statusLeased}</span>
+                <span className="badge-taken"><Icon name="tag" /> {listing.status === 'sold' ? t.statusSold : t.statusLeased}</span>
               )}
               {listing.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
-              {listing.advertised && <span className="badge">📣 {t.advertised}</span>}
+              {listing.advertised && <span className="badge"><Icon name="megaphone" /> {t.advertised}</span>}
             </div>
           )}
         </div>

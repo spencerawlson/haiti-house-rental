@@ -5,6 +5,7 @@ import { getDict } from '@/lib/dictionaries';
 import { readFavorites } from '@/components/FavoriteButton';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
+import Icon from '@/components/Icon';
 
 // Saved homes, kept in the browser until accounts exist.
 export default function Favorites(props) {
@@ -23,7 +24,7 @@ export default function Favorites(props) {
   return (
     <>
       <main className="container">
-        <h1>♥ {t.favorites}</h1>
+        <h1><Icon name="heart" /> {t.favorites}</h1>
         {listings === null && <p>...</p>}
         {listings?.length === 0 && <p>{t.favoritesEmpty}</p>}
         <div className="grid grid-2">

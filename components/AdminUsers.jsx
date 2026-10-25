@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
 import { hashPassword } from '@/lib/account';
+import Icon from '@/components/Icon';
 
 // The Admin Board's Users tab.
 //
@@ -131,7 +132,7 @@ export default function AdminUsers({ locale, t }) {
 
   return (
     <>
-      <h2 className="admin-h2">👥 {t.accountsTitle}</h2>
+      <h2 className="admin-h2"><Icon name="users" /> {t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
       <p className="muted" style={{ marginTop: -6 }}>{t.metricsNote}</p>
 
@@ -177,12 +178,12 @@ export default function AdminUsers({ locale, t }) {
         {accounts.map((a) => (
           <section key={a.username} className="card">
             <div className="card-body">
-              <h3 style={{ margin: '0 0 4px' }}>{a.id ? `${a.id} · ` : ''}{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? ` · 🤝 ${t.partner}` : ''}</h3>
+              <h3 style={{ margin: '0 0 4px' }}>{a.id ? `${a.id} · ` : ''}{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? <> · <Icon name="partner" /> {t.partner}</> : ''}</h3>
               <p className="muted" style={{ margin: '0 0 4px' }}>
                 {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${communeName(a.location.commune, locale)}, ${departmentName(a.location.department, locale)}` : ''}
               </p>
               <p className="muted" style={{ margin: '0 0 8px' }}>
-                {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? `⏳ ${t.transferFrom} ${a.phone} ${t.viaProvider} ${a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}` : t.accountPending}
+                {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? <><Icon name="hourglass" /> {t.transferFrom} {a.phone} {t.viaProvider} {a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}</> : t.accountPending}
                 {a.role === 'landlord' && !a.partner && (
                   <>
                     {' · '}
@@ -193,13 +194,13 @@ export default function AdminUsers({ locale, t }) {
               </p>
               <div className="metric-row">
                 <span title={t.lastSeenHelp}>
-                  👁 {t.lastSeen}: <strong>{sinceLabel(a.metrics?.lastSeenAt, t)}</strong>
+                  <Icon name="eye" /> {t.lastSeen}: <strong>{sinceLabel(a.metrics?.lastSeenAt, t)}</strong>
                   {a.metrics?.activeSessions > 0 && <span className="live-dot" title={t.liveNow} />}
                 </span>
-                <span title={t.loginsHelp}>🔑 {t.logins}: <strong>{a.metrics?.logins ?? 0}</strong></span>
-                <span title={t.avgSessionHelp}>⏱ {t.avgSession}: <strong>{durationLabel(a.metrics?.avgSessionMs)}</strong></span>
+                <span title={t.loginsHelp}><Icon name="key" /> {t.logins}: <strong>{a.metrics?.logins ?? 0}</strong></span>
+                <span title={t.avgSessionHelp}><Icon name="timer" /> {t.avgSession}: <strong>{durationLabel(a.metrics?.avgSessionMs)}</strong></span>
                 <span title={t.visitsCountHelp}>
-                  📅 {t.visitsCount}: <strong>{a.metrics?.visits ?? 0}</strong>
+                  <Icon name="calendar" /> {t.visitsCount}: <strong>{a.metrics?.visits ?? 0}</strong>
                   {' '}<span className="muted">({a.metrics?.visitsActive ?? 0} {t.visitsLive})</span>
                 </span>
               </div>
@@ -210,11 +211,11 @@ export default function AdminUsers({ locale, t }) {
                 {a.role !== 'tenant' && a.activated && (
                   <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
                 )}
-                <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}>🔑 {t.resetCodeButton}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="key" /> {t.resetCodeButton}</button>
               </div>
               {a.role !== 'tenant' && (
                 <div className="limit-row">
-                  <span>🏠 {t.listingLimitLabel}: <strong>{a.liveListings ?? 0}{a.listingLimit !== null && a.listingLimit !== undefined ? ` / ${a.listingLimit}` : ''}</strong>{a.listingLimit === null || a.listingLimit === undefined ? <span className="muted"> · {t.listingLimitNone}</span> : ''}</span>
+                  <span><Icon name="home" /> {t.listingLimitLabel}: <strong>{a.liveListings ?? 0}{a.listingLimit !== null && a.listingLimit !== undefined ? ` / ${a.listingLimit}` : ''}</strong>{a.listingLimit === null || a.listingLimit === undefined ? <span className="muted"> · {t.listingLimitNone}</span> : ''}</span>
                   <input
                     className="input"
                     type="number"
@@ -296,7 +297,7 @@ function PartnerForm({ locale, t, onCreated }) {
 
   return (
     <>
-      <h2 className="admin-h2">🤝 {t.createPartnerAccount}</h2>
+      <h2 className="admin-h2"><Icon name="partner" /> {t.createPartnerAccount}</h2>
       <p className="muted">{t.partnerNote}</p>
       <form className="card" onSubmit={createPartner}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>

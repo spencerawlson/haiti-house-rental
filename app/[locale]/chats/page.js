@@ -6,6 +6,7 @@ import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
+import Icon from '@/components/Icon';
 
 // The dedicated chat spot. The thread list (with unread counts and a
 // per-side delete) is here, and tapping a thread opens the conversation
@@ -104,7 +105,7 @@ export default function Chats(props) {
                   </p>
                   {th.otherName && <p className="muted" style={{ margin: '0 0 4px' }}>{th.listingTitle}</p>}
                   <p className="muted" style={{ margin: '0 0 12px' }}>{th.lastText}</p>
-                  <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑️ {t.deleteChat}</button>
+                  <button className="btn btn-secondary" type="button" onClick={() => deleteThread(th)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="trash" /> {t.deleteChat}</button>
                 </div>
               </section>
             ))}

@@ -1,4 +1,5 @@
 import { optionKey } from '@/lib/listing-details';
+import Icon from '@/components/Icon';
 
 // Listing details on the detail page (design: docs/design/app-showcase.png,
 // screen 7 — four tiles for water, electricity, internet, security, then
@@ -6,14 +7,14 @@ import { optionKey } from '@/lib/listing-details';
 export default function ListingFacts({ details, t, locale }) {
   const d = details || {};
   const tiles = [
-    d.water && { icon: '💧', label: t.det_water, value: t[optionKey('water', d.water)] },
+    d.water && { icon: 'water', label: t.det_water, value: t[optionKey('water', d.water)] },
     (d.electricity || d.power24) && {
-      icon: '⚡',
+      icon: 'power',
       label: t.det_electricity,
       value: [d.electricity && t[optionKey('electricity', d.electricity)], d.power24 && t.det_power24Short].filter(Boolean).join(' · '),
     },
-    d.internet && { icon: '📶', label: t.det_internet, value: t[optionKey('internet', d.internet)] },
-    d.security?.length && { icon: '🛡️', label: t.det_security, value: d.security.map((s) => t[optionKey('security', s)]).join(', ') },
+    d.internet && { icon: 'wifi', label: t.det_internet, value: t[optionKey('internet', d.internet)] },
+    d.security?.length && { icon: 'shield', label: t.det_security, value: d.security.map((s) => t[optionKey('security', s)]).join(', ') },
   ].filter(Boolean);
   const rows = [
     d.furnished && [t.det_furnished, t[optionKey('furnished', d.furnished)]],
@@ -30,7 +31,7 @@ export default function ListingFacts({ details, t, locale }) {
         <div className="fact-tiles">
           {tiles.map((tile) => (
             <div key={tile.label} className="fact-tile">
-              <span className="fact-icon" aria-hidden="true">{tile.icon}</span>
+              <span className="fact-icon" aria-hidden="true"><Icon name={tile.icon} /></span>
               <span className="fact-label">{tile.label}</span>
               <span className="fact-value">{tile.value}</span>
             </div>

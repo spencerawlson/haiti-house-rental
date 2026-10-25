@@ -6,10 +6,11 @@ import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
+import Icon from '@/components/Icon';
 
 // Notifications inbox: visit requests and answers, payment decisions.
 // Opening it marks everything read.
-const ICON = { visit_proposed: '📅', visit_confirmed: '✅', visit_declined: '✖️', visit_cancelled: '🚫', visit_rescheduled: '🔁', payment_confirmed: '💳', payment_rejected: '⚠️', chat: '💬' };
+const ICON = { visit_proposed: 'calendar', visit_confirmed: 'check', visit_declined: 'x', visit_cancelled: 'ban', visit_rescheduled: 'repeat', payment_confirmed: 'card', payment_rejected: 'warning', chat: 'chat' };
 
 export default function Notifications(props) {
   const params = use(props.params);
@@ -39,14 +40,14 @@ export default function Notifications(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1 className="page-title">🔔 {t.notificationsTitle}</h1>
+        <h1 className="page-title"><Icon name="bell" /> {t.notificationsTitle}</h1>
         {!signedIn && <p><Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link></p>}
         {items && signedIn && items.length === 0 && <p className="muted">{t.noNotifications}</p>}
         <nav className="menu card">
           {(items || []).map((n) => {
             const body = (
               <>
-                <span className="menu-icon" aria-hidden="true">{ICON[n.kind] || '•'}</span>
+                <span className="menu-icon" aria-hidden="true"><Icon name={ICON[n.kind] || 'bell'} /></span>
                 <span style={{ flex: 1, fontWeight: n.read ? 400 : 800 }}>
                   {text(n)}
                   <span className="muted" style={{ display: 'block', fontSize: '0.8rem', fontWeight: 400 }}>{new Date(n.createdAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)}</span>

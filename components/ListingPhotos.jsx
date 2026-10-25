@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Icon from '@/components/Icon';
 
 // Listing photos with a zoomable lightbox: tap any photo to open it
 // full-screen, then pinch (touch), scroll (mouse wheel) or use the
@@ -208,12 +209,12 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
       />
       {hero && photos.length > 1 && galleryHref && (
         <a href={galleryHref} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-          📷 1/{photos.length}
+          <Icon name="camera" /> 1/{photos.length}
         </a>
       )}
       {hero && photos.length > 1 && !galleryHref && (
         <button type="button" onClick={() => open(0)} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, border: 'none', borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-          📷 1/{photos.length}
+          <Icon name="camera" /> 1/{photos.length}
         </button>
       )}
       {!hero && photos.length > 1 && (

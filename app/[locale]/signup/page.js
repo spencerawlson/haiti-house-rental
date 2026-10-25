@@ -10,6 +10,7 @@ import { createAccount } from '@/lib/account';
 import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
+import Icon from '@/components/Icon';
 
 // Account creation, in Spencer's order: identity first, then location.
 // Step 0 (design screen 3): choose a role — tenant (free, own signup
@@ -141,12 +142,12 @@ export default function Signup(props) {
             <p style={{ margin: 0, fontWeight: 700, textAlign: 'center' }}>{t.chooseRole}</p>
             <div className="role-cards" role="radiogroup" aria-label={t.chooseRole}>
               {[
-                { id: 'tenant', icon: '👤', title: t.roleTenant, sub: t.roleTenantSub, extra: t.free },
-                { id: 'landlord', icon: '🏠', title: t.roleLandlord, sub: t.roleLandlordSub, extra: `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}` },
-                { id: 'admin', icon: '🛡️', title: t.roleAdmin, sub: '', extra: '' },
+                { id: 'tenant', icon: 'user', title: t.roleTenant, sub: t.roleTenantSub, extra: t.free },
+                { id: 'landlord', icon: 'home', title: t.roleLandlord, sub: t.roleLandlordSub, extra: `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}` },
+                { id: 'admin', icon: 'shield', title: t.roleAdmin, sub: '', extra: '' },
               ].map((r) => (
                 <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={`role-card${role === r.id ? ' selected' : ''}`} onClick={() => setRole(r.id)}>
-                  <span className="role-icon" aria-hidden="true">{r.icon}</span>
+                  <span className="role-icon" aria-hidden="true"><Icon name={r.icon} /></span>
                   <span style={{ display: 'grid' }}>
                     <strong>{r.title}</strong>
                     {r.sub && <span className="muted" style={{ fontSize: '0.88rem' }}>{r.sub}</span>}
@@ -188,7 +189,7 @@ export default function Signup(props) {
             <div className="card-body" style={{ display: 'grid', gap: 14 }}>
               <h2 style={{ margin: 0 }}>{t.stepLocation}</h2>
               <button className="btn btn-secondary" type="button" onClick={detect} disabled={locating}>
-                {locating ? t.locating : `📍 ${t.detectLocation}`}
+                {locating ? t.locating : <><Icon name="pin" /> {t.detectLocation}</>}
               </button>
               {detected && <p>{t.detectedLocation} <strong>{detected}</strong></p>}
               <p className="muted" style={{ margin: 0 }}>{t.manualLocation}</p>

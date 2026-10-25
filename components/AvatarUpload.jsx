@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { compressImage } from '@/lib/image-compress';
 import { syncSessionHint } from '@/lib/account';
+import Icon from '@/components/Icon';
 
 // The profile circle on the Account page. It used to be initials only,
 // with no way to put a real face on it. Now the circle IS the button: tap
@@ -66,7 +67,7 @@ export default function AvatarUpload({ account, onChange, t }) {
         ) : (
           <span className="avatar" aria-hidden="true">{initials(account.name)}</span>
         )}
-        <span className="avatar-edit" aria-hidden="true">{busy ? '⋯' : '📷'}</span>
+        <span className="avatar-edit" aria-hidden="true">{busy ? '⋯' : <Icon name="camera" />}</span>
       </button>
       <input ref={fileRef} type="file" accept="image/*" onChange={pick} hidden />
       {showPhoto && (

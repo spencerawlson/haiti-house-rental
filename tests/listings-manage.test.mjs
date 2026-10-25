@@ -183,6 +183,8 @@ test('view counts are public: everyone sees the number the owner sees', { skip }
   assert.equal(pub?.views, 1, 'public list');
   // The detail page shows it; the sold-home deletion clock stays private.
   const page = (await (await fetch(`${BASE}/en/listings/${id}`)).text()).replace(/<!-- -->/g, '');
-  assert.match(page, /👁 1 views/);
+  // A vector eye icon (not an emoji) followed by the count.
+  assert.match(page, /lucide-eye/);
+  assert.match(page.replace(/<[^>]+>/g, ''), /1 views/);
   assert.equal((await anon(`/api/listings?id=${id}`)).data.listing.deletesAt, undefined);
 });
