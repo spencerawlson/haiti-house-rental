@@ -95,12 +95,16 @@ export default function ListHome(props) {
       <main className="container">
       <Link href={`/${params.locale}`}>{t.back}</Link>
       <h1 className="page-title">{t.landlordTitle}</h1>
-      <ol className="muted">
-        <li>{t.landlordStep1}</li>
-        <li>{t.landlordStep2}</li>
-        <li>{t.landlordStep3}</li>
-      </ol>
-      <p>{t.activationFee}: <strong>{JOIN_FEE_HTG.toLocaleString()} HTG</strong> ({t.oneTime}) · <strong>{QUARTER_FEE_HTG.toLocaleString()} HTG</strong> {t.quarterFeeLabel}</p>
+      {!(meLoaded && me?.activated) && (
+        <>
+          <ol className="muted">
+            <li>{t.landlordStep1}</li>
+            <li>{t.landlordStep2}</li>
+            <li>{t.landlordStep3}</li>
+          </ol>
+          <p>{t.activationFee}: <strong>{JOIN_FEE_HTG.toLocaleString()} HTG</strong> ({t.oneTime}) · <strong>{QUARTER_FEE_HTG.toLocaleString()} HTG</strong> {t.quarterFeeLabel}</p>
+        </>
+      )}
       <p className="muted">{t.advertisedFee}: <strong>{ADVERTISED_FEE_HTG_MONTH} HTG {t.perMonth}</strong></p>
       {myUsername && <p>{t.postingAs} <strong>@{myUsername}</strong></p>}
       {meLoaded && !me && (
