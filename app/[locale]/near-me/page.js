@@ -52,7 +52,7 @@ export default function NearMe(props) {
   return (
     <>
       <main className="container">
-        <h1><Icon name="pin" /> {t.nearMe}</h1>
+        <h1 className="page-title"><Icon name="pin" /> {t.nearMe}</h1>
         {status === 'idle' && (
           <>
             <p className="muted">{t.nearMeIntro}</p>

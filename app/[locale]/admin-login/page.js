@@ -34,7 +34,7 @@ export default function AdminLogin(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1>{t.adminLogin}</h1>
+        <h1 className="page-title">{t.adminLogin}</h1>
         <form className="card" onSubmit={submit}>
           <div className="card-body" style={{ display: 'grid', gap: 14 }}>
             <div className="field"><label>{t.adminPassword}</label>

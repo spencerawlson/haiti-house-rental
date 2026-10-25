@@ -116,7 +116,7 @@ export default function EditListing(props) {
     <>
       <main className="container">
         <Link href={`/${params.locale}/listings/${params.id}`}>{t.back}</Link>
-        <h1>{t.editListing}</h1>
+        <h1 className="page-title">{t.editListing}</h1>
         {loaded && !listing && <p className="muted">{t.notFound}</p>}
         {loaded && listing && !mine && (
           <div className="card" style={{ marginTop: 20 }}>

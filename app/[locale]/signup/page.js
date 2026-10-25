@@ -133,7 +133,7 @@ export default function Signup(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1>{t.createAccount}</h1>
+        <h1 className="page-title">{t.createAccount}</h1>
         <p>
           <Link href={`/${params.locale}/tenants`}>{t.tenantLink}</Link>
         </p>
