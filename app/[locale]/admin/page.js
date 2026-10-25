@@ -49,7 +49,7 @@ export default function Admin(props) {
   const [auditEntries, setAuditEntries] = useState([]);
   const [channels, setChannels] = useState(null);
   const [reportThreads, setReportThreads] = useState({});
-  const [revenue, setRevenue] = useState({ entries: [], totalHTG: 0 });
+  const [revenue, setRevenue] = useState({ entries: [], byKind: {}, totalHTG: 0 });
   const [rates, setRates] = useState(null);
   const [rateError, setRateError] = useState(false);
   const [convertAmount, setConvertAmount] = useState('');
@@ -66,6 +66,17 @@ export default function Admin(props) {
     } else {
       setRateError(true);
     }
+  }
+
+  function revenueKindLabel(kind) {
+    return {
+      join: t.joinFeeLabel,
+      quarter: t.revenueKindQuarter,
+      reactivation: t.reactivationFeeLabel,
+      advertising: t.payKindAdvertising,
+      activation: t.payKindActivation,
+      manual: t.revenueKindManual,
+    }[kind] || kind;
   }
 
   async function loadPayments(status) {
@@ -482,14 +493,20 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           <p className="muted" style={{ margin: 0 }}>{t.revenueStartNote}</p>
         </div>
       </div>
-      <h3 style={{ marginTop: 24 }}>{t.activationsTitle}</h3>
+      {/* Every confirmed payment at its real amount, by kind. */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '12px 0' }}>
+        {Object.entries(revenue.byKind || {}).map(([kind, htg]) => (
+          <span key={kind} className="chip">{revenueKindLabel(kind)}: <strong style={{ marginLeft: 4 }}>{htg.toLocaleString()} HTG</strong></span>
+        ))}
+      </div>
+      <h3 style={{ marginTop: 16 }}>{t.revenuePaymentsTitle}</h3>
       <div className="grid">
         {revenue.entries.map((e) => (
-          <section key={e.username} className="card">
+          <section key={e.key} className="card">
             <div className="card-body">
-              <p style={{ margin: '0 0 4px' }}><strong>{e.name}</strong> · @{e.username}</p>
+              <p style={{ margin: '0 0 4px' }}><strong>{e.amountHTG.toLocaleString()} HTG</strong> · {revenueKindLabel(e.kind)}</p>
               <p className="muted" style={{ margin: 0 }}>
-                {new Date(e.activatedAt).toLocaleDateString(params.locale)} · {e.amountHTG.toLocaleString()} HTG
+                {e.name} · @{e.username} · {new Date(e.at).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}
               </p>
             </div>
           </section>

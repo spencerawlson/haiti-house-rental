@@ -4,6 +4,12 @@ import { getAccountMetrics } from '@/lib/account-metrics-server';
 import { rateLimit, clientIp, tooMany } from '@/lib/rate-limit';
 
 // Live data: never serve a build-time snapshot of the accounts.
+// Sign-ups per IP per hour. 40 in production (generous: Haitian mobile
+// carriers put many people behind one address). Overridable only so the
+// regression suite — which signs up dozens of accounts from one IP — is
+// not capped by its own size; leave SIGNUP_LIMIT_PER_HOUR unset in prod.
+const SIGNUP_LIMIT_PER_HOUR = Number(process.env.SIGNUP_LIMIT_PER_HOUR) > 0 ? Number(process.env.SIGNUP_LIMIT_PER_HOUR) : 40;
+
 export const dynamic = 'force-dynamic';
 
 // The full list is admin-only (middleware). A ?username= lookup is public
@@ -45,7 +51,7 @@ export async function GET(request) {
 export async function POST(request) {
   // Per-IP limits are generous: Haitian mobile carriers put many
   // subscribers behind one shared (CGNAT) address.
-  if (!rateLimit(`signup:${clientIp(request)}`, 40, 60 * 60 * 1000)) return tooMany();
+  if (!rateLimit(`signup:${clientIp(request)}`, SIGNUP_LIMIT_PER_HOUR, 60 * 60 * 1000)) return tooMany();
   const data = await request.json().catch(() => ({}));
   const username = String(data.username || '').trim();
   if (!data.name || !username || !data.passwordHash || !data.phone) {
