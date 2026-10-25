@@ -11,6 +11,7 @@ import TabBar from '@/components/TabBar';
 import ListingDetailsFields from '@/components/ListingDetailsFields';
 import LocationPicker from '@/components/LocationPicker';
 import { compressImage } from '@/lib/image-compress';
+import { uploadErrorInfo, uploadErrorMessage } from '@/lib/upload-errors';
 import Icon from '@/components/Icon';
 
 // Landlord posting form: details + description + house photos and videos.
@@ -55,7 +56,12 @@ export default function ListHome(props) {
       const form = new FormData();
       form.append('file', await compressImage(file));
       const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const e = new Error('Upload failed');
+        e.info = uploadErrorInfo(res, err, file.name);
+        throw e;
+      }
       const data = await res.json();
       urls.push(data.url);
     }
@@ -80,6 +86,14 @@ export default function ListHome(props) {
           setStatus(t.listingLimitReached.replace('{limit}', err.limit));
           return;
         }
+        if (err.error === 'Only activated landlord accounts can post listings') {
+          setStatus(t.postNotActivated);
+          return;
+        }
+        if (err.error === 'Title and commune are required') {
+          setStatus(t.postMissingInfo);
+          return;
+        }
         throw new Error('Create failed');
       }
       const data = await res.json();
@@ -87,8 +101,9 @@ export default function ListHome(props) {
       // One more home live: keep the usage line honest without a reload.
       setMe((m) => (m?.listings ? { ...m, listings: { ...m.listings, used: m.listings.used + 1 } } : m));
       setStatus(t.listingCreated);
-    } catch {
-      setStatus(t.listingError);
+    } catch (e) {
+      if (e?.info) setStatus(uploadErrorMessage(t, e.info));
+      else setStatus(t.listingError);
     }
   }
 
