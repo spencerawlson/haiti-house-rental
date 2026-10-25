@@ -131,7 +131,8 @@ export default function AdminUsers({ locale, t }) {
   const last = Math.min(data.page * per, total);
 
   return (
-    <>
+    <div className="admin-users-layout">
+      <div>
       <h2 className="admin-h2"><Icon name="users" /> {t.accountsTitle}</h2>
       <p className="muted">{t.accountsNote}</p>
       <p className="muted" style={{ marginTop: -6 }}>{t.metricsNote}</p>
@@ -251,8 +252,11 @@ export default function AdminUsers({ locale, t }) {
         </div>
       )}
 
+      </div>
+      <div>
       <PartnerForm locale={locale} t={t} onCreated={load} />
-    </>
+      </div>
+    </div>
   );
 }
 
