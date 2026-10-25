@@ -9,6 +9,7 @@ import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import ListingDetailsFields from '@/components/ListingDetailsFields';
+import LocationPicker from '@/components/LocationPicker';
 import { compressImage } from '@/lib/image-compress';
 import Icon from '@/components/Icon';
 
@@ -22,6 +23,7 @@ export default function ListHome(props) {
   const [description, setDescription] = useState('');
   const [department, setDepartment] = useState('ouest');
   const [commune, setCommune] = useState('');
+  const [coords, setCoords] = useState(null);
   const [priceHTG, setPriceHTG] = useState('');
   const [purpose, setPurpose] = useState('rent');
   const [rentPeriod, setRentPeriod] = useState('monthly');
@@ -70,7 +72,7 @@ export default function ListHome(props) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details }),
+        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -186,6 +188,10 @@ export default function ListHome(props) {
         </div>
         <div className="field"><label>{t.commune}</label>
           <input className="input" value={commune} onChange={(e) => setCommune(e.target.value)} required />
+        </div>
+        <div className="field"><label>{t.pinLocationTitle}</label>
+          <span className="muted">{t.pinLocationHint}</span>
+          <LocationPicker value={coords} onChange={setCoords} useMyLocationLabel={t.useMyLocation} unavailableLabel={t.locationUnavailable} />
         </div>
         <div className="field"><label>{t.priceLabel} (HTG{purpose === 'rent' ? ` ${rentPeriodLabel(rentPeriod, t)}` : ''})</label>
           <input className="input" type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required />

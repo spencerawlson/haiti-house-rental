@@ -9,6 +9,7 @@ import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import ListingDetailsFields from '@/components/ListingDetailsFields';
+import LocationPicker from '@/components/LocationPicker';
 import { compressImage } from '@/lib/image-compress';
 
 // Landlord edit form: every field the creation form sets, pre-filled
@@ -24,6 +25,7 @@ export default function EditListing(props) {
   const [loaded, setLoaded] = useState(false);
   const [mine, setMine] = useState(false);
   const [f, setF] = useState(null);
+  const [coords, setCoords] = useState(null);
   const [newPhotos, setNewPhotos] = useState([]);
   const [newVideos, setNewVideos] = useState([]);
   const [status, setStatus] = useState('');
@@ -55,6 +57,7 @@ export default function EditListing(props) {
             photos: [...(l.photos || [])],
             videos: [...(l.videos || [])],
           });
+          setCoords(typeof l.lat === 'number' && typeof l.lng === 'number' ? { lat: l.lat, lng: l.lng } : null);
         }
       })
       .catch(() => setLoaded(true));
@@ -103,6 +106,7 @@ export default function EditListing(props) {
           rentPeriod: f.rentPeriod,
           photos,
           videos,
+          ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
         }),
       });
       if (!res.ok) throw new Error('Save failed');
@@ -163,6 +167,10 @@ export default function EditListing(props) {
               </div>
               <div className="field"><label>{t.commune}</label>
                 <input className="input" value={f.commune} onChange={(e) => set('commune', e.target.value)} required />
+              </div>
+              <div className="field"><label>{t.pinLocationTitle}</label>
+                <span className="muted">{t.pinLocationHint}</span>
+                <LocationPicker value={coords} onChange={setCoords} useMyLocationLabel={t.useMyLocation} unavailableLabel={t.locationUnavailable} />
               </div>
               <div className="field"><label>{t.priceLabel} (HTG{f.purpose === 'rent' ? ` ${rentPeriodLabel(f.rentPeriod, t)}` : ''})</label>
                 <input className="input" type="number" value={f.priceHTG} onChange={(e) => set('priceHTG', e.target.value)} required />
