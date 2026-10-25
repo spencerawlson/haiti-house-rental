@@ -63,6 +63,17 @@ export default function Account(props) {
     setMe(null);
   }
 
+  async function deleteAccount() {
+    if (!window.confirm(t.deleteAccountConfirm)) return;
+    const res = await fetch('/api/accounts/me', { method: 'DELETE' });
+    if (!res.ok) {
+      window.alert(t.deleteAccountFailed);
+      return;
+    }
+    await signOut();
+    setMe(null);
+  }
+
   const isLandlord = !!me && me.role !== 'tenant';
   const unread = threads.reduce((sum, th) => sum + th.unread, 0);
   const upcomingVisits = visits.filter((v) => ['proposed', 'confirmed'].includes(v.status)).length;
@@ -205,6 +216,7 @@ export default function Account(props) {
         {me && (
           <nav className="menu card" style={{ marginTop: 20 }}>
             <MenuRow icon="↪" label={t.signOut} onClick={logout} />
+            <MenuRow icon="🗑️" label={t.deleteAccount} onClick={deleteAccount} />
           </nav>
         )}
       </main>
