@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getSession } from '@/lib/account';
 import ReportForm from './ReportForm';
+import Icon from '@/components/Icon';
 
 // "Report this listing" on a listing page, for signed-in users who are
 // not its owner.
@@ -21,7 +22,7 @@ export default function ReportListingButton({ listingId, owner, strings }) {
       {open ? (
         <ReportForm kind="listing" listingId={listingId} strings={strings} onDone={() => setOpen(false)} />
       ) : (
-        <button type="button" className="link-btn" onClick={() => setOpen(true)}>⚑ {strings.reportListing}</button>
+        <button type="button" className="link-btn" onClick={() => setOpen(true)}><Icon name="flag" /> {strings.reportListing}</button>
       )}
     </div>
   );

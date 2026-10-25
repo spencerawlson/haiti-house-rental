@@ -27,7 +27,7 @@ export default function ListingMap({ listings, locale, t, userLocation }) {
         points.push([userLocation.lat, userLocation.lng]);
         L.circleMarker([userLocation.lat, userLocation.lng], {
           radius: 10, color: '#dc2626', fillColor: '#dc2626', fillOpacity: 0.9,
-        }).addTo(map).bindPopup('📍');
+        }).addTo(map).bindPopup('<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>');
       }
       // Popups are raw HTML: every listing value is escaped, or a landlord
       // could put a script in a title and run it for every map visitor.

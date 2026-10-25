@@ -7,6 +7,7 @@ import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import ListingMap from '@/components/ListingMap';
 import SaveSearchButton from '@/components/SaveSearchButton';
+import Icon from '@/components/Icon';
 
 // Search (design: docs/design/app-showcase.png, screens 5–6): search pill
 // always visible, filters in a fold-out sheet (rent/sale toggle, type,
@@ -48,14 +49,14 @@ export default async function Listings(props) {
         <h1 className="page-title">{t.browse}</h1>
         <form method="get" style={{ marginBottom: 16 }}>
           <div className="search-pill" role="search">
-            <span aria-hidden="true">🔍</span>
+            <span aria-hidden="true"><Icon name="search" /></span>
             <input name="q" defaultValue={f.q} placeholder={t.searchPlaceholder} aria-label={t.searchPlaceholder} />
             <button type="submit">{t.tabSearch}</button>
           </div>
           {view === 'map' && <input type="hidden" name="view" value="map" />}
           <details className="card" style={{ marginTop: 12 }}>
             <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}>
-              ⚙️ {t.filters}{activeFilters > 0 ? ` (${activeFilters})` : ''}
+              <Icon name="settings" /> {t.filters}{activeFilters > 0 ? ` (${activeFilters})` : ''}
             </summary>
             <div className="card-body" style={{ display: 'grid', gap: 14, paddingTop: 4 }}>
               <div className="seg" role="radiogroup" aria-label={t.purpose}>
@@ -95,8 +96,8 @@ export default async function Listings(props) {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="power24" value="1" defaultChecked={f.power24 === '1'} style={{ marginRight: 6 }} />⚡ {t.det_power24Short}</label>
-                <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="furnished" value="1" defaultChecked={f.furnished === '1'} style={{ marginRight: 6 }} />🛋️ {t.det_furnished_furnished}</label>
+                <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="power24" value="1" defaultChecked={f.power24 === '1'} style={{ marginRight: 6 }} /><Icon name="power" /> {t.det_power24Short}</label>
+                <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="furnished" value="1" defaultChecked={f.furnished === '1'} style={{ marginRight: 6 }} /><Icon name="sofa" /> {t.det_furnished_furnished}</label>
                 <label className="chip" style={{ cursor: 'pointer' }}><input type="checkbox" name="verified" value="1" defaultChecked={f.verified === '1'} style={{ marginRight: 6 }} />✓ {t.verifiedListing}</label>
               </div>
               <div className="field"><label>{t.sortBy}</label>
@@ -116,7 +117,7 @@ export default async function Listings(props) {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
           <span className="muted" style={{ marginRight: 'auto' }}><strong>{shown.length}</strong> {t.resultsFound}</span>
           <Link className={`chip${view === 'list' ? ' active' : ''}`} href={withView('list')}>☰ {t.listView}</Link>
-          <Link className={`chip${view === 'map' ? ' active' : ''}`} href={withView('map')}>🗺 {t.mapView}</Link>
+          <Link className={`chip${view === 'map' ? ' active' : ''}`} href={withView('map')}><Icon name="map" /> {t.mapView}</Link>
           <SaveSearchButton savedLabel={t.saveSearch} />
         </div>
         {view === 'map' ? (

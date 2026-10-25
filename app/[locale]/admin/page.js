@@ -7,6 +7,7 @@ import { communeName } from '@/lib/departments';
 import BackButton from '@/components/BackButton';
 import AdminUsers from '@/components/AdminUsers';
 import AdminTraffic from '@/components/AdminTraffic';
+import Icon from '@/components/Icon';
 
 // Admin: approve or remove advertising, track activation revenue, and
 // convert it. Nothing here is automatic — a landlord's advertising
@@ -267,7 +268,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
     <main className="container admin">
       <BackButton locale={params.locale} />
       <header className="topbar" style={{ marginTop: 8 }}>
-        <h1 className="page-title" style={{ margin: 0 }}>🛡️ {t.adminTitle}</h1>
+        <h1 className="page-title" style={{ margin: 0 }}><Icon name="shield" /> {t.adminTitle}</h1>
         <button className="btn btn-secondary" type="button" onClick={adminLogout} style={{ minHeight: 40, padding: '8px 16px' }}>{t.signOut}</button>
       </header>
       <p className="muted" style={{ marginTop: 0 }}>{t.adminNote}</p>
@@ -284,7 +285,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
             aria-selected={tab === id}
             onClick={() => setTab(id)}
           >
-            {id === 'overview' ? `📋 ${t.tabOverview}` : `👥 ${t.accountsTitle}`}
+            {id === 'overview' ? <><Icon name="overview" /> {t.tabOverview}</> : <><Icon name="users" /> {t.accountsTitle}</>}
           </button>
         ))}
       </div>
@@ -296,38 +297,38 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
       {/* Summary tiles (same style as the landlord dashboard): what needs
           the admin now. Each tile jumps to its section. */}
       <div className="stat-tiles admin-tiles">
-        <a href="#payments" className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{paySummary ? paySummary.pendingCount : '—'}</strong><span>{t.dashPendingPayments}{paySummary ? ` · ${paySummary.pendingHTG.toLocaleString()} HTG` : ''}</span></a>
-        <a href="#reports" className="stat-tile tone-purple"><span className="stat-icon">⚑</span><strong>{reports.length}</strong><span>{t.reportsTitle}</span></a>
+        <a href="#payments" className="stat-tile tone-amber"><span className="stat-icon"><Icon name="card" /></span><strong>{paySummary ? paySummary.pendingCount : '—'}</strong><span>{t.dashPendingPayments}{paySummary ? ` · ${paySummary.pendingHTG.toLocaleString()} HTG` : ''}</span></a>
+        <a href="#reports" className="stat-tile tone-purple"><span className="stat-icon"><Icon name="flag" /></span><strong>{reports.length}</strong><span>{t.reportsTitle}</span></a>
         {/* Counted in Postgres, not by filtering a download of every
             account. Switches tabs rather than jumping to an anchor. */}
-        <button type="button" className="stat-tile tone-blue" onClick={() => setTab('users')}><span className="stat-icon">⏳</span><strong>{counts ? counts.pendingActivation : '—'}</strong><span>{t.pendingUsers}</span></button>
-        <a href="#listings" className="stat-tile tone-green"><span className="stat-icon">🏠</span><strong>{listings.length}</strong><span>{t.statusLive}</span></a>
-        <a href="#revenue" className="stat-tile tone-green"><span className="stat-icon">💰</span><strong>{(paySummary?.confirmedHTG || 0).toLocaleString()}</strong><span>HTG · {t.payConfirmedTotal}</span></a>
-        <a href="#live" className="stat-tile tone-blue"><span className="stat-icon">🟢</span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
+        <button type="button" className="stat-tile tone-blue" onClick={() => setTab('users')}><span className="stat-icon"><Icon name="hourglass" /></span><strong>{counts ? counts.pendingActivation : '—'}</strong><span>{t.pendingUsers}</span></button>
+        <a href="#listings" className="stat-tile tone-green"><span className="stat-icon"><Icon name="home" /></span><strong>{listings.length}</strong><span>{t.statusLive}</span></a>
+        <a href="#revenue" className="stat-tile tone-green"><span className="stat-icon"><Icon name="money" /></span><strong>{(paySummary?.confirmedHTG || 0).toLocaleString()}</strong><span>HTG · {t.payConfirmedTotal}</span></a>
+        <a href="#live" className="stat-tile tone-blue"><span className="stat-icon"><Icon name="live" /></span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
       </div>
       <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
-        {[['traffic', `📈 ${t.trafficTitle}`], ['payments', `💳 ${t.paymentsTitle}`], ['reports', `⚑ ${t.reportsTitle}`], ['listings', `🏠 ${t.advertisedTitle || t.adminTitle}`], ['revenue', `💰 ${t.revenueTitle}`], ['settings', `⚙️ ${t.paymentNumbers}`], ['live', `🟢 ${t.liveNow}`]].map(([id, label]) => (
-          <a key={id} className="chip" href={`#${id}`}>{label}</a>
+        {[['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
+          <a key={id} className="chip" href={`#${id}`}><Icon name={icon} /> {label}</a>
         ))}
       </nav>
       <AdminTraffic locale={params.locale} t={t} onCounts={onCounts} />
-      <h2 id="live" className="admin-h2">🟢 {t.liveNow}</h2>
+      <h2 id="live" className="admin-h2"><Icon name="live" /> {t.liveNow}</h2>
       <p className="muted">{t.liveNowNote}</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-        <span className="chip">🟢 {presence.users.length} {t.liveUsers}</span>
+        <span className="chip"><Icon name="live" /> {presence.users.length} {t.liveUsers}</span>
         <span className="chip">{presence.visitors} {t.visitorsBrowsing}</span>
       </div>
       <div className="grid">
         {presence.users.map((u) => (
           <section key={u.username} className="card">
             <div className="card-body">
-              <p style={{ margin: 0 }}>🟢 <strong>{u.name || u.username}</strong> · @{u.username}{u.id ? ` · ${u.id}` : ''} · {u.secondsAgo}s</p>
+              <p style={{ margin: 0 }}><Icon name="live" /> <strong>{u.name || u.username}</strong> · @{u.username}{u.id ? ` · ${u.id}` : ''} · {u.secondsAgo}s</p>
             </div>
           </section>
         ))}
         {presence.users.length === 0 && <p className="muted">{t.noLiveUsers}</p>}
       </div>
-      <h2 id="settings" className="admin-h2">⚙️ {t.paymentNumbers}</h2>
+      <h2 id="settings" className="admin-h2"><Icon name="settings" /> {t.paymentNumbers}</h2>
       <form className="card" onSubmit={saveNumbers}>
         <div className="card-body" style={{ display: 'grid', gap: 14 }}>
           <div className="field"><label>{t.moncashNumber}</label>
@@ -341,13 +342,13 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         </div>
       </form>
       {channels && (
-        <p className="muted" style={{ marginTop: 24 }}>🔔 {t.notifyChannels}: SMS {channels.sms ? `✓ ${t.channelOn}` : t.channelOff} · WhatsApp {channels.whatsapp ? `✓ ${t.channelOn}` : t.channelOff} · Email {channels.email ? `✓ ${t.channelOn}` : t.channelOff}</p>
+        <p className="muted" style={{ marginTop: 24 }}><Icon name="bell" /> {t.notifyChannels}: SMS {channels.sms ? `✓ ${t.channelOn}` : t.channelOff} · WhatsApp {channels.whatsapp ? `✓ ${t.channelOn}` : t.channelOff} · Email {channels.email ? `✓ ${t.channelOn}` : t.channelOff}</p>
       )}
-      <h2 id="payments" className="admin-h2">💳 {t.paymentsTitle} ({payments.length})</h2>
+      <h2 id="payments" className="admin-h2"><Icon name="card" /> {t.paymentsTitle} ({payments.length})</h2>
       {paySummary && (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
           <span className="chip">✓ {t.payConfirmedTotal}: <strong style={{ marginLeft: 4 }}>{paySummary.confirmedHTG.toLocaleString()} HTG</strong></span>
-          <span className="chip">⏳ {t.payPendingTotal}: <strong style={{ marginLeft: 4 }}>{paySummary.pendingHTG.toLocaleString()} HTG</strong></span>
+          <span className="chip"><Icon name="hourglass" /> {t.payPendingTotal}: <strong style={{ marginLeft: 4 }}>{paySummary.pendingHTG.toLocaleString()} HTG</strong></span>
           <span className="chip">{t.payKindActivation}: {paySummary.byKind.activation.confirmedHTG.toLocaleString()} HTG</span>
           <span className="chip">{t.payKindAdvertising}: {paySummary.byKind.advertising.confirmedHTG.toLocaleString()} HTG</span>
         </div>
@@ -359,7 +360,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         <select className="input" style={{ maxWidth: 220 }} value={payStatus} onChange={(e) => { const s = e.target.value; setPayStatus(s); loadPayments(s); }} aria-label={t.paymentsTitle}>
           <option value="pending">{t.payPending}</option>
           <option value="confirmed">{t.payConfirmed}</option>
-          <option value="noTxn">⚠ {t.payNoTxnFilter}</option>
+          <option value="noTxn">{t.payNoTxnFilter}</option>
           <option value="rejected">{t.payRejected}</option>
           <option value="all">{t.all}</option>
         </select>
@@ -381,7 +382,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                 <p style={{ margin: 0 }}>
                   {p.receiverTxn
                     ? <span className="muted">{t.payTxnLabel}: <code>{p.receiverTxn}</code></span>
-                    : <span className="badge">⚠ {t.payNoTxnBadge}</span>}
+                    : <span className="badge"><Icon name="warning" /> {t.payNoTxnBadge}</span>}
                 </p>
               )}
               <p className="muted" style={{ margin: 0 }}>
@@ -406,7 +407,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                     <button className="btn btn-secondary" type="button" onClick={() => reviewPayment(p, 'rejected')} style={{ minHeight: 40, padding: '8px 16px' }}>{t.payRejectBtn}</button>
                   </>
                 )}
-                <button className="btn btn-danger" type="button" onClick={() => deleteTransaction(p)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.payDeleteBtn}</button>
+                <button className="btn btn-danger" type="button" onClick={() => deleteTransaction(p)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="trash" /> {t.payDeleteBtn}</button>
               </div>
             </div>
           </section>
@@ -417,7 +418,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           Nothing on this screen — or anywhere in the app — can clear an
           entry from this list. */}
       <details className="card" style={{ marginBottom: 16 }}>
-        <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}>🗑 {t.payDeletedTitle} ({deletions.length})</summary>
+        <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}><Icon name="trash" /> {t.payDeletedTitle} ({deletions.length})</summary>
         <div className="card-body" style={{ display: 'grid', gap: 8, paddingTop: 4 }}>
           <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>{t.payDeletedNote}</p>
           {deletions.length === 0 && <p className="muted" style={{ margin: 0 }}>—</p>}
@@ -431,12 +432,12 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
               <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
                 {new Date(d.deletedAt).toLocaleString(params.locale === 'ht' ? 'fr' : params.locale)} · {d.deletedBy}
               </p>
-              <p style={{ margin: '2px 0 0', fontSize: '0.9rem' }}>💬 {d.reason}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '0.9rem' }}><Icon name="chat" /> {d.reason}</p>
             </div>
           ))}
         </div>
       </details>
-      <h2 id="reports" className="admin-h2">⚑ {t.reportsTitle} ({reports.length})</h2>
+      <h2 id="reports" className="admin-h2"><Icon name="flag" /> {t.reportsTitle} ({reports.length})</h2>
       <div className="grid" style={{ marginBottom: 16 }}>
         {reports.length === 0 && <p className="muted">{t.noReports}</p>}
         {reports.map((r) => (
@@ -452,7 +453,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
               {r.details && <p style={{ margin: 0 }}>“{r.details}”</p>}
               {reportThreads[r.id] && (
                 <div className="chat-box" style={{ padding: 10, border: '1px solid var(--line)', borderRadius: 12 }}>
-                  <p className="muted" style={{ margin: 0 }}>@{reportThreads[r.id].conversation.tenant || '—'} ↔ @{reportThreads[r.id].conversation.landlord || '—'}{reportThreads[r.id].conversation.blockedBy ? ` · ⊘ @${reportThreads[r.id].conversation.blockedBy}` : ''}</p>
+                  <p className="muted" style={{ margin: 0 }}>@{reportThreads[r.id].conversation.tenant || '—'} <Icon name="swap" /> @{reportThreads[r.id].conversation.landlord || '—'}{reportThreads[r.id].conversation.blockedBy ? ` · ⊘ @${reportThreads[r.id].conversation.blockedBy}` : ''}</p>
                   {reportThreads[r.id].messages.map((m) => (
                     <p key={m.id} className={`bubble ${m.sender === 'owner' ? 'bubble-theirs' : 'bubble-mine'}`} style={{ margin: 0 }}>
                       <strong>{m.sender === 'owner' ? t.ownerLabel : t.tenantLabel}:</strong> {m.text}
@@ -474,7 +475,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         ))}
       </div>
       <details className="card" style={{ marginTop: 24 }}>
-        <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}>🧾 {t.auditTitle} ({auditEntries.length})</summary>
+        <summary style={{ padding: '12px 16px', cursor: 'pointer', fontWeight: 800 }}><Icon name="receipt" /> {t.auditTitle} ({auditEntries.length})</summary>
         <div className="card-body" style={{ display: 'grid', gap: 6, paddingTop: 4 }}>
           {auditEntries.length === 0 && <p className="muted" style={{ margin: 0 }}>—</p>}
           {auditEntries.slice(0, 100).map((e) => (
@@ -485,7 +486,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           ))}
         </div>
       </details>
-      <h2 id="revenue" className="admin-h2">💰 {t.revenueTitle}</h2>
+      <h2 id="revenue" className="admin-h2"><Icon name="money" /> {t.revenueTitle}</h2>
       <div className="card">
         <div className="card-body">
           <p style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 4px' }}>{revenue.totalHTG.toLocaleString()} HTG</p>
@@ -513,7 +514,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         ))}
         {revenue.entries.length === 0 && <p className="muted">{t.noActivations}</p>}
       </div>
-      <h2 className="admin-h2">💱 {t.converterTitle}</h2>
+      <h2 className="admin-h2"><Icon name="exchange" /> {t.converterTitle}</h2>
       <div className="card">
         <div className="card-body" style={{ display: 'grid', gap: 12 }}>
           <div className="field"><label>{t.converterAmount}</label>
@@ -539,7 +540,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           </div>
         </div>
       </div>
-      <h2 id="listings" className="admin-h2">🏠 {t.advertisedTitle || t.adminTitle}</h2>
+      <h2 id="listings" className="admin-h2"><Icon name="home" /> {t.advertisedTitle || t.adminTitle}</h2>
       <div className="grid">
         {listings.map((l) => (
           <section key={l.id} className="card">
@@ -548,7 +549,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
               <p className="muted" style={{ margin: '0 0 8px' }}>
                 {communeName(l.commune, params.locale)} · {l.priceHTG.toLocaleString()} HTG
                 {l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}
-                {l.advertised && <> · <span className="badge">📣 {t.advertised}</span></>}
+                {l.advertised && <> · <span className="badge"><Icon name="megaphone" /> {t.advertised}</span></>}
                 {l.advertisedRequested && !l.advertised && <> · <span className="badge">{t.advertisedRequestedBadge}</span></>}
                 {l.verified && <> · <span className="badge-verified">✓ {t.verifiedListing}</span></>}
               </p>

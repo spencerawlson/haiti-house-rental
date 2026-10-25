@@ -7,6 +7,7 @@ import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import PaymentForm from '@/components/PaymentForm';
 import { ADVERTISED_FEE_HTG_MONTH } from '@/lib/config';
+import Icon from '@/components/Icon';
 
 const AD_MONTHS = [1, 3, 6, 12];
 
@@ -128,7 +129,7 @@ export default function Library(props) {
         <h1>{t.library}</h1>
         {usage && usage.limit !== null && (
           <p className={usage.used >= usage.limit ? 'notice' : 'muted'} style={{ margin: '0 0 12px' }}>
-            🏠 {usage.used >= usage.limit
+            <Icon name="home" /> {usage.used >= usage.limit
               ? t.listingLimitReached.replace('{limit}', usage.limit)
               : t.listingLimitUsage.replace('{used}', usage.used).replace('{limit}', usage.limit)}
           </p>
@@ -152,28 +153,28 @@ export default function Library(props) {
               <div className="card-body">
                 <p style={{ margin: '0 0 4px' }}><strong>{h.title}</strong></p>
                 <p className="muted" style={{ margin: '0 0 4px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
-                <p className="muted" style={{ margin: '0 0 4px' }}>👁 <strong>{(h.views || 0).toLocaleString()}</strong> {t.viewsLabel}</p>
+                <p className="muted" style={{ margin: '0 0 4px' }}><Icon name="eye" /> <strong>{(h.views || 0).toLocaleString()}</strong> {t.viewsLabel}</p>
                 <p style={{ margin: '0 0 12px' }}>
                   {h.status === 'active' && <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>}
                   {h.status === 'removed' && <span className="muted">{t.statusRemoved}</span>}
                   {(h.status === 'sold' || h.status === 'leased') && (
                     <>
                       <span style={{ color: '#dc2626', fontWeight: 700 }}>
-                        {h.status === 'sold' ? `🏷 ${t.statusSold}` : `🏷 ${t.statusLeased}`}
+                        <Icon name="tag" /> {h.status === 'sold' ? t.statusSold : t.statusLeased}
                       </span>
                       {h.deletesAt && (
-                        <span className="muted"> · ⏳ {t.deletesIn} {hoursLeft(h.deletesAt)}</span>
+                        <span className="muted"> · <Icon name="hourglass" /> {t.deletesIn} {hoursLeft(h.deletesAt)}</span>
                       )}
                     </>
                   )}
                 </p>
                 {h.status === 'active' && h.advertised && (
                   <p style={{ margin: '0 0 8px' }}>
-                    <span className="badge">📣 {t.advertised}</span>
+                    <span className="badge"><Icon name="megaphone" /> {t.advertised}</span>
                     {h.advertisedUntil && <span className="muted"> · {t.adUntil} {new Date(h.advertisedUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}</span>}
                   </p>
                 )}
-                {h.status === 'active' && pendingAds[h.id] && <p className="muted" style={{ margin: '0 0 8px' }}>⏳ {t.adPaymentPending}</p>}
+                {h.status === 'active' && pendingAds[h.id] && <p className="muted" style={{ margin: '0 0 8px' }}><Icon name="hourglass" /> {t.adPaymentPending}</p>}
                 {adOpen === h.id && !pendingAds[h.id] && (
                   <div className="card" style={{ boxShadow: 'none', marginBottom: 12 }}>
                     <div className="card-body" style={{ display: 'grid', gap: 8 }}>
@@ -192,7 +193,7 @@ export default function Library(props) {
                 )}
                 <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
                   {h.status === 'active' && !pendingAds[h.id] && adOpen !== h.id && (
-                    <button className="btn btn-secondary" type="button" onClick={() => setAdOpen(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>📣 {h.advertised ? t.adExtend : t.adStart}</button>
+                    <button className="btn btn-secondary" type="button" onClick={() => setAdOpen(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="megaphone" /> {h.advertised ? t.adExtend : t.adStart}</button>
                   )}
                   {h.status === 'active' && (
                     <>
@@ -200,7 +201,7 @@ export default function Library(props) {
                       <Link className="btn btn-secondary" href={`/${params.locale}/listings/${h.id}/edit`} style={{ minHeight: 40, padding: '8px 16px' }}>{t.editListing}</Link>
                       <button className="btn btn-secondary" type="button" onClick={() => takeDown(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
                       <button className="btn btn-secondary" type="button" onClick={() => markSold(h.id, h.purpose === 'sale' ? 'sold' : 'leased')} style={{ minHeight: 40, padding: '8px 16px' }}>
-                        🏷 {h.purpose === 'sale' ? t.markSold : t.markLeased}
+                        <Icon name="tag" /> {h.purpose === 'sale' ? t.markSold : t.markLeased}
                       </button>
                     </>
                   )}
@@ -209,7 +210,7 @@ export default function Library(props) {
                       {h.status === 'removed' ? t.restore : t.undoSold}
                     </button>
                   )}
-                  <button className="btn btn-danger" type="button" onClick={() => remove(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}>🗑 {t.deleteListing}</button>
+                  <button className="btn btn-danger" type="button" onClick={() => remove(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="trash" /> {t.deleteListing}</button>
                 </p>
               </div>
             </section>

@@ -7,6 +7,7 @@ import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
 import { PaymentStatus } from '@/components/PaymentForm';
+import Icon from '@/components/Icon';
 
 // My payments — every MonCash/NatCash reference I submitted, with its
 // status (pending / confirmed / rejected and the admin's reason).
@@ -35,7 +36,7 @@ export default function Payments(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1 className="page-title">💳 {t.myPayments}</h1>
+        <h1 className="page-title"><Icon name="card" /> {t.myPayments}</h1>
         {loaded && !me && (
           <p><Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link></p>
         )}
@@ -48,7 +49,7 @@ export default function Payments(props) {
           ))}
         </div>
         <p className="muted" style={{ marginTop: 20 }}>
-          <Link href={`/${params.locale}/library`}>📣 {t.adStart} ›</Link>
+          <Link href={`/${params.locale}/library`}><Icon name="megaphone" /> {t.adStart} ›</Link>
         </p>
       </main>
       <TabBar locale={params.locale} />

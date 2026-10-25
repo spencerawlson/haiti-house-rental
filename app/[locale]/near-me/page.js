@@ -6,6 +6,7 @@ import { distanceKm } from '@/lib/geo';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import ListingMap from '@/components/ListingMap';
+import Icon from '@/components/Icon';
 
 // "Near me": no typing. The visitor taps one button, the phone asks for
 // location permission, and homes sort nearest-first by real distance.
@@ -51,7 +52,7 @@ export default function NearMe(props) {
   return (
     <>
       <main className="container">
-        <h1>📍 {t.nearMe}</h1>
+        <h1><Icon name="pin" /> {t.nearMe}</h1>
         {status === 'idle' && (
           <>
             <p className="muted">{t.nearMeIntro}</p>
@@ -87,7 +88,7 @@ export default function NearMe(props) {
               {shown.map((l) => (
                 <div key={l.id}>
                   <ListingCard listing={l} locale={params.locale} t={t} />
-                  <p style={{ margin: '6px 0 0', fontWeight: 700 }}>📍 {l.km < 1 ? `${Math.round(l.km * 1000)} m` : `${l.km.toFixed(1)} ${t.kmAway}`}</p>
+                  <p style={{ margin: '6px 0 0', fontWeight: 700 }}><Icon name="pin" /> {l.km < 1 ? `${Math.round(l.km * 1000)} m` : `${l.km.toFixed(1)} ${t.kmAway}`}</p>
                 </div>
               ))}
             </div>

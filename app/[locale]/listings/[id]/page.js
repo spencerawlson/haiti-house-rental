@@ -13,6 +13,7 @@ import ReportListingButton from '@/components/ReportListingButton';
 import ListingFacts from '@/components/ListingFacts';
 import FavoriteButton from '@/components/FavoriteButton';
 import ViewPing from '@/components/ViewPing';
+import Icon from '@/components/Icon';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,13 +48,13 @@ export default async function ListingDetail(props) {
           </p>
           <h1 style={{ margin: '0 0 4px', fontSize: '1.5rem' }}>{l.title}</h1>
           <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 700 }}>
-            📍 {communeName(l.commune, params.locale)}, {departmentName(l.department, params.locale)}
+            <Icon name="pin" /> {communeName(l.commune, params.locale)}, {departmentName(l.department, params.locale)}
           </p>
           {(l.advertised || l.verified || taken) && (
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 0' }}>
-              {taken && <span className="badge-taken">🏷 {l.status === 'sold' ? t.statusSold : t.statusLeased}</span>}
+              {taken && <span className="badge-taken"><Icon name="tag" /> {l.status === 'sold' ? t.statusSold : t.statusLeased}</span>}
               {l.verified && <span className="badge-verified">✓ {t.verifiedListing}</span>}
-              {l.advertised && <span className="badge">📣 {t.advertised}</span>}
+              {l.advertised && <span className="badge"><Icon name="megaphone" /> {t.advertised}</span>}
             </p>
           )}
           <p style={{ margin: '12px 0 0', fontSize: '1.6rem', fontWeight: 900, color: 'var(--primary)' }}>
@@ -62,20 +63,20 @@ export default async function ListingDetail(props) {
           </p>
           <div className="icon-row" style={{ fontSize: '0.95rem', gap: 18, margin: '10px 0 0', color: 'var(--ink)' }}>
             {l.type === 'land' ? (
-              <span>📐 {l.areaM2 ? `${l.areaM2.toLocaleString()} m²` : t.land}</span>
+              <span><Icon name="area" /> {l.areaM2 ? `${l.areaM2.toLocaleString()} m²` : t.land}</span>
             ) : (
               <>
-                <span>🛏 {l.bedrooms} {t.bedrooms}</span>
-                <span>🛁 {l.bathrooms} {t.bathrooms}</span>
+                <span><Icon name="bed" /> {l.bedrooms} {t.bedrooms}</span>
+                <span><Icon name="bath" /> {l.bathrooms} {t.bathrooms}</span>
               </>
             )}
-            <span>🏠 {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</span>
-            {(d.internet === 'included' || d.internet === 'available') && <span>📶 WiFi</span>}
+            <span><Icon name="home" /> {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</span>
+            {(d.internet === 'included' || d.internet === 'available') && <span><Icon name="wifi" /> WiFi</span>}
           </div>
           {/* Public view count (same number the landlord sees in their
               library); hidden at zero rather than showing "0". */}
           {l.views > 0 && (
-            <p className="muted" style={{ margin: '8px 0 0', fontWeight: 700 }}>👁 {l.views.toLocaleString()} {t.viewsLabel}</p>
+            <p className="muted" style={{ margin: '8px 0 0', fontWeight: 700 }}><Icon name="eye" /> {l.views.toLocaleString()} {t.viewsLabel}</p>
           )}
           <ListingFacts details={l.details} t={t} locale={params.locale} />
           {l.description && (
@@ -105,7 +106,7 @@ export default async function ListingDetail(props) {
         </section>
         {!taken && (
           <div className="sticky-cta">
-            <Link className="btn" href={`${base}/chats?listingId=${l.id}`}>💬 {t.contact}</Link>
+            <Link className="btn" href={`${base}/chats?listingId=${l.id}`}><Icon name="chat" /> {t.contact}</Link>
           </div>
         )}
       </main>

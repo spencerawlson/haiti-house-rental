@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { getSession } from '@/lib/account';
 import ReportForm from './ReportForm';
+import Icon from '@/components/Icon';
 
 // A private conversation between one tenant and the listing owner
 // (design: docs/design/app-showcase.png, screen 9 — listing card on top,
@@ -135,7 +136,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
               {(!blocked || conversation.blockedByMe) && (
                 <button type="button" className="link-btn" onClick={toggleBlock}>{blocked ? strings.unblockChat : `⊘ ${strings.blockChat}`}</button>
               )}
-              <button type="button" className="link-btn" onClick={() => setReporting((r) => !r)}>⚑ {strings.reportChat}</button>
+              <button type="button" className="link-btn" onClick={() => setReporting((r) => !r)}><Icon name="flag" /> {strings.reportChat}</button>
             </span>
           )}
         </div>

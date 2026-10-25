@@ -7,6 +7,7 @@ import { matchesQuery, resolveDepartmentId } from '@/lib/listings';
 import { readSavedSearches, SAVED_KEY } from '@/components/SaveSearchButton';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
+import Icon from '@/components/Icon';
 
 // Centris-style alerts, without accounts: every saved search re-runs against
 // the live listings, and listings created after the search was saved are
@@ -49,7 +50,7 @@ export default function SavedSearches(props) {
   return (
     <>
       <main className="container">
-        <h1>🔔 {t.savedSearches}</h1>
+        <h1><Icon name="bell" /> {t.savedSearches}</h1>
         {searches === null && <p>...</p>}
         {searches?.length === 0 && <p>{t.noSavedSearches}</p>}
         {(searches || []).map((s) => {

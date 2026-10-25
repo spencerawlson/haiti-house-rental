@@ -551,3 +551,19 @@ a:hover { text-decoration: underline; }
 
 /* Admin: per-account listing limit (0015) */
 .limit-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+
+/* Vector icons (components/Icon.jsx) — replaced emoji. 1em by default,
+   sit on the text baseline, never squash in flex rows, follow the text
+   colour. The "live" icon is a filled green dot. */
+.icon { display: inline-block; vertical-align: -0.14em; flex-shrink: 0; }
+.icon-live { width: 0.62em; height: 0.62em; border-radius: 999px; background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.18); vertical-align: 0.05em; margin: 0 0.12em; }
+.stat-icon { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.7); color: var(--primary); font-size: 18px; }
+.menu-icon { display: inline-grid; place-items: center; color: var(--primary); font-size: 19px; }
+.fact-icon { color: var(--primary); }
+.role-icon { color: var(--primary); }
+.role-card.selected .role-icon { color: #fff; }
+.chip .icon, .btn .icon, .badge .icon, .badge-verified .icon, .badge-taken .icon { margin-right: 2px; }
+[data-theme="dark"] .stat-icon { background: rgba(15, 23, 42, 0.45); }
+
+/* A stat tile that is a <button> lines up like the link tiles. */
+button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%; }

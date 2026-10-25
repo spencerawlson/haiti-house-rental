@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSession } from '@/lib/account';
+import Icon from '@/components/Icon';
 
 // Visit appointments on a listing (design: docs/design/app-showcase.png,
 // screen 10 — month calendar, time-slot pills, optional note). A tenant
@@ -199,7 +200,7 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
                     {strings.proposedBy} @{v.proposedBy === 'owner' ? v.owner : v.tenant}
                     {v.message ? ` — ${v.message}` : ''}
                   </p>
-                  {v.status === 'proposed' && !canAnswer && <p className="muted" style={{ margin: 0 }}>⏳ {strings.waitingOtherSide}</p>}
+                  {v.status === 'proposed' && !canAnswer && <p className="muted" style={{ margin: 0 }}><Icon name="hourglass" /> {strings.waitingOtherSide}</p>}
                   {rescheduling === v.id ? (
                     <div style={{ display: 'grid', gap: 12 }}>
                       <SlotPicker date={newDate} time={newTime} onDate={setNewDate} onTime={setNewTime} strings={strings} locale={locale} />

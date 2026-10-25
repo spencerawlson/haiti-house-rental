@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Icon from '@/components/Icon';
 
 // Centris-style favourite heart, saved in the browser (no account yet).
 // The favourites page reads the same key.
@@ -43,7 +44,7 @@ export default function FavoriteButton({ listingId }) {
         color: fav ? '#dc2626' : '#9ca3af',
       }}
     >
-      {fav ? '♥' : '♡'}
+      <Icon name="heart" filled={fav} size={20} />
     </button>
   );
 }

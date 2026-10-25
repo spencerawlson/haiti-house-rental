@@ -6,6 +6,7 @@ import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
 import AdvertisedCarousel from '@/components/AdvertisedCarousel';
 import NotificationBell from '@/components/NotificationBell';
+import Icon from '@/components/Icon';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ export default async function LocaleHome(props) {
     { href: `${base}/listings?type=apartment`, label: t.apartment },
     { href: `${base}/listings?type=house`, label: t.house },
     { href: `${base}/listings?type=land`, label: t.land },
-    { href: `${base}/near-me`, label: `📍 ${t.nearMe}` },
+    { href: `${base}/near-me`, label: t.nearMe, icon: 'pin' },
   ];
   return (
     <>
@@ -41,12 +42,12 @@ export default async function LocaleHome(props) {
           <NotificationBell locale={params.locale} label={t.notificationsTitle} />
         </header>
         <form method="get" action={`${base}/listings`} className="search-pill" role="search">
-          <span aria-hidden="true">🔍</span>
+          <span aria-hidden="true"><Icon name="search" /></span>
           <input name="q" placeholder={t.searchPlaceholder} aria-label={t.searchPlaceholder} />
           <button type="submit">{t.tabSearch}</button>
         </form>
         <nav className="chip-row" aria-label={t.filters}>
-          {chips.map((c) => <Link key={c.href} className="chip" href={c.href}>{c.label}</Link>)}
+          {chips.map((c) => <Link key={c.href} className="chip" href={c.href}>{c.icon && <Icon name={c.icon} />} {c.label}</Link>)}
         </nav>
 
         <div className="section-head"><h2>{t.department}</h2></div>
@@ -61,7 +62,7 @@ export default async function LocaleHome(props) {
 
         {advertised.length > 0 && (
           <>
-            <div className="section-head"><h2>📣 {t.advertisedSection}</h2></div>
+            <div className="section-head"><h2><Icon name="megaphone" /> {t.advertisedSection}</h2></div>
             <AdvertisedCarousel>
               {advertised.map((l) => (
                 <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
@@ -77,7 +78,7 @@ export default async function LocaleHome(props) {
         {LISTINGS.length < 4 && (
           <section className="card" style={{ marginBottom: 14, background: 'var(--primary-soft)' }}>
             <div className="card-body" style={{ display: 'grid', gap: 8 }}>
-              <strong>🌱 {t.earlyTitle}</strong>
+              <strong><Icon name="sprout" /> {t.earlyTitle}</strong>
               <span className="muted">{t.earlyText}</span>
               {/* Goes to the posting page, not to signup: a landlord who is
                   already signed in was being asked to create a second

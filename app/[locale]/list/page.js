@@ -10,6 +10,7 @@ import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import ListingDetailsFields from '@/components/ListingDetailsFields';
 import { compressImage } from '@/lib/image-compress';
+import Icon from '@/components/Icon';
 
 // Landlord posting form: details + description + house photos and videos.
 // Only an activated landlord account can post — tenants explore, they
@@ -127,7 +128,7 @@ export default function ListHome(props) {
       {meLoaded && me && me.role === 'landlord' && !me.activated && (
         <div className="card" style={{ marginTop: 20 }}>
           <div className="card-body">
-            <p style={{ margin: '0 0 12px' }}>⏳ {t.waitingActivation}</p>
+            <p style={{ margin: '0 0 12px' }}><Icon name="hourglass" /> {t.waitingActivation}</p>
             <p style={{ margin: 0 }}>
               <Link className="btn" href={`/${params.locale}/account`}>{t.account}</Link>
             </p>
@@ -139,7 +140,7 @@ export default function ListHome(props) {
           photo is uploaded. The server enforces it either way. */}
       {meLoaded && me?.activated && me.listings?.limit !== null && me.listings?.limit !== undefined && (
         <p className={me.listings.used >= me.listings.limit ? 'notice' : 'muted'} style={{ marginTop: 20 }}>
-          🏠 {me.listings.used >= me.listings.limit
+          <Icon name="home" /> {me.listings.used >= me.listings.limit
             ? t.listingLimitReached.replace('{limit}', me.listings.limit)
             : t.listingLimitUsage.replace('{used}', me.listings.used).replace('{limit}', me.listings.limit)}
         </p>

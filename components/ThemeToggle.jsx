@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getStoredTheme, applyTheme } from '@/lib/theme';
+import Icon from '@/components/Icon';
 
 // Light / dark switch. Reads the theme the layout script applied, so the
 // buttons always show the theme actually in use.
@@ -25,7 +26,7 @@ export default function ThemeToggle({ lightLabel, darkLabel }) {
         onClick={() => pick('light')}
         style={{ minHeight: 40, padding: '8px 16px' }}
       >
-        ☀️ {lightLabel}
+        <Icon name="sun" /> {lightLabel}
       </button>
       <button
         className={theme === 'dark' ? 'btn' : 'btn btn-secondary'}
@@ -33,7 +34,7 @@ export default function ThemeToggle({ lightLabel, darkLabel }) {
         onClick={() => pick('dark')}
         style={{ minHeight: 40, padding: '8px 16px' }}
       >
-        🌙 {darkLabel}
+        <Icon name="moon" /> {darkLabel}
       </button>
     </span>
   );

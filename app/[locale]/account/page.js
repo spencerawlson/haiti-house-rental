@@ -10,6 +10,7 @@ import AvatarUpload from '@/components/AvatarUpload';
 import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import ThemeToggle from '@/components/ThemeToggle';
+import Icon from '@/components/Icon';
 
 // Account (design: docs/design/app-showcase.png — screen 12 profile menu,
 // and for landlords the screen 11 dashboard tiles). Details live on their
@@ -18,7 +19,7 @@ import ThemeToggle from '@/components/ThemeToggle';
 function MenuRow({ href, icon, label, badge, onClick }) {
   const inner = (
     <>
-      <span className="menu-icon" aria-hidden="true">{icon}</span>
+      <span className="menu-icon" aria-hidden="true"><Icon name={icon} /></span>
       <span style={{ flex: 1 }}>{label}</span>
       {badge > 0 && <span className="count-badge">{badge}</span>}
       <span className="muted" aria-hidden="true">›</span>
@@ -121,7 +122,7 @@ export default function Account(props) {
               </p>
               <p className="muted" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
                 {me.phone}{me.email ? ` · ${me.email}` : ''}
-                {me.location ? ` · 📍 ${communeName(me.location.commune, params.locale)}, ${departmentName(me.location.department, params.locale)}` : ''}
+                {me.location ? <> · <Icon name="pin" /> {communeName(me.location.commune, params.locale)}, {departmentName(me.location.department, params.locale)}</> : ''}
               </p>
             </div>
           </section>
@@ -139,7 +140,7 @@ export default function Account(props) {
               {billing === 'suspended' && <p className="notice" style={{ margin: 0 }}>{t.suspendedNotice}</p>}
               {billing === 'deactivated' && <p className="notice" style={{ margin: 0 }}>{t.deactivatedNotice}</p>}
               {activationPending ? (
-                <p style={{ margin: 0 }}>⏳ {t.waitingActivation}</p>
+                <p style={{ margin: 0 }}><Icon name="hourglass" /> {t.waitingActivation}</p>
               ) : dueKind && (billing !== 'active' || me.paidUntil) ? (
                 <>
                   <p style={{ margin: 0 }}>{t.sendTransfer}</p>
@@ -163,10 +164,10 @@ export default function Account(props) {
           <>
             <h2 style={{ margin: '8px 0 12px' }}>{t.landlordDashboard}</h2>
             <div className="stat-tiles">
-              <Link href={`${base}/library`} className="stat-tile tone-blue"><span className="stat-icon">🏠</span><strong>{myHomes.length}</strong><span>{t.myListings}</span></Link>
-              <Link href={`${base}/chats`} className="stat-tile tone-green"><span className="stat-icon">💬</span><strong>{unread}</strong><span>{t.dashNewMessages}</span></Link>
-              <Link href={`${base}/visits`} className="stat-tile tone-purple"><span className="stat-icon">📅</span><strong>{upcomingVisits}</strong><span>{t.dashVisits}</span></Link>
-              <Link href={`${base}/payments`} className="stat-tile tone-amber"><span className="stat-icon">💳</span><strong>{pendingPayments}</strong><span>{t.dashPendingPayments}</span></Link>
+              <Link href={`${base}/library`} className="stat-tile tone-blue"><span className="stat-icon"><Icon name="home" /></span><strong>{myHomes.length}</strong><span>{t.myListings}</span></Link>
+              <Link href={`${base}/chats`} className="stat-tile tone-green"><span className="stat-icon"><Icon name="chat" /></span><strong>{unread}</strong><span>{t.dashNewMessages}</span></Link>
+              <Link href={`${base}/visits`} className="stat-tile tone-purple"><span className="stat-icon"><Icon name="calendar" /></span><strong>{upcomingVisits}</strong><span>{t.dashVisits}</span></Link>
+              <Link href={`${base}/payments`} className="stat-tile tone-amber"><span className="stat-icon"><Icon name="card" /></span><strong>{pendingPayments}</strong><span>{t.dashPendingPayments}</span></Link>
             </div>
             {me.activated && (
               <p style={{ margin: '14px 0 0' }}><Link className="btn" href={`${base}/list`} style={{ width: '100%' }}>＋ {t.addNewHome}</Link></p>
@@ -175,20 +176,20 @@ export default function Account(props) {
         )}
 
         <nav className="menu card" style={{ marginTop: 20 }}>
-          {me && <MenuRow href={`${base}/chats`} icon="💬" label={t.myMessages} badge={unread} />}
-          {me && <MenuRow href={`${base}/notifications`} icon="🔔" label={t.notificationsTitle} badge={0} />}
-          {me && <MenuRow href={`${base}/visits`} icon="📅" label={t.myVisits} badge={0} />}
-          <MenuRow href={`${base}/favorites`} icon="♡" label={t.favorites} />
-          <MenuRow href={`${base}/saved-searches`} icon="🔔" label={t.savedSearches} />
-          <MenuRow href={`${base}/near-me`} icon="📍" label={t.nearMe} />
-          {isLandlord && <MenuRow href={`${base}/library`} icon="🏠" label={t.library} />}
-          {isLandlord && <MenuRow href={`${base}/payments`} icon="💳" label={t.myPayments} badge={0} />}
+          {me && <MenuRow href={`${base}/chats`} icon="chat" label={t.myMessages} badge={unread} />}
+          {me && <MenuRow href={`${base}/notifications`} icon="bell" label={t.notificationsTitle} badge={0} />}
+          {me && <MenuRow href={`${base}/visits`} icon="calendar" label={t.myVisits} badge={0} />}
+          <MenuRow href={`${base}/favorites`} icon="heart" label={t.favorites} />
+          <MenuRow href={`${base}/saved-searches`} icon="bell" label={t.savedSearches} />
+          <MenuRow href={`${base}/near-me`} icon="pin" label={t.nearMe} />
+          {isLandlord && <MenuRow href={`${base}/library`} icon="home" label={t.library} />}
+          {isLandlord && <MenuRow href={`${base}/payments`} icon="card" label={t.myPayments} badge={0} />}
           {loaded && !me && <MenuRow href={`${base}/list`} icon="＋" label={t.postHome} />}
         </nav>
 
         <section className="card" style={{ marginTop: 20 }}>
           <div className="card-body">
-            <p style={{ margin: '0 0 8px', fontWeight: 700 }}>🌐 {t.language}</p>
+            <p style={{ margin: '0 0 8px', fontWeight: 700 }}><Icon name="globe" /> {t.language}</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {LOCALES.map((l) => (
                 <Link
@@ -208,15 +209,15 @@ export default function Account(props) {
                 </Link>
               ))}
             </div>
-            <p style={{ margin: '16px 0 8px', fontWeight: 700 }}>🌓 {t.theme}</p>
+            <p style={{ margin: '16px 0 8px', fontWeight: 700 }}><Icon name="theme" /> {t.theme}</p>
             <ThemeToggle lightLabel={t.themeLight} darkLabel={t.themeDark} />
           </div>
         </section>
 
         {me && (
           <nav className="menu card" style={{ marginTop: 20 }}>
-            <MenuRow icon="↪" label={t.signOut} onClick={logout} />
-            <MenuRow icon="🗑️" label={t.deleteAccount} onClick={deleteAccount} />
+            <MenuRow icon="signout" label={t.signOut} onClick={logout} />
+            <MenuRow icon="trash" label={t.deleteAccount} onClick={deleteAccount} />
           </nav>
         )}
       </main>

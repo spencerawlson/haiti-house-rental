@@ -6,6 +6,7 @@ import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
+import Icon from '@/components/Icon';
 
 // My visits — every visit where I am the tenant or the listing owner,
 // upcoming first. Actions (confirm, reschedule, cancel) stay on the
@@ -39,7 +40,7 @@ export default function Visits(props) {
     <>
       <main className="container">
         <BackButton locale={params.locale} />
-        <h1 className="page-title">📅 {t.myVisits}</h1>
+        <h1 className="page-title"><Icon name="calendar" /> {t.myVisits}</h1>
         {loaded && !me && (
           <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link className="btn" href={`/${params.locale}/signin`}>{t.signIn}</Link>
@@ -58,7 +59,7 @@ export default function Visits(props) {
                 <p style={{ margin: 0 }}>{v.listingTitle}</p>
                 <p className="muted" style={{ margin: 0, fontSize: '0.88rem' }}>
                   {me && v.owner === me.username ? `${t.roleLandlord} · @${v.tenant}` : `${t.roleTenant}`}
-                  {v.status === 'proposed' && ((me && v.owner === me.username) ? v.proposedBy === 'tenant' : v.proposedBy === 'owner') ? ` · ⏳ ${t.visitNeedsYou}` : ''}
+                  {v.status === 'proposed' && ((me && v.owner === me.username) ? v.proposedBy === 'tenant' : v.proposedBy === 'owner') ? <> · <Icon name="hourglass" /> {t.visitNeedsYou}</> : ''}
                 </p>
               </div>
             </Link>
