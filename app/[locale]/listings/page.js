@@ -81,10 +81,10 @@ export default async function Listings(props) {
                     ))}
                   </select>
                 </div>
-                <div className="field"><label>{t.minPrice} (HTG)</label>
+                <div className="field"><label>{t.minPrice}</label>
                   <input className="input" type="number" name="minPrice" defaultValue={f.minPrice} min="0" inputMode="numeric" />
                 </div>
-                <div className="field"><label>{t.maxPrice} (HTG)</label>
+                <div className="field"><label>{t.maxPrice}</label>
                   <input className="input" type="number" name="maxPrice" defaultValue={f.maxPrice} min="0" inputMode="numeric" />
                 </div>
               </div>

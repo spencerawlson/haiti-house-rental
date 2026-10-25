@@ -46,7 +46,7 @@ test('join 1500 + quarter 1000 + advertising 75: every payment adds its real amo
   now = await totals();
   assert.equal(now.revenue - before.revenue, 2500, 'the quarter adds 1000 more');
 
-  const l = await L('/api/listings', { method: 'POST', body: { title: `Rev ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  const l = await L('/api/listings', { method: 'POST', body: { title: `Rev ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   assert.equal(l.status, 200);
   await payAndConfirm(L, { kind: 'advertising', listingId: l.data.listing.id, months: 1 });
   now = await totals();

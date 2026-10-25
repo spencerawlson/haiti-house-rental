@@ -67,7 +67,7 @@ test('stored passwords are not the browser hash (sign-in still works)', async ()
 });
 
 test('only an activated landlord session can post — a body `owner` is ignored', { skip: !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD to activate the landlord' }, async () => {
-  const body = { title: 'Test home', commune: 'Delmas', department: 'ouest', priceHTG: 1000, purpose: 'rent', lat: 18.54, lng: -72.3 };
+  const body = { title: 'Test home', commune: 'Delmas', department: 'ouest', price: 1000, purpose: 'rent', lat: 18.54, lng: -72.3 };
   assert.equal((await as.anon('/api/listings', { method: 'POST', body: { ...body, owner: users.landlord.username } })).status, 403);
   assert.equal((await as.t1('/api/listings', { method: 'POST', body: { ...body, owner: users.landlord.username } })).status, 403);
   const r = await as.landlord('/api/listings', { method: 'POST', body: { ...body, owner: users.t1.username } });

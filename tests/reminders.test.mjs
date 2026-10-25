@@ -73,7 +73,7 @@ test('the scheduled job refuses anyone without the secret', { skip: cronSkip }, 
 test('a confirmed visit reminds both sides, exactly once', { skip: windowSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Remind ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 30000, purpose: 'rent' },
+    body: { title: `Remind ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
   });
   const listingId = made.data.listing.id;
   // Later today, on the half hour, inside 06:00-20:00.
@@ -117,7 +117,7 @@ test('a confirmed visit reminds both sides, exactly once', { skip: windowSkip },
 test('rescheduling clears the record so the new date reminds again', { skip: windowSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Reschedule ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 30000, purpose: 'rent' },
+    body: { title: `Reschedule ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
   });
   const listingId = made.data.listing.id;
   const slot = `${String(Math.min(20, haitiHour + 1)).padStart(2, '0')}:30`;
@@ -145,7 +145,7 @@ test('rescheduling clears the record so the new date reminds again', { skip: win
 test('the job also deletes sold homes whose time is up', { skip: cronSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `CronSweep ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 30000, purpose: 'sale' },
+    body: { title: `CronSweep ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'sale' },
   });
   const id = made.data.listing.id;
   await as.L('/api/listings/sold', { method: 'POST', body: { id, status: 'sold' } });

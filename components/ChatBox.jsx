@@ -129,7 +129,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
             {listing.photos?.[0] ? <img src={listing.photos[0]} alt="" /> : <span className="thumb" />}
             <span style={{ minWidth: 0 }}>
               <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.title}</strong>
-              <span className="muted" style={{ fontSize: '0.88rem' }}>{Number(listing.priceHTG || 0).toLocaleString()} HTG · {listing.commune}</span>
+              <span className="muted" style={{ fontSize: '0.88rem' }}>{Number(listing.price || 0).toLocaleString()} {listing.currency || 'HTG'} · {listing.commune}</span>
             </span>
           </Link>
         )}

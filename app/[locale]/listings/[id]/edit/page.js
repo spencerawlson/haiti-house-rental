@@ -45,7 +45,8 @@ export default function EditListing(props) {
             description: l.description || '',
             department: l.department || 'ouest',
             commune: l.commune || '',
-            priceHTG: String(l.priceHTG ?? ''),
+            price: String(l.price ?? ''),
+            currency: l.currency || 'HTG',
             purpose: l.purpose || 'rent',
             rentPeriod: l.rentPeriod || 'monthly',
             homeType: l.type || 'house',
@@ -95,7 +96,8 @@ export default function EditListing(props) {
           description: f.description,
           department: f.department,
           commune: f.commune,
-          priceHTG: f.priceHTG,
+          price: f.price,
+          currency: f.currency,
           bedrooms: f.bedrooms,
           bathrooms: f.bathrooms,
           purpose: f.purpose,
@@ -172,8 +174,14 @@ export default function EditListing(props) {
                 <span className="muted">{t.pinLocationHint}</span>
                 <LocationPicker value={coords} onChange={setCoords} useMyLocationLabel={t.useMyLocation} unavailableLabel={t.locationUnavailable} />
               </div>
-              <div className="field"><label>{t.priceLabel} (HTG{f.purpose === 'rent' ? ` ${rentPeriodLabel(f.rentPeriod, t)}` : ''})</label>
-                <input className="input" type="number" value={f.priceHTG} onChange={(e) => set('priceHTG', e.target.value)} required />
+              <div className="field"><label>{t.currency}</label>
+                <select className="input" value={f.currency} onChange={(e) => set('currency', e.target.value)}>
+                  <option value="HTG">HTG</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+              <div className="field"><label>{t.priceLabel} ({f.currency}{f.purpose === 'rent' ? ` ${rentPeriodLabel(f.rentPeriod, t)}` : ''})</label>
+                <input className="input" type="number" value={f.price} onChange={(e) => set('price', e.target.value)} required />
               </div>
               {f.purpose === 'rent' && (
                 <p style={{ margin: 0 }}>{t.rentPeriod}<br />

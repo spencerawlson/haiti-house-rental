@@ -30,7 +30,7 @@ before(async () => {
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
   const r = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Del home ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 50000, purpose: 'rent', lat: 18.5, lng: -72.3 },
+    body: { title: `Del home ${run}`, commune: 'Delmas', department: 'ouest', price: 50000, purpose: 'rent', lat: 18.5, lng: -72.3 },
   });
   assert.equal(r.status, 200, 'created listing');
   listingId = r.data.listing.id;

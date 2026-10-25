@@ -152,7 +152,7 @@ export default function Library(props) {
               )}
               <div className="card-body">
                 <p style={{ margin: '0 0 4px' }}><strong>{h.title}</strong></p>
-                <p className="muted" style={{ margin: '0 0 4px' }}>{h.commune} · {h.priceHTG.toLocaleString()} HTG</p>
+                <p className="muted" style={{ margin: '0 0 4px' }}>{h.commune} · {h.price.toLocaleString()} {h.currency || 'HTG'}</p>
                 <p className="muted" style={{ margin: '0 0 4px' }}><Icon name="eye" /> <strong>{(h.views || 0).toLocaleString()}</strong> {t.viewsLabel}</p>
                 <p style={{ margin: '0 0 12px' }}>
                   {h.status === 'active' && <span style={{ color: '#15803d', fontWeight: 700 }}>✓ {t.statusLive}</span>}

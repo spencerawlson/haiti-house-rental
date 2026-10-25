@@ -36,9 +36,9 @@ export default function ListingMap({ listings, locale, t, userLocation, height =
         points.push([l.lat, l.lng]);
         // Price pins (design screen 5): the rent/sale price on the map
         // itself, so people compare without opening every marker.
-        const short = l.priceHTG >= 1000 ? `${Math.round(l.priceHTG / 1000).toLocaleString()}k` : String(l.priceHTG || 0);
+        const short = l.price >= 1000 ? `${Math.round(l.price / 1000).toLocaleString()}k` : String(l.price || 0);
         const marker = L.marker([l.lat, l.lng], {
-          icon: L.divIcon({ className: '', html: `<span class="price-pin">${esc(short)} HTG</span>`, iconSize: null, iconAnchor: [30, 28] }),
+          icon: L.divIcon({ className: '', html: `<span class="price-pin">${esc(short)} ${esc(l.currency || 'HTG')}</span>`, iconSize: null, iconAnchor: [30, 28] }),
         }).addTo(map);
         marker.on('click', () => { window.location.href = `/${locale}/listings/${encodeURIComponent(l.id)}`; });
       }

@@ -84,7 +84,7 @@ test('rejection keeps the account inactive and lets the landlord resubmit', { sk
 });
 
 test('advertising: owner only, 75 HTG per month, confirmed months set an end date that extends', { skip }, async () => {
-  const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Ad ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   const id = listing.data.listing.id;
   assert.equal((await as.L2('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 1, provider: 'moncash', senderPhone: PHONE } })).status, 403);
   assert.equal((await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 5, provider: 'moncash', senderPhone: PHONE } })).status, 400);
@@ -106,7 +106,7 @@ test('advertising: owner only, 75 HTG per month, confirmed months set an end dat
 // Deleting a transaction (0013). Test payments have to be removable, but
 // the removal is the thing that gets recorded forever.
 test('a transaction cannot be deleted without a reason', { skip }, async () => {
-  const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Del ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Del ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: listing.data.listing.id, months: 1, provider: 'moncash', senderPhone: PHONE } });
   const id = p.data.payment.id;
 
@@ -124,7 +124,7 @@ test('a transaction cannot be deleted without a reason', { skip }, async () => {
 });
 
 test('deleting a transaction removes it but records it forever', { skip }, async () => {
-  const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Del2 ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Del2 ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: listing.data.listing.id, months: 1, provider: 'moncash', senderPhone: PHONE } });
   const id = p.data.payment.id;
   const amount = p.data.payment.amountHTG;

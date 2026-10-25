@@ -106,7 +106,7 @@ await step('landlord signs in', async () => {
 await step('landlord posts a listing with details', async () => {
   const r = await landlord('/api/listings', { method: 'POST', body: {
     title: `QA test — not a real home ${id}`, description: 'Automated test listing. It is taken down when the test ends.',
-    commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', type: 'apartment', bedrooms: 1, bathrooms: 1, lat: 18.54, lng: -72.3,
+    commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', type: 'apartment', bedrooms: 1, bathrooms: 1, lat: 18.54, lng: -72.3,
     details: { water: 'city', power24: true, internet: 'included' },
   } });
   expect(r.status === 200, `post ${r.status} ${r.text}`);

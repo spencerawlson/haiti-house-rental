@@ -22,7 +22,7 @@ let admin;
 async function newListing(title, purpose = 'rent') {
   const r = await as.L('/api/listings', {
     method: 'POST',
-    body: { title, commune: 'Delmas', department: 'ouest', priceHTG: 40000, purpose, lat: 18.5, lng: -72.3 },
+    body: { title, commune: 'Delmas', department: 'ouest', price: 40000, purpose, lat: 18.5, lng: -72.3 },
   });
   assert.equal(r.status, 200, `created ${title}`);
   return r.data.listing.id;

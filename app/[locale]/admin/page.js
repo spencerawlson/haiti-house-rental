@@ -547,7 +547,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
             <div className="card-body">
               <h3 style={{ margin: '0 0 4px' }}>{l.title}</h3>
               <p className="muted" style={{ margin: '0 0 8px' }}>
-                {communeName(l.commune, params.locale)} · {l.priceHTG.toLocaleString()} HTG
+                {communeName(l.commune, params.locale)} · {l.price.toLocaleString()} {l.currency || 'HTG'}
                 {l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}
                 {l.advertised && <> · <span className="badge"><Icon name="megaphone" /> {t.advertised}</span></>}
                 {l.advertisedRequested && !l.advertised && <> · <span className="badge">{t.advertisedRequestedBadge}</span></>}

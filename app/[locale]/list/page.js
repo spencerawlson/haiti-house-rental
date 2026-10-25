@@ -24,7 +24,8 @@ export default function ListHome(props) {
   const [department, setDepartment] = useState('ouest');
   const [commune, setCommune] = useState('');
   const [coords, setCoords] = useState(null);
-  const [priceHTG, setPriceHTG] = useState('');
+  const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState('HTG');
   const [purpose, setPurpose] = useState('rent');
   const [rentPeriod, setRentPeriod] = useState('monthly');
   const [homeType, setHomeType] = useState('house');
@@ -72,7 +73,7 @@ export default function ListHome(props) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, department, commune, priceHTG, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) }),
+        body: JSON.stringify({ title, description, department, commune, price, currency, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -193,8 +194,14 @@ export default function ListHome(props) {
           <span className="muted">{t.pinLocationHint}</span>
           <LocationPicker value={coords} onChange={setCoords} useMyLocationLabel={t.useMyLocation} unavailableLabel={t.locationUnavailable} />
         </div>
-        <div className="field"><label>{t.priceLabel} (HTG{purpose === 'rent' ? ` ${rentPeriodLabel(rentPeriod, t)}` : ''})</label>
-          <input className="input" type="number" value={priceHTG} onChange={(e) => setPriceHTG(e.target.value)} required />
+        <div className="field"><label>{t.currency}</label>
+          <select className="input" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+            <option value="HTG">HTG</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+        <div className="field"><label>{t.priceLabel} ({currency}{purpose === 'rent' ? ` ${rentPeriodLabel(rentPeriod, t)}` : ''})</label>
+          <input className="input" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
         </div>
         {purpose === 'rent' && (
           <p style={{ margin: 0 }}>{t.rentPeriod}<br />
