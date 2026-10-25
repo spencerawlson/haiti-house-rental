@@ -107,7 +107,7 @@ async function waitForStatus(tag, want, ms = 25000) {
 const postListing = (tag, title) =>
   as[tag]('/api/listings', {
     method: 'POST',
-    body: { title, commune: 'Delmas', department: 'ouest', priceHTG: 25000, purpose: 'rent' },
+    body: { title, commune: 'Delmas', department: 'ouest', price: 25000, purpose: 'rent' },
   });
 
 before(async () => {

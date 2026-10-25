@@ -22,7 +22,7 @@ export default function ListingCard({ listing, locale, t }) {
           <h3 className="lcard-title">{listing.title}</h3>
           <p className="lcard-place">{communeName(listing.commune, locale)}</p>
           <p className="lcard-price">
-            {listing.priceHTG.toLocaleString()} HTG
+            {listing.price.toLocaleString()} {listing.currency || 'HTG'}
             {listing.purpose === 'rent' && <small> {rentPeriodLabel(listing.rentPeriod, t)}</small>}
           </p>
           <div className="icon-row">

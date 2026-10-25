@@ -5,7 +5,7 @@ import { sortListings, filterListings } from '../lib/listings.js';
 import { sanitizeDetails } from '../lib/listing-details.js';
 import { dueReminder, haitiWallClockToMs } from '../lib/reminders-server.js';
 
-const L = (id, priceHTG, createdAt, extra = {}) => ({ id, priceHTG, createdAt, title: id, commune: 'Delmas', department: 'ouest', type: 'house', purpose: 'rent', bedrooms: 1, bathrooms: 1, ...extra });
+const L = (id, price, createdAt, extra = {}) => ({ id, price, createdAt, title: id, commune: 'Delmas', department: 'ouest', type: 'house', purpose: 'rent', bedrooms: 1, bathrooms: 1, ...extra });
 
 test('default order keeps the server order (newest real listings first)', () => {
   const serverOrder = [L('new', 5, 300), L('older', 5, 200), L('demo', 5, 0, { seed: true })];

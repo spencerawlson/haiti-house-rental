@@ -19,7 +19,7 @@ before(async () => {
   for (const [k, u] of [['L', L], ['A', A], ['B', B]]) assert.equal((await signup(as[k], u)).status, 200);
   admin = await adminClient();
   await admin('/api/admin/activate', { method: 'POST', body: { username: L.username, activated: true } });
-  const r = await as.L('/api/listings', { method: 'POST', body: { title: 'P2 home', commune: 'Delmas', department: 'ouest', priceHTG: 2000, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  const r = await as.L('/api/listings', { method: 'POST', body: { title: 'P2 home', commune: 'Delmas', department: 'ouest', price: 2000, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   assert.equal(r.status, 200);
   listingId = r.data.listing.id;
 });

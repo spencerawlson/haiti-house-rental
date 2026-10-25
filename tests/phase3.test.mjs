@@ -10,7 +10,7 @@ const L = { name: 'Lou Landlord', username: `p3land_${run}`, password: 'pw-l', r
 const T = { name: 'Tim Tenant', username: `p3ten_${run}`, password: 'pw-t', role: 'tenant' };
 const as = { L: client(), T: client() };
 let admin;
-const base = { commune: 'Delmas', department: 'ouest', priceHTG: 3000, purpose: 'rent', lat: 18.5, lng: -72.3 };
+const base = { commune: 'Delmas', department: 'ouest', price: 3000, purpose: 'rent', lat: 18.5, lng: -72.3 };
 
 before(async () => {
   if (skip) return;

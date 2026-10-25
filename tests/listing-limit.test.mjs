@@ -9,7 +9,7 @@ const run = uniq();
 const U = `lim_${run}`;
 let admin;
 let partner;
-const home = (n) => ({ title: `Limit ${run} ${n}`, commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', lat: 18.5, lng: -72.3 });
+const home = (n) => ({ title: `Limit ${run} ${n}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 });
 const post = (n) => partner('/api/listings', { method: 'POST', body: home(n) });
 const setLimit = (limit, who = admin) => who('/api/admin/listing-limit', { method: 'POST', body: { username: U, limit } });
 const usage = async () => (await partner('/api/accounts/me')).data.account.listings;

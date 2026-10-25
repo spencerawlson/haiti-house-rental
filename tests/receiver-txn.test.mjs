@@ -29,7 +29,7 @@ before(async () => {
   assert.equal(made.status, 200, JSON.stringify(made.data));
   landlord = client();
   assert.equal((await landlord('/api/accounts/signin', { method: 'POST', body: { username: u, passwordHash: sha('pw') } })).status, 200);
-  const l = await landlord('/api/listings', { method: 'POST', body: { title: `Txn ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  const l = await landlord('/api/listings', { method: 'POST', body: { title: `Txn ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   assert.equal(l.status, 200, JSON.stringify(l.data));
   listingId = l.data.listing.id;
 });

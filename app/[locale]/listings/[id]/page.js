@@ -58,7 +58,7 @@ export default async function ListingDetail(props) {
             </p>
           )}
           <p style={{ margin: '12px 0 0', fontSize: '1.6rem', fontWeight: 900, color: 'var(--primary)' }}>
-            {l.priceHTG.toLocaleString()} HTG
+            {l.price.toLocaleString()} {l.currency || 'HTG'}
             {l.purpose === 'rent' && <span style={{ fontSize: '1rem', fontWeight: 600 }}> {rentPeriodLabel(l.rentPeriod, t)}</span>}
           </p>
           <div className="icon-row" style={{ fontSize: '0.95rem', gap: 18, margin: '10px 0 0', color: 'var(--ink)' }}>
