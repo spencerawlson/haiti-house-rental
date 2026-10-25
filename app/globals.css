@@ -505,6 +505,10 @@ a:hover { text-decoration: underline; }
 @media (min-width: 720px) { .admin-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .admin-nav { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 10px 0; margin-bottom: 4px; }
 .admin-h2 { margin: 34px 0 12px; padding-top: 8px; font-size: 1.15rem; scroll-margin-top: 64px; border-top: 1px solid var(--line); }
+/* Users tab: accounts list beside the partner form on wide screens, so
+   creating the next account never means scrolling past the whole list. */
+.admin-users-layout { display: grid; gap: 20px; align-items: start; }
+@media (min-width: 900px) { .admin-users-layout { grid-template-columns: minmax(0, 1fr) 360px; } }
 .admin .card + .card { margin-top: 0; }
 
 /* Admin tabs. The board's panels are swapped, not scrolled: the accounts
