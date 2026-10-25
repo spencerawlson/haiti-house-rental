@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { getSession } from '@/lib/account';
 import ReportForm from './ReportForm';
+import VisitScheduler from './VisitScheduler';
 import Icon from '@/components/Icon';
 
 // A private conversation between one tenant and the listing owner
@@ -11,7 +12,9 @@ import Icon from '@/components/Icon';
 // bubbles, round send button). The server decides who is who from the
 // session: a tenant always sees their own thread; the owner sees the
 // tenant thread passed as `tenant`. Either side can block (no new
-// messages) or report the conversation to the admin. Polls every 5s.
+// messages) or report the conversation to the admin. Either side can
+// also schedule a visit from here — the same scheduler as the listing
+// page, so a proposal made in chat is answered in chat. Polls every 5s.
 export default function ChatBox({ listingId, tenant = null, listing = null, strings, locale }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
@@ -20,6 +23,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   const [signedIn, setSignedIn] = useState(null);
   const [conversation, setConversation] = useState(null);
   const [reporting, setReporting] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   // closed = no new messages. landlordLeft = the home was deleted, so the
   // landlord is out of the conversation for good. The tenant keeps every
   // message either way — their history is theirs.
@@ -133,16 +137,24 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
           <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{strings.chatTitle}</h2>
           {conversation && (
             <span style={{ display: 'flex', gap: 4 }}>
+              {!blocked && !closed && (
+                <button type="button" className="link-btn" onClick={() => { setScheduling((s) => !s); setReporting(false); }}><Icon name="calendar" /> {strings.scheduleVisit}</button>
+              )}
               {(!blocked || conversation.blockedByMe) && (
                 <button type="button" className="link-btn" onClick={toggleBlock}>{blocked ? strings.unblockChat : `⊘ ${strings.blockChat}`}</button>
               )}
-              <button type="button" className="link-btn" onClick={() => setReporting((r) => !r)}><Icon name="flag" /> {strings.reportChat}</button>
+              <button type="button" className="link-btn" onClick={() => { setReporting((r) => !r); setScheduling(false); }}><Icon name="flag" /> {strings.reportChat}</button>
             </span>
           )}
         </div>
         {reporting && conversation && (
           <div style={{ marginBottom: 14 }}>
             <ReportForm kind="conversation" listingId={listingId} tenant={threadTenant} strings={strings} onDone={() => setReporting(false)} />
+          </div>
+        )}
+        {scheduling && conversation && (
+          <div style={{ marginBottom: 14 }}>
+            <VisitScheduler listingId={listingId} owner={listing?.owner} strings={strings} locale={locale} />
           </div>
         )}
         {signedIn === false && (
