@@ -1,9 +1,9 @@
 import { getRevenue } from '@/lib/revenue-server';
 
-// Admin-only (middleware gates /api/admin/*): the activation ledger.
-// The roster starts with activations logged after this route shipped —
-// earlier activations predate the ledger and are not backfilled, because
-// their activation dates were never recorded.
+// Admin-only (middleware gates /api/admin/*): revenue = every confirmed
+// payment at its real amount (join, quarters, reactivation, advertising)
+// plus manual activations made outside the payments ledger. Same total as
+// the payment summary's "confirmed" figure.
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
