@@ -48,6 +48,7 @@ services:
       - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM:-}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - EMAIL_FROM=${EMAIL_FROM:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://kayayiti.app}
       # Scheduled jobs (the `cron` service below). Without this the
       # /api/cron endpoint stays closed and nothing is scheduled.
