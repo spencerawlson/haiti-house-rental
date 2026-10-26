@@ -143,3 +143,22 @@ test('photo room tags: uploaded photos and known rooms only', () => {
   assert.deepEqual(out.photoTags, { '/uploads/a.jpg': 'inside' });
   assert.equal(sanitizeDetails({ photoTags: 'nope' }).photoTags, undefined);
 });
+
+test('photoSrc: sized URLs for our uploads only', async () => {
+  const { photoSrc } = await import('../lib/photo-url.js');
+  assert.equal(photoSrc('/uploads/a.jpg', 480), '/uploads/a.jpg?w=480');
+  assert.equal(photoSrc('/uploads/a.jpg', 1200, 'jpg'), '/uploads/a.jpg?w=1200&f=jpg');
+  assert.equal(photoSrc('/uploads/a.jpg', 999), '/uploads/a.jpg?w=480', 'unknown width falls back to 480');
+  assert.equal(photoSrc('/uploads/clip.mp4', 480), '/uploads/clip.mp4', 'videos untouched');
+  assert.equal(photoSrc('/images/landing-house.jpg', 480), '/images/landing-house.jpg', 'built-in images untouched');
+  assert.equal(photoSrc(null, 480), null);
+});
+
+test('mapPins keeps only what the map draws', async () => {
+  const { mapPins } = await import('../lib/listings.js');
+  const pins = mapPins([
+    { id: 'a', approxLat: 18.5, approxLng: -72.3, price: 1, currency: 'USD', description: 'long', owner: 'x', photos: ['/u.jpg'] },
+    { id: 'b', approxLat: null, approxLng: null, price: 2 },
+  ]);
+  assert.deepEqual(pins, [{ id: 'a', approxLat: 18.5, approxLng: -72.3, price: 1, currency: 'USD' }]);
+});

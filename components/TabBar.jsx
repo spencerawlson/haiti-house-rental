@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getSession } from '@/lib/account';
 import { getDict } from '@/lib/dictionaries';
+import { photoSrc } from '@/lib/photo-url';
 
 // Bottom tab bar (design: docs/design/app-showcase.png — Akèy, Rechèch,
 // Favori, Mesaj, Kont). Labels come from the locale's dictionary, so the
@@ -76,7 +77,7 @@ export default function TabBar({ locale }) {
         <Link key={tab.key} href={tab.href} className={active === tab.key ? 'active' : ''} aria-current={active === tab.key ? 'page' : undefined}>
           <span className="tab-icon" aria-hidden="true">
             {tab.key === 'account' && avatarUrl && !avatarBroken ? (
-              <img className="tab-avatar" src={avatarUrl} alt="" onError={() => setAvatarBroken(true)} />
+              <img className="tab-avatar" src={photoSrc(avatarUrl, 320)} alt="" onError={() => setAvatarBroken(true)} />
             ) : (
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{ICONS[tab.key]}</svg>
             )}

@@ -12,6 +12,7 @@ import ListingDetailsFields from '@/components/ListingDetailsFields';
 import LocationPicker from '@/components/LocationPicker';
 import { compressImage } from '@/lib/image-compress';
 import { uploadErrorInfo, uploadErrorMessage } from '@/lib/upload-errors';
+import { photoSrc } from '@/lib/photo-url';
 
 // Landlord edit form: every field the creation form sets, pre-filled
 // from the listing. Existing photos/videos stay unless removed with ✕;
@@ -258,7 +259,7 @@ export default function EditListing(props) {
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
                   {f.photos.map((src) => (
                     <span key={src} style={{ position: 'relative', display: 'inline-block' }}>
-                      <img src={src} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
+                      <img src={photoSrc(src, 320)} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, display: 'block' }} />
                       <select
                         aria-label={t.photoTagLabel}
                         value={f.details?.photoTags?.[src] || ''}

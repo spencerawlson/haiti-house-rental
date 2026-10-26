@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Icon from '@/components/Icon';
+import { photoSrc } from '@/lib/photo-url';
 
 // Listing photos with a zoomable lightbox: tap any photo to open it
 // full-screen, then pinch (touch), scroll (mouse wheel) or use the
@@ -190,7 +191,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
         <div className="photo-grid">
           {photos.map((src, i) => (
             <button key={src} type="button" onClick={() => open(i)} aria-label={`${i + 1} / ${photos.length}`}>
-              <img src={src} alt="" loading="lazy" decoding="async" />
+              <img src={photoSrc(src, 480)} alt="" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>
@@ -202,7 +203,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
   return (
     <>
       <img
-        src={photos[0]}
+        src={photoSrc(photos[0], hero ? 1200 : 800)}
         alt=""
         onClick={() => open(0)}
         style={hero
@@ -222,7 +223,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
       {!hero && photos.length > 1 && (
         <div className="gallery">
           {photos.slice(1).map((src, i) => (
-            <img key={src} src={src} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
+            <img key={src} src={photoSrc(src, 480)} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
           ))}
         </div>
       )}
