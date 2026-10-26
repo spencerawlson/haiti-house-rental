@@ -3,7 +3,7 @@
 Small, reviewable phases, one pull request each. Security and privacy
 come first. No phase deletes users or payment history, and none changes
 pricing (tenants free; activation 1000 HTG one-time; advertising
-75 HTG/month; MonCash/NatCash; admin approval).
+100–1,000 HTG chosen by the landlord; MonCash/NatCash; admin approval).
 
 Changed in Phase 9: listings are no longer kept forever. A landlord can
 delete their own home for good — or tag it sold/leased, which deletes it
