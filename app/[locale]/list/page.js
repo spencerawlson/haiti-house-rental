@@ -235,6 +235,7 @@ export default function ListHome(props) {
           <span className="muted">{t.pinLocationHint}</span>
           <LocationPicker value={coords} onChange={setCoords} useMyLocationLabel={t.useMyLocation} unavailableLabel={t.locationUnavailable} />
         </div>
+        <p className="muted" style={{ margin: 0 }}>{t.locationPrivacyNote}</p>
         <div className="field"><label>{t.currency}</label>
           <select className="input" value={currency} onChange={(e) => setCurrency(e.target.value)}>
             <option value="HTG">HTG</option>

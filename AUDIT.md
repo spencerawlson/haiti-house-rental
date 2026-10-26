@@ -26,6 +26,7 @@ others; **High** = private data exposed or business rules bypassed;
 | 13 | Medium | **Next.js 14.2.5** has published security advisories (incl. middleware-bypass CVE-2025-29927, fixed in 14.2.25). The admin gate depends on middleware. | `package.json` | Fixed (1b): Next.js 14.2.35 (latest 14.2.x); `npm audit` not yet run — registry timed out |
 | 14 | Low | Presence pings accepted any claimed username. | `app/api/presence/route.js` | Fixed (session-derived) |
 | 15 | Low | Upload content is trusted by declared MIME + extension; no magic-byte check. | `app/api/upload/route.js` | Fixed (1b): magic-byte check per format; `nosniff` on all responses |
+| 16 | High | **Exact home location is public by default.** `mapListing` returned the free-text `address` and exact `lat`/`lng` to anonymous callers; the detail page rendered the address verbatim and map price pins sat on exact coordinates. No form warning, no approximation, no consent control. | `lib/listings-server.js` `mapListing` | Fixed (Stage 2, B1 — owner-approved: approximate by default, exact on contact): the public shape carries commune + `approxLat`/`approxLng` (0.004° grid, ~300 m max displacement) only; exact values stay in the owner and new full-admin shapes and are revealed to a tenant once the landlord replies in chat; a plain warning sits on the post and edit forms. Regression test `tests/location-precision.test.mjs`. Note: A1's and A2's branches also append a row 16 — merging in order A1, A2, B1 needs keep-all-three + renumber. |
 
 ## Product / workflow gaps
 
