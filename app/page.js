@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { getSessionAccount } from '@/lib/session-server';
+import { getPromoCounts } from '@/lib/promo-server';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
@@ -25,6 +26,11 @@ export default async function Landing() {
   // becomes "Kont". getSessionAccount only needs something with
   // .cookies.get, which the next/headers jar provides.
   const me = await getSessionAccount({ cookies: jar }).catch(() => null);
+  // Promo announcement (0022): the same remaining count the Admin
+  // Board shows, rendered server-side for anonymous visitors. Count
+  // only, nothing about any account. A failed count hides the banner
+  // instead of breaking the landing page.
+  const promo = await getPromoCounts().catch(() => null);
   const backgrounds = [
     '/images/landing-mountain.jpg',
     '/images/landing-beach.jpg',
@@ -56,6 +62,18 @@ export default async function Landing() {
           <h1>{t.landingHero}</h1>
           <p>{t.landingSub}</p>
         </section>
+
+        {promo && promo.remaining > 0 && (
+          <section className="card" style={{ marginTop: 24, border: '2px solid #1d4ed8' }}>
+            <div className="card-body">
+              <h3 style={{ margin: '0 0 4px' }}>{t.promoLandingTitle}</h3>
+              <p className="muted" style={{ margin: '0 0 12px' }}>
+                {t.promoLandingBody.replaceAll('{remaining}', String(promo.remaining)).replaceAll('{spots}', String(promo.spots))}
+              </p>
+              <Link className="btn" href={`/${lang}/signup`}>{t.createAccount}</Link>
+            </div>
+          </section>
+        )}
 
         <form action={`/${lang}/listings`} method="get" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <input name="q" className="input" placeholder={t.searchPlaceholder} style={{ flex: 1 }} />
