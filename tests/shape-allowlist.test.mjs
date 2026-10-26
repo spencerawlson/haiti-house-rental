@@ -55,14 +55,10 @@ const OWNER_LISTING = [...PUBLIC_LISTING,
 const REVEALED_LISTING = [...PUBLIC_LISTING,
   'address', 'lat', 'lng',
 ];
-// The Admin Board reads listings through the public /api/listings
-// endpoint (app/[locale]/admin/page.js), so its listing shape IS the
-// public shape; its campaign view is the separate ad-stats row.
-// REBASE NOTE: B1 gives the admin its own shape (owner shapes on a full
-// admin cookie). When B1 lands, rebase this line to OWNER_LISTING —
-// until then, on main, the admin fetch returns the public shape and
-// this equality is what is true.
-const ADMIN_LISTING = PUBLIC_LISTING;
+// The admin reads listings with a full-admin cookie (Stage 2, B1),
+// so its listing shape IS the owner shape; its campaign view is the
+// separate ad-stats row.
+const ADMIN_LISTING = OWNER_LISTING;
 const ADMIN_AD_STATS = ['id', 'title', 'owner', 'advertised',
   'advertisedRequested', 'paused', 'amountHTG', 'viewsBudget', 'viewsUsed',
   'clicksBudget', 'clicksUsed'];

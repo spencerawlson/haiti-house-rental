@@ -32,12 +32,14 @@ export default function ListingMap({ listings, locale, t, userLocation, height =
       // in between, on this map or any other map in the app.
       const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
       for (const l of listings) {
-        if (typeof l.lat !== 'number' || typeof l.lng !== 'number') continue;
-        points.push([l.lat, l.lng]);
+        // Public pins are APPROXIMATE (Stage 2, B1): the public shape
+        // carries approxLat/approxLng, never the exact coordinates.
+        if (typeof l.approxLat !== 'number' || typeof l.approxLng !== 'number') continue;
+        points.push([l.approxLat, l.approxLng]);
         // Price pins (design screen 5): the rent/sale price on the map
         // itself, so people compare without opening every marker.
         const short = l.price >= 1000 ? `${Math.round(l.price / 1000).toLocaleString()}k` : String(l.price || 0);
-        const marker = L.marker([l.lat, l.lng], {
+        const marker = L.marker([l.approxLat, l.approxLng], {
           icon: L.divIcon({ className: '', html: `<span class="price-pin">${esc(short)} ${esc(l.currency || 'HTG')}</span>`, iconSize: null, iconAnchor: [30, 28] }),
         }).addTo(map);
         marker.on('click', () => { window.location.href = `/${locale}/listings/${encodeURIComponent(l.id)}`; });
