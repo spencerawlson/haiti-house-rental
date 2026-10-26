@@ -12,6 +12,7 @@ export default function AdminLogin(props) {
   const params = use(props.params);
   const t = getDict(params.locale);
   const router = useRouter();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -21,13 +22,14 @@ export default function AdminLogin(props) {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ username: username.trim(), password }),
     });
     if (!res.ok) {
       setError(t.invalidAdminPassword);
       return;
     }
-    router.push(`/${params.locale}/admin`);
+    const data = await res.json().catch(() => ({}));
+    router.push(`/${params.locale}/${data.scope === 'stats' ? 'stats' : 'admin'}`);
   }
 
   return (
@@ -37,6 +39,10 @@ export default function AdminLogin(props) {
         <h1 className="page-title">{t.adminLogin}</h1>
         <form className="card" onSubmit={submit}>
           <div className="card-body" style={{ display: 'grid', gap: 14 }}>
+            <p className="muted" style={{ margin: 0 }}>{t.adminLoginScopeNote}</p>
+            <div className="field"><label>{t.username}</label>
+              <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" />
+            </div>
             <div className="field"><label>{t.adminPassword}</label>
               <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
