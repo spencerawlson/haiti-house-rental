@@ -3,7 +3,7 @@ import TabBar from '@/components/TabBar';
 import { getDict } from '@/lib/dictionaries';
 
 // Privacy policy, required by the app stores. Short and honest: what the
-// app stores, and the v0 limit that server memory resets on restart.
+// app stores, and that it lives in a permanent database.
 const TEXT = {
   ht: {
     title: 'Konfidansyalite',
@@ -13,7 +13,7 @@ const TEXT = {
       'Kay ou mete yo: tit, pri, foto ak videyo ou televèse yo. Yo vizib pou tout moun ki vizite sit la — pa mete enfòmasyon pèsonèl nan foto yo.',
       'Mesaj chat ak vizit: mesaj ou echanje ak lòt itilizatè yo, ak randevou vizit ou pwopoze yo.',
       'Peman: Kay Ayiti pa janm mande nimewo kat labank. Aktivasyon ak piblisite peye pa transfè MonCash oswa NatCash, admin an verifye yo alamen.',
-      'Limit vèsyon sa a: done yo kenbe nan memwa sèvè a pou kounye a — si sèvè a rekòmanse, done yo efase. Yon baz done pèmanan ap vini.',
+      'Done yo kenbe nan yon baz done pèmanan (Postgres) sou sèvè a — yo pa efase lè sèvè a rekòmanse.',
     ],
     back: 'Tounen',
   },
@@ -25,7 +25,7 @@ const TEXT = {
       'Vos maisons publiées : titre, prix, photos et vidéos que vous téléversez. Elles sont visibles par tous les visiteurs du site — n’y incluez pas d’informations personnelles.',
       'Messages et visites : les messages échangés avec les autres utilisateurs, et les rendez-vous de visite proposés.',
       'Paiements : Kay Ayiti ne demande jamais de numéro de carte bancaire. L’activation et la publicité se paient par transfert MonCash ou NatCash, vérifiés manuellement par l’admin.',
-      'Limite de cette version : les données sont conservées en mémoire du serveur pour le moment — si le serveur redémarre, elles sont effacées. Une base de données permanente est prévue.',
+      'Les données sont conservées dans une base de données permanente (Postgres) sur le serveur — elles ne sont pas effacées lorsque le serveur redémarre.',
     ],
     back: 'Retour',
   },
@@ -37,7 +37,7 @@ const TEXT = {
       'Homes you post: title, price, photos and videos you upload. They are visible to everyone who visits the site — do not include personal information in them.',
       'Messages and visits: messages exchanged with other users, and visit appointments you propose.',
       'Payments: Kay Ayiti never asks for a bank card number. Activation and advertising are paid by MonCash or NatCash transfer, verified manually by the admin.',
-      'Limit of this version: data is currently kept in server memory — if the server restarts, it is erased. A permanent database is coming.',
+      'Data is kept in a permanent database (Postgres) on the server — it is not erased when the server restarts.',
     ],
     back: 'Back',
   },

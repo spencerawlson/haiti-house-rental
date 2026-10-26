@@ -2,7 +2,7 @@
 
 Small, reviewable phases, one pull request each. Security and privacy
 come first. No phase deletes users or payment history, and none changes
-pricing (tenants free; activation 1000 HTG one-time; advertising
+pricing (tenants free; activation 1,500 HTG to join + 1,000 HTG every 3 months; advertising
 100–1,000 HTG chosen by the landlord; MonCash/NatCash; admin approval).
 
 Changed in Phase 9: listings are no longer kept forever. A landlord can

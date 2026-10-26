@@ -25,7 +25,7 @@ container `kayayiti-web` on FedServ host port 8097.
   bar on the landing; the app lives behind it. Who pays what is spelled
   out per audience in two cards (never one shared line — that confused
   landlords and tenants): tenants free, no fee, no activation; landlords
-  one-time 1000 HTG activation via MonCash/NatCash. Background carousel:
+  1,500 HTG to join + 1,000 HTG every 3 months, via MonCash/NatCash. Background carousel:
   four pale Haiti illustrations (mountains, beach, house, palms) in
   public/images play one after another behind the landing content
   (28s cycle, crossfading, pale white wash over them); all info boxes
@@ -58,8 +58,7 @@ container `kayayiti-web` on FedServ host port 8097.
   are selectable locations, not later additions.
 - **Two-sided marketplace:** landlords list homes; tenants search and find
   homes. Tenants browse free.
-- **Landlord fees (decided 2026-10-21):** account activation (one-time,
-  MonCash/NatCash) **1000 HTG**; advertising **100–1,000 HTG** chosen by the
+- **Landlord fees (decided 2026-10-21):** account activation (MonCash/NatCash) **1,500 HTG to join + 1,000 HTG every 3 months**; advertising **100–1,000 HTG** chosen by the
   landlord, admin-confirmed. Activation is manual: the user transfers from the phone
   number on their account to the admin-set MonCash (Digicel) / NatCash
   (Natcom) destination number, and the admin activates.
@@ -151,8 +150,7 @@ container `kayayiti-web` on FedServ host port 8097.
   activates the account. Payment collection and account approvals are still
   manual — the app records the prices and the requests, it does not move
   money yet.
-- Admin revenue ledger: every landlord activation logs **1000 HTG** (once per
-  account; tenant accounts are free and never counted). The Admin page shows
+- Admin revenue ledger: every confirmed landlord payment logs its real amount (join 1,500 HTG, quarter 1,000 HTG, reactivation 1,500 HTG); tenant accounts are free and never counted. Manual legacy rows keep the old one-time amount. The Admin page shows
   the running total, the activation roster, and a live HTG → USD / CAD
   converter (rate from open.er-api.com, refreshed hourly; no rate is shown
   if the fetch fails).
