@@ -12,14 +12,16 @@ const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const CRON_SECRET = process.env.CRON_SECRET || '';
 const cronSkip = skip || (!CRON_SECRET && 'needs CRON_SECRET on the server');
 
-// The end-to-end test uses a visit later TODAY, which only sits inside a
-// reminder window between 06:00 and 20:00 Haiti time. Outside that it
-// skips loudly rather than failing by the clock.
-const haitiHour = Number(
-  new Date().toLocaleString('en-US', { timeZone: 'America/Port-au-Prince', hour: '2-digit', hour12: false }),
-);
-const windowSkip = cronSkip || ((haitiHour < 6 || haitiHour >= 19) && `Haiti time is ${haitiHour}:00, outside 06:00-19:00`);
-
+// Fake clock (Stage 2, A3). These tests run under a pinned "now" —
+// today 11:00 Haiti wall-clock — that ONLY the reminder path reads
+// (KAY_FAKE_NOW_MS, set by the suite runner and by CI; see
+// app/api/cron/route.js). Tomorrow's visits then always sit in their
+// two_days window whatever the real hour, so the tests never skip on
+// the clock again. Without the var they fail loudly outside the
+// windows instead of skipping — that is the contract, not a flake.
+// Midnight-rollover caveat: a run crossing Haiti midnight makes fake
+// today older than real today and visit creation rejects the date as
+// past (~1/1440 runs, same class as existing flakiness).
 const run = uniq();
 const L = { name: 'Rem Landlord', username: `rmland_${run}`, password: 'pw-l', role: 'landlord' };
 const T = { name: 'Rem Tenant', username: `rmten_${run}`, password: 'pw-t', role: 'tenant' };
@@ -70,17 +72,17 @@ test('the scheduled job refuses anyone without the secret', { skip: cronSkip }, 
   assert.ok(typeof ok.data.deletedListings === 'number');
 });
 
-test('a confirmed visit reminds both sides, exactly once', { skip: windowSkip }, async () => {
+test('a confirmed visit reminds both sides, exactly once', { skip: cronSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
     body: { title: `Remind ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
   });
   const listingId = made.data.listing.id;
-  // Later today, on the half hour, inside 06:00-20:00.
-  const slot = `${String(Math.min(20, haitiHour + 1)).padStart(2, '0')}:00`;
+  // Tomorrow at noon: under the fake clock (today 11:00 Haiti) this sits
+  // in its two_days window, whatever the real hour.
   const v = await as.T('/api/visits', {
     method: 'POST',
-    body: { listingId, date: haitiDate(0), time: slot, message: 'today please' },
+    body: { listingId, date: haitiDate(1), time: '12:00', message: 'tomorrow please' },
   });
   assert.equal(v.status, 200, 'visit requested');
   const visitId = v.data.visit.id;
@@ -98,12 +100,14 @@ test('a confirmed visit reminds both sides, exactly once', { skip: windowSkip },
   assert.equal(first.status, 200);
   assert.ok(first.data.remindersSent >= 1, `sent something, got ${first.data.remindersSent}`);
 
-  // Both sides, in their own inbox.
+  // Both sides, in their own inbox — and the kind pins the fake clock:
+  // under real time this visit's kind would vary or nothing would fire.
   const forL = await waitForReminders('L', 1);
   const forT = await waitForReminders('T', 1);
   assert.equal(forL.length, 1, 'landlord reminded once');
   assert.equal(forT.length, 1, 'tenant reminded once');
-  assert.equal(forL[0].kind, forT[0].kind, 'the same reminder');
+  assert.equal(forL[0].kind, 'visit_reminder_two_days', 'fake clock puts tomorrow noon in two_days');
+  assert.equal(forT[0].kind, 'visit_reminder_two_days');
   assert.equal(forL[0].params.title, `Remind ${run}`, 'names the home');
 
   // Running again must not repeat it — this is the claim doing its job.
@@ -114,32 +118,34 @@ test('a confirmed visit reminds both sides, exactly once', { skip: windowSkip },
   assert.equal((await reminders('T')).length, 1);
 });
 
-test('rescheduling clears the record so the new date reminds again', { skip: windowSkip }, async () => {
+test('rescheduling clears the record so the new date reminds again', { skip: cronSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
     body: { title: `Reschedule ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
   });
   const listingId = made.data.listing.id;
-  const slot = `${String(Math.min(20, haitiHour + 1)).padStart(2, '0')}:30`;
-  const v = await as.T('/api/visits', { method: 'POST', body: { listingId, date: haitiDate(0), time: slot } });
+  const v = await as.T('/api/visits', { method: 'POST', body: { listingId, date: haitiDate(1), time: '12:30' } });
   const visitId = v.data.visit.id;
   await as.L('/api/visits/status', { method: 'POST', body: { id: visitId, action: 'confirm' } });
 
   const title = `Reschedule ${run}`;
 
   await cron(CRON_SECRET);
-  assert.equal((await waitForReminders('T', 1, title)).length, 1, 'reminded for the original time');
+  const first = await waitForReminders('T', 1, title);
+  assert.equal(first.length, 1, 'reminded for the original time');
+  assert.equal(first[0].kind, 'visit_reminder_two_days', 'fake clock pins the original reminder kind');
 
-  // Move it to another slot today and confirm again.
-  const slot2 = `${String(Math.min(20, haitiHour + 2)).padStart(2, '0')}:00`;
+  // Move it to another slot tomorrow and confirm again.
   assert.equal(
-    (await as.L('/api/visits/status', { method: 'POST', body: { id: visitId, action: 'reschedule', date: haitiDate(0), time: slot2 } })).status,
+    (await as.L('/api/visits/status', { method: 'POST', body: { id: visitId, action: 'reschedule', date: haitiDate(1), time: '13:00' } })).status,
     200,
   );
   assert.equal((await as.T('/api/visits/status', { method: 'POST', body: { id: visitId, action: 'confirm' } })).status, 200);
 
   await cron(CRON_SECRET);
-  assert.equal((await waitForReminders('T', 2, title)).length, 2, 'the new time gets its own reminder');
+  const both = await waitForReminders('T', 2, title);
+  assert.equal(both.length, 2, 'the new time gets its own reminder');
+  assert.equal(both[1].kind, 'visit_reminder_two_days', 'fake clock pins the rescheduled reminder kind');
 });
 
 test('the job also deletes sold homes whose time is up', { skip: cronSkip }, async () => {
