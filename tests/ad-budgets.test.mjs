@@ -76,16 +76,17 @@ test('views and clicks consume the budget, the landlord sees only a money balanc
   const id = await activateListing(100);
   const pub0 = (await asL(`/api/listings?id=${id}`)).data.listing;
   assert.equal(pub0.advertised, true);
-  assert.equal(pub0.adBalanceHTG, 100);
-  assert.ok(!('viewsBudget' in pub0) && !('viewsUsed' in pub0), 'counts hidden from the public shape');
+  assert.ok(!('viewsBudget' in pub0) && !('viewsUsed' in pub0) && !('adBalanceHTG' in pub0), 'counts and balance hidden from the public shape');
+  const lib0 = (await asL(`/api/listings?owner=${L.username}&all=1`)).data.listings.find((l) => l.id === id);
+  assert.equal(lib0.adBalanceHTG, 100, 'landlord sees the money balance in their Library');
   for (let i = 0; i < 250; i++) {
     const r = await asL('/api/ads/impression', { method: 'POST', body: { listingId: id } });
     assert.equal(r.data.counted, true);
   }
   const click = await asL('/api/ads/click', { method: 'POST', body: { listingId: id } });
   assert.equal(click.data.counted, true);
-  const pub1 = (await asL(`/api/listings?id=${id}`)).data.listing;
-  assert.equal(pub1.adBalanceHTG, 75, '250 of 1000 views spent = 75 HTG left');
+  const lib1 = (await asL(`/api/listings?owner=${L.username}&all=1`)).data.listings.find((l) => l.id === id);
+  assert.equal(lib1.adBalanceHTG, 75, '250 of 1000 views spent = 75 HTG left');
   const stats = (await admin('/api/admin/ad-stats')).data.stats.find((s) => s.id === id);
   assert.equal(stats.viewsUsed, 250);
   assert.equal(stats.clicksUsed, 1);
@@ -116,8 +117,9 @@ test('exhausting either budget stops the ad on its own', { skip }, async () => {
     assert.equal((await asL('/api/ads/click', { method: 'POST', body: { listingId: id } })).data.counted, true);
     const ended = (await asL(`/api/listings?id=${id}`)).data.listing;
     assert.equal(ended.advertised, false, 'clicks spent: ad stops');
-    assert.equal(ended.adEnded, true);
-    assert.equal(ended.adBalanceHTG, 0);
+    const endedLib = (await asL(`/api/listings?owner=${L.username}&all=1`)).data.listings.find((l) => l.id === id);
+    assert.equal(endedLib.adEnded, true);
+    assert.equal(endedLib.adBalanceHTG, 0);
     assert.equal((await asL('/api/ads/click', { method: 'POST', body: { listingId: id } })).data.counted, false, 'nothing counts after the end');
   } finally {
     await admin('/api/admin/settings', { method: 'POST', body: { adViewsPer100: 1000, adClicksPer100: 200 } });
