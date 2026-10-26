@@ -24,6 +24,8 @@ export default function ListHome(props) {
   const [description, setDescription] = useState('');
   const [department, setDepartment] = useState('ouest');
   const [commune, setCommune] = useState('');
+  const [address, setAddress] = useState('');
+  const [geoMsg, setGeoMsg] = useState('');
   const [coords, setCoords] = useState(null);
   const [price, setPrice] = useState('');
   const [currency, setCurrency] = useState('HTG');
@@ -50,6 +52,23 @@ export default function ListHome(props) {
     if (session) setMyUsername(session.username);
     getMyAccount().then((a) => { setMe(a); setMeLoaded(true); });
   }, []);
+
+  async function findOnMap() {
+    if (!address.trim()) return;
+    setGeoMsg('');
+    try {
+      const res = await fetch(`/api/geocode?address=${encodeURIComponent(address.trim())}`);
+      const data = await res.json();
+      if (typeof data.lat === 'number' && typeof data.lng === 'number') {
+        setCoords({ lat: data.lat, lng: data.lng });
+        setGeoMsg(t.addressFound);
+      } else {
+        setGeoMsg(t.addressNotFound);
+      }
+    } catch {
+      setGeoMsg(t.addressNotFound);
+    }
+  }
 
   async function uploadAll(files) {
     const urls = [];
@@ -79,7 +98,7 @@ export default function ListHome(props) {
       const res = await fetch('/api/listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, department, commune, price, currency, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) }),
+        body: JSON.stringify({ title, description, department, commune, address, price, currency, bedrooms, bathrooms, photos, videos, purpose, advertisedRequested, type: homeType, areaM2, rentPeriod, details, ...(coords ? { lat: coords.lat, lng: coords.lng } : {}) }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -204,6 +223,13 @@ export default function ListHome(props) {
         </div>
         <div className="field"><label>{t.commune}</label>
           <input className="input" value={commune} onChange={(e) => setCommune(e.target.value)} required />
+        </div>
+        <div className="field"><label>{t.address}</label>
+          <input className="input" value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.address} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+            <button type="button" className="btn btn-secondary" onClick={findOnMap}>{t.findOnMap}</button>
+            {geoMsg && <span className="muted">{geoMsg}</span>}
+          </div>
         </div>
         <div className="field"><label>{t.pinLocationTitle}</label>
           <span className="muted">{t.pinLocationHint}</span>

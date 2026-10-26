@@ -27,6 +27,7 @@ export default function EditListing(props) {
   const [mine, setMine] = useState(false);
   const [f, setF] = useState(null);
   const [coords, setCoords] = useState(null);
+  const [geoMsg, setGeoMsg] = useState('');
   const [newPhotos, setNewPhotos] = useState([]);
   const [newVideos, setNewVideos] = useState([]);
   const [status, setStatus] = useState('');
@@ -46,6 +47,7 @@ export default function EditListing(props) {
             description: l.description || '',
             department: l.department || 'ouest',
             commune: l.commune || '',
+            address: l.address || '',
             price: String(l.price ?? ''),
             currency: l.currency || 'HTG',
             purpose: l.purpose || 'rent',
@@ -67,6 +69,23 @@ export default function EditListing(props) {
 
   function set(field, value) {
     setF((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function findOnMap() {
+    if (!f.address.trim()) return;
+    setGeoMsg('');
+    try {
+      const res = await fetch(`/api/geocode?address=${encodeURIComponent(f.address.trim())}`);
+      const data = await res.json();
+      if (typeof data.lat === 'number' && typeof data.lng === 'number') {
+        setCoords({ lat: data.lat, lng: data.lng });
+        setGeoMsg(t.addressFound);
+      } else {
+        setGeoMsg(t.addressNotFound);
+      }
+    } catch {
+      setGeoMsg(t.addressNotFound);
+    }
   }
 
   async function uploadAll(files) {
@@ -102,6 +121,7 @@ export default function EditListing(props) {
           description: f.description,
           department: f.department,
           commune: f.commune,
+          address: f.address,
           price: f.price,
           currency: f.currency,
           bedrooms: f.bedrooms,
@@ -176,6 +196,13 @@ export default function EditListing(props) {
               </div>
               <div className="field"><label>{t.commune}</label>
                 <input className="input" value={f.commune} onChange={(e) => set('commune', e.target.value)} required />
+              </div>
+              <div className="field"><label>{t.address}</label>
+                <input className="input" value={f.address} onChange={(e) => set('address', e.target.value)} placeholder={t.address} />
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6 }}>
+                  <button type="button" className="btn btn-secondary" onClick={findOnMap}>{t.findOnMap}</button>
+                  {geoMsg && <span className="muted">{geoMsg}</span>}
+                </div>
               </div>
               <div className="field"><label>{t.pinLocationTitle}</label>
                 <span className="muted">{t.pinLocationHint}</span>
