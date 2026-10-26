@@ -30,13 +30,13 @@ export async function GET(request) {
   return Response.json({ listings: owner ? listings.filter((l) => l.owner === owner) : listings });
 }
 
-// Geocode the commune via OpenStreetMap Nominatim (free, no key) so new
+// Geocode a query via OpenStreetMap Nominatim (free, no key) so new
 // listings appear on the map. Failure is non-fatal: the listing is created
 // without coordinates and shows in list view only.
-async function geocode(commune) {
+async function geocode(query) {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(commune + ', Haiti')}`,
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query + ', Haiti')}`,
       { headers: { 'User-Agent': 'KayAyiti/1.0' }, signal: AbortSignal.timeout(5000) },
     );
     const data = await res.json();
@@ -44,6 +44,17 @@ async function geocode(commune) {
   } catch {
     // fall through — no coordinates
   }
+  return null;
+}
+
+// The pin for a listing with no explicit pin: the typed address first
+// (it names the property itself), then the commune as a fallback.
+async function geocodeListing(data) {
+  if (data.address && String(data.address).trim()) {
+    const byAddress = await geocode(String(data.address).trim());
+    if (byAddress) return byAddress;
+  }
+  if (data.commune) return geocode(data.commune);
   return null;
 }
 
@@ -58,8 +69,8 @@ export async function POST(request) {
     return Response.json({ error: 'Only activated landlord accounts can post listings' }, { status: 403 });
   }
   data.owner = owner.username;
-  if (data.commune && typeof data.lat !== 'number') {
-    const coords = await geocode(data.commune);
+  if (typeof data.lat !== 'number') {
+    const coords = await geocodeListing(data);
     if (coords) Object.assign(data, coords);
   }
   // The account's listing limit (0015), checked atomically with the insert.
@@ -88,10 +99,11 @@ export async function PATCH(request) {
   if (!String(data.title || '').trim() || !String(data.commune || '').trim()) {
     return Response.json({ error: 'Title and commune are required' }, { status: 400 });
   }
-  // New commune, new map pin: re-geocode only when the commune changed
-  // and no explicit pin was placed — an explicit pin always wins.
-  if (data.commune && resolveCommune(data.commune) !== listing.commune && typeof data.lat !== 'number') {
-    const coords = await geocode(data.commune);
+  // New place, new map pin: re-geocode only when the address or commune
+  // changed and no explicit pin was placed — an explicit pin always wins.
+  const addressChanged = typeof data.address === 'string' && data.address.trim() !== (listing.address || '');
+  if ((addressChanged || (data.commune && resolveCommune(data.commune) !== listing.commune)) && typeof data.lat !== 'number') {
+    const coords = await geocodeListing(data);
     if (coords) Object.assign(data, coords);
   }
   const updated = await updateListing(data.id, data);

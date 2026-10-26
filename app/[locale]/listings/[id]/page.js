@@ -50,6 +50,7 @@ export default async function ListingDetail(props) {
           <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 700 }}>
             <Icon name="pin" /> {communeName(l.commune, params.locale)}, {departmentName(l.department, params.locale)}
           </p>
+          {l.address ? <p style={{ margin: '4px 0 0' }}>{l.address}</p> : null}
           {(l.advertised || l.verified || taken) && (
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0 0' }}>
               {taken && <span className="badge-taken"><Icon name="tag" /> {l.status === 'sold' ? t.statusSold : t.statusLeased}</span>}
