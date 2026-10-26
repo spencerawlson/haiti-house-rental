@@ -73,7 +73,11 @@ const ME = ['id', 'name', 'username', 'phone', 'email', 'location',
   // Fraud private notice (PR #57 rebase): the account's OWN suspension
   // state, shown to the owner only on sign-in + account page. The
   // public profile allowlist above is unchanged — these never go public.
-  'fraudSuspended', 'fraudSuspendedAt', 'fraudReason'];
+  'fraudSuspended', 'fraudSuspendedAt', 'fraudReason',
+  // Promo state (0022): the account's OWN promo tag + free-until date,
+  // shown on the owner's account page ("Promo: free until …"). Same
+  // rule as the fraud keys — own profile only, never public.
+  'promoTagged', 'promoUntil'];
 
 function assertShape(actual, allowlist, label) {
   const keys = Object.keys(actual);

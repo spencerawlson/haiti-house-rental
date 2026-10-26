@@ -31,6 +31,7 @@ export default async function LocaleHome(props) {
     { href: `${base}/listings?type=house`, label: t.house },
     { href: `${base}/listings?type=land`, label: t.land },
     { href: `${base}/near-me`, label: t.nearMe, icon: 'pin' },
+    { href: `${base}/admin-chat`, label: t.contactAdmin, icon: 'chat' },
   ];
   return (
     <>

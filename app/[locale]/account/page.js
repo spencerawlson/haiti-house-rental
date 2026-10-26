@@ -93,6 +93,10 @@ export default function Account(props) {
   const dueLabel = { join: t.payJoin, quarter: t.payQuarter, reactivation: t.payReactivation }[dueKind];
   const statusLabel = { pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[billing];
   const dateFmt = (ms) => new Date(ms).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale);
+  // Promo (0022): a tagged landlord with a future promo end pays
+  // nothing — no join fee, no quarterly fee — so the payment form
+  // stays hidden and the promo line shows instead.
+  const promoActive = !!me && !!me.promoTagged && !!me.promoUntil && me.promoUntil > Date.now();
 
   return (
     <>
@@ -147,9 +151,13 @@ export default function Account(props) {
               </p>
               {billing === 'suspended' && <p className="notice" style={{ margin: 0 }}>{t.suspendedNotice}</p>}
               {billing === 'deactivated' && <p className="notice" style={{ margin: 0 }}>{t.deactivatedNotice}</p>}
-              {activationPending ? (
+              {promoActive && (
+                <p style={{ margin: 0 }}><strong>{t.promoFreeUntil.replace('{date}', dateFmt(me.promoUntil))}</strong></p>
+              )}
+              {!promoActive && activationPending && (
                 <p style={{ margin: 0 }}><Icon name="hourglass" /> {t.waitingActivation}</p>
-              ) : dueKind && (billing !== 'active' || me.paidUntil) ? (
+              )}
+              {!promoActive && !activationPending && dueKind && (billing !== 'active' || me.paidUntil) ? (
                 <>
                   <p style={{ margin: 0 }}>{t.sendTransfer}</p>
                   <p className="muted" style={{ margin: 0 }}>
@@ -185,6 +193,7 @@ export default function Account(props) {
 
         <nav className="menu card" style={{ marginTop: 20 }}>
           {me && <MenuRow href={`${base}/chats`} icon="chat" label={t.myMessages} badge={unread} />}
+          {me && <MenuRow href={`${base}/admin-chat`} icon="chat" label={t.contactAdmin} badge={0} />}
           {me && <MenuRow href={`${base}/notifications`} icon="bell" label={t.notificationsTitle} badge={0} />}
           {me && <MenuRow href={`${base}/visits`} icon="calendar" label={t.myVisits} badge={0} />}
           <MenuRow href={`${base}/favorites`} icon="heart" label={t.favorites} />

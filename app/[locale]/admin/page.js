@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useCallback, useEffect, useState, use } from 'react';
+import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
@@ -68,6 +69,10 @@ export default function Admin(props) {
   const [adStats, setAdStats] = useState([]);
   const [numbersSaved, setNumbersSaved] = useState(false);
   const [presence, setPresence] = useState({ users: [], visitors: 0 });
+  // Promo countdown (0022) + admin chat threads: counts only for the
+  // countdown, and thread heads (last message + unread) for the chats.
+  const [promo, setPromo] = useState(null);
+  const [adminThreads, setAdminThreads] = useState([]);
 
   async function loadRates(fresh) {
     const res = await fetch(`/api/rates${fresh ? '?fresh=1' : ''}`);
@@ -137,6 +142,10 @@ export default function Admin(props) {
     if (adres.ok) setAdStats((await adres.json()).stats || []);
     const aures = await fetch('/api/admin/admin-users');
     if (aures.ok) setAdminUsers((await aures.json()).users || []);
+    const pres = await fetch('/api/admin/promo');
+    if (pres.ok) setPromo(await pres.json());
+    const thres = await fetch('/api/admin/admin-chat');
+    if (thres.ok) setAdminThreads((await thres.json()).threads || []);
   }
 
   useEffect(() => {
@@ -390,10 +399,32 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         <a href="#live" className="stat-tile tone-blue"><span className="stat-icon"><Icon name="live" /></span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
       </div>
       <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
-        {[['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
+        {[['promo', 'tag', t.promoSpotsTitle], ['admin-chats', 'chat', t.adminChatsTitle], ['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
           <a key={id} className="chip" href={`#${id}`}><Icon name={icon} /> {label}</a>
         ))}
       </nav>
+      <h2 id="promo" className="admin-h2"><Icon name="tag" /> {t.promoSpotsTitle}</h2>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {promo
+          ? t.promoSpots.replace('{remaining}', String(promo.remaining)).replace('{spots}', String(promo.spots)).replace('{tagged}', String(promo.tagged))
+          : '—'}
+      </p>
+      <h2 id="admin-chats" className="admin-h2"><Icon name="chat" /> {t.adminChatsTitle}</h2>
+      {adminThreads.length === 0 && <p className="muted">{t.adminChatEmpty}</p>}
+      {adminThreads.length > 0 && (
+        <div className="grid">
+          {adminThreads.map((th) => (
+            <section key={th.username} className="card">
+              <div className="card-body">
+                <Link href={`/${params.locale}/admin/chats?username=${encodeURIComponent(th.username)}`} style={{ color: 'inherit' }}>
+                  <p style={{ margin: '0 0 4px' }}><strong>{th.name || th.username}</strong> · @{th.username}{th.unread > 0 && (<> · <span className="count-badge">{th.unread}</span></>)}</p>
+                  <p className="muted" style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{th.lastText}</p>
+                </Link>
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
       <AdminTraffic locale={params.locale} t={t} onCounts={onCounts} />
       <h2 id="live" className="admin-h2"><Icon name="live" /> {t.liveNow}</h2>
       <p className="muted">{t.liveNowNote}</p>

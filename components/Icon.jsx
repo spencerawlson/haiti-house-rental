@@ -2,7 +2,7 @@ import {
   ArrowLeftRight, Ban, Banknote, Bath, BedDouble, Bell, CalendarDays, Camera, Car, CircleCheck,
   CirclePause, CircleX, ClipboardList, Coins, CreditCard, Download, Droplet, Eye, Flag, Footprints,
   Globe, Handshake, Heart, Hourglass, House, KeyRound, LogOut, Map as MapIcon, MapPin, Megaphone,
-  MessageCircle, Moon, OctagonX, PenLine, Receipt, Repeat, Ruler, Search, Settings, Shield, Sofa,
+  MessageCircle, Moon, OctagonX, PenLine, Receipt, Repeat, Ruler, Search, Settings, Shield, Sofa, Sparkles,
   Sprout, Star, Sun, SunMoon, Tag, Timer, Trash2, TrendingUp, TriangleAlert, Undo2, User, Users,
   Wifi, Zap,
 } from 'lucide-react';
@@ -55,6 +55,7 @@ const ICONS = {
   signout: LogOut,
   signup: PenLine,
   sofa: Sofa,
+  sparkles: Sparkles,
   sprout: Sprout,
   star: Star,
   stop: OctagonX,
