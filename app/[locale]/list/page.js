@@ -215,7 +215,7 @@ export default function ListHome(props) {
             <option value="USD">USD</option>
           </select>
         </div>
-        <div className="field"><label>{t.priceLabel} ({currency}{purpose === 'rent' ? ` ${rentPeriodLabel(rentPeriod, t)}` : ''})</label>
+        <div className="field"><label>{t.priceLabel}</label>
           <input className="input" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
         </div>
         {purpose === 'rent' && (
