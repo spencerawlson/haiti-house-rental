@@ -128,6 +128,14 @@ export default function Account(props) {
           </section>
         )}
 
+        {loaded && me && me.fraudSuspended && (
+          <section className="card" style={{ marginBottom: 20 }}>
+            <div className="card-body">
+              <p className="notice" style={{ margin: 0 }}>{t.fraudAccountSuspended.replace('{reason}', me.fraudReason || '')}</p>
+            </div>
+          </section>
+        )}
+
         {isLandlord && !me.partner && (
           <section className="card" style={{ marginBottom: 20 }}>
             <div className="card-body" style={{ display: 'grid', gap: 10 }}>

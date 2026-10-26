@@ -69,7 +69,11 @@ const PUBLIC_PROFILE = ['username', 'name', 'role'];
 const ME = ['id', 'name', 'username', 'phone', 'email', 'location',
   'locale', 'listingLimit', 'avatarUrl', 'role', 'activated',
   'billingStatus', 'paidUntil', 'suspendedAt', 'partner', 'transferSent',
-  'transferProvider', 'createdAt', 'listings'];
+  'transferProvider', 'createdAt', 'listings',
+  // Fraud private notice (PR #57 rebase): the account's OWN suspension
+  // state, shown to the owner only on sign-in + account page. The
+  // public profile allowlist above is unchanged — these never go public.
+  'fraudSuspended', 'fraudSuspendedAt', 'fraudReason'];
 
 function assertShape(actual, allowlist, label) {
   const keys = Object.keys(actual);

@@ -77,6 +77,11 @@ export async function POST(request) {
   if (!owner || owner.role !== 'landlord' || !owner.activated) {
     return Response.json({ error: 'Only activated landlord accounts can post listings' }, { status: 403 });
   }
+  // Fraud suspension (0021) is separate from billing: an activated,
+  // paid-up landlord still cannot post while fraud-suspended.
+  if (owner.fraudSuspended) {
+    return Response.json({ error: 'suspended' }, { status: 403 });
+  }
   data.owner = owner.username;
   if (typeof data.lat !== 'number') {
     const coords = await geocodeListing(data);
