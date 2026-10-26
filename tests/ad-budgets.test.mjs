@@ -18,6 +18,7 @@ const L = { name: 'Ad Budget Landlord', username: `adbud_${run}`, password: 'pw-
 const L2 = { name: 'Ad Budget Other', username: `adbud2_${run}`, password: 'pw-l', role: 'landlord' };
 const asL = client();
 const asL2 = client();
+const anon = client();
 let admin;
 
 async function confirmPayment(id) {
@@ -74,7 +75,7 @@ test('the admin rate is settable and applies to the next activation, not a runni
 
 test('views and clicks consume the budget, the landlord sees only a money balance', { skip }, async () => {
   const id = await activateListing(100);
-  const pub0 = (await asL(`/api/listings?id=${id}`)).data.listing;
+  const pub0 = (await anon(`/api/listings?id=${id}`)).data.listing;
   assert.equal(pub0.advertised, true);
   assert.ok(!('viewsBudget' in pub0) && !('viewsUsed' in pub0) && !('adBalanceHTG' in pub0), 'counts and balance hidden from the public shape');
   const lib0 = (await asL(`/api/listings?owner=${L.username}&all=1`)).data.listings.find((l) => l.id === id);
