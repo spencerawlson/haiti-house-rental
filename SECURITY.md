@@ -99,6 +99,8 @@ A nonce-based CSP is still to do.
 | Per-account engagement figures (last seen, logins, average session, visits) | Admin only. Merged into the admin-gated `GET /api/accounts` list, never into `pub()`, so they cannot reach a public profile or `/api/accounts/me`. Tested. |
 | Public profile lookup | Anyone — username, name, role only |
 
+Shape boundaries: the public, owner, admin, and revealed listing shapes, the public profile, and the own-profile shape are locked by allowlist tests (`tests/shape-allowlist.test.mjs`) — the boundary is test-enforced, not comment-enforced. Widening a shape means editing its allowlist deliberately, and only that shape's list.
+
 ## Chat privacy
 
 A thread is `(listing_id, tenant)`. Migration `chat-per-tenant-threads`
