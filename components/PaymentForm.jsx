@@ -7,13 +7,13 @@ import { useState } from 'react';
 // sent it from (0013); the admin matches that against the statement. It
 // used to ask for the transaction ID, which people had to go and find.
 // Prices are fixed (lib/config.js) and only displayed here.
-export default function PaymentForm({ kind, listingId, amountHTG, monthOptions, monthlyHTG, destination, strings, onSubmitted }) {
+export default function PaymentForm({ kind, listingId, amountHTG, destination, strings, onSubmitted }) {
   const [provider, setProvider] = useState('moncash');
   const [senderPhone, setSenderPhone] = useState('');
-  const [months, setMonths] = useState(monthOptions?.[0] || 1);
+  const [adAmount, setAdAmount] = useState(100);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const amount = kind === 'advertising' ? monthlyHTG * months : amountHTG;
+  const amount = kind === 'advertising' ? adAmount : amountHTG;
   const number = provider === 'natcash' ? destination?.natcashNumber : destination?.moncashNumber;
 
   async function submit(e) {
@@ -23,7 +23,7 @@ export default function PaymentForm({ kind, listingId, amountHTG, monthOptions, 
     const res = await fetch('/api/payments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kind, provider, senderPhone, listingId, months }),
+      body: JSON.stringify({ kind, provider, senderPhone, listingId, amountHTG: kind === 'advertising' ? adAmount : undefined }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -32,6 +32,7 @@ export default function PaymentForm({ kind, listingId, amountHTG, monthOptions, 
         code === 'invalid_phone' ? strings.payPhoneInvalid
           : code === 'duplicate_reference' ? strings.payDuplicate
           : code === 'already_pending' ? strings.payAlreadyPending
+          : code === 'invalid_amount' ? strings.payAmountInvalid
           : strings.payError,
       );
       return;
@@ -43,14 +44,18 @@ export default function PaymentForm({ kind, listingId, amountHTG, monthOptions, 
   return (
     <form onSubmit={submit} style={{ display: 'grid', gap: 10 }}>
       {kind === 'advertising' && (
-        <div className="field"><label>{strings.payMonths}</label>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {monthOptions.map((m) => (
-              <button key={m} type="button" className={`slot${months === m ? ' selected' : ''}`} style={{ padding: '8px 14px' }} onClick={() => setMonths(m)}>
-                {m} {strings.payMonthUnit}
-              </button>
-            ))}
-          </div>
+        <div className="field"><label>{strings.adAmount}</label>
+          <input
+            className="input"
+            type="number"
+            min={100}
+            max={1000}
+            step={1}
+            value={adAmount}
+            onChange={(e) => setAdAmount(Number(e.target.value))}
+            required
+          />
+          <span className="muted">{strings.adAmountHint}</span>
         </div>
       )}
       <div style={{ display: 'flex', gap: 16 }}>
@@ -90,7 +95,7 @@ export function PaymentStatus({ payment, strings, locale }) {
         <span>{payment.amountHTG.toLocaleString()} HTG · {payment.provider === 'natcash' ? 'NatCash' : 'MonCash'}{payment.senderPhone ? ` · ${payment.senderPhone}` : ''}</span>
       </p>
       <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-        {payment.kind === 'advertising' ? `${strings.payKindAdvertising} (${payment.months} ${strings.payMonthUnit})` : strings.payKindActivation}
+        {payment.kind === 'advertising' ? (payment.months ? `${strings.payKindAdvertising} (${payment.months} ${strings.payMonthUnit})` : strings.payKindAdvertising) : strings.payKindActivation}
         {' · '}{new Date(payment.submittedAt).toLocaleDateString(locale === 'ht' ? 'fr' : locale)}
         {payment.note ? ` — ${payment.note}` : ''}
       </p>

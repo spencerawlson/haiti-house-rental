@@ -12,10 +12,10 @@ let landlord;
 let listingId;
 
 // One admin-created PARTNER landlord (not subject to the sign-up rate
-// limit) and one listing; every payment below is a 1-month advertising
+// limit) and one listing; every payment below is an advertising
 // payment on it, so the file adds no sign-ups to the suite.
 async function pendingAd(provider = 'moncash') {
-  const p = await landlord('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId, months: 1, provider, senderPhone: '+509 3700 0000' } });
+  const p = await landlord('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId, amountHTG: 100, provider, senderPhone: '+509 3700 0000' } });
   assert.equal(p.status, 200, JSON.stringify(p.data));
   return p.data.payment.id;
 }

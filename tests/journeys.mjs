@@ -153,7 +153,7 @@ await step('visit: tenant reschedules, landlord confirms, tenant cancels', async
   return c.data.visit.history.map((h) => h.action).join(' → ');
 });
 await step('advertising payment submitted, then rejected by the admin (no revenue)', async () => {
-  const p = await landlord('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId, months: 1, provider: 'moncash', senderPhone: '30000099' } });
+  const p = await landlord('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId, amountHTG: 100, provider: 'moncash', senderPhone: '30000099' } });
   expect(p.status === 200 && p.data.payment.amountHTG === 75, `payment ${p.status} ${p.text}`);
   const r = await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'rejected', note: 'QA test — not a real payment' } });
   expect(r.data?.payment?.status === 'rejected', 'reject');

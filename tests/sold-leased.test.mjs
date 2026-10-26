@@ -153,7 +153,7 @@ test('a home with a pending payment survives its deadline', { skip: sweepSkip },
   const id = await newListing(`Pending ${run}`);
   const pay = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', senderPhone: '30000031' },
+    body: { kind: 'advertising', listingId: id, amountHTG: 100, provider: 'natcash', senderPhone: '30000031' },
   });
   assert.equal(pay.status, 200);
   await as.L('/api/listings/sold', { method: 'POST', body: { id, status: 'leased' } });

@@ -1,6 +1,6 @@
 // Phase 4 regression tests: manual, auditable payments. Prices come from
 // the server, only the admin confirms, a confirmation applies exactly
-// once, advertising gets an end date.
+// once, advertising gets a budget.
 //
 // Changed in 0013: the landlord gives the PHONE NUMBER they transferred
 // from, not a transaction id. So "a reference pays once" is gone as a
@@ -83,31 +83,35 @@ test('rejection keeps the account inactive and lets the landlord resubmit', { sk
   assert.equal((await as.L2('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: PHONE } })).status, 200);
 });
 
-test('advertising: owner only, 75 HTG per month, confirmed months set an end date that extends', { skip }, async () => {
+test('advertising: owner only, chosen 100–1,000 HTG, confirmation sets view/click budgets from the admin rate', { skip }, async () => {
   const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   const id = listing.data.listing.id;
-  assert.equal((await as.L2('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 1, provider: 'moncash', senderPhone: PHONE } })).status, 403);
-  assert.equal((await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 5, provider: 'moncash', senderPhone: PHONE } })).status, 400);
-  const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 3, provider: 'natcash', senderPhone: PHONE } });
-  assert.equal(p.data.payment.amountHTG, 225);
+  assert.equal((await as.L2('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, amountHTG: 100, provider: 'moncash', senderPhone: PHONE } })).status, 403);
+  assert.equal((await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, amountHTG: 99, provider: 'moncash', senderPhone: PHONE } })).status, 400);
+  assert.equal((await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, amountHTG: 1001, provider: 'moncash', senderPhone: PHONE } })).status, 400);
+  const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, amountHTG: 300, provider: 'natcash', senderPhone: PHONE } });
+  assert.equal(p.data.payment.amountHTG, 300);
   assert.equal((await as.T(`/api/listings?id=${id}`)).data.listing.advertised, false, 'not advertised before confirmation');
   await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const after = (await as.T(`/api/listings?id=${id}`)).data.listing;
   assert.equal(after.advertised, true);
-  const days = (after.advertisedUntil - Date.now()) / 86400000;
-  assert.ok(days > 88 && days < 93, `about 3 months, got ${days.toFixed(1)} days`);
-  const p2 = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', senderPhone: PHONE } });
+  assert.equal(after.adBalanceHTG, 300, 'full balance at activation');
+  const stats = (await admin('/api/admin/ad-stats')).data.stats.find((s) => s.id === id);
+  assert.equal(stats.viewsBudget, 3000, 'default rate: 1000 views per 100 HTG');
+  assert.equal(stats.clicksBudget, 600, 'default rate: 200 clicks per 100 HTG');
+  // A second payment restarts the campaign with fresh budgets.
+  const p2 = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: id, amountHTG: 100, provider: 'natcash', senderPhone: PHONE } });
   await admin('/api/admin/payments', { method: 'POST', body: { id: p2.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
-  const extended = (await as.T(`/api/listings?id=${id}`)).data.listing;
-  const more = (extended.advertisedUntil - after.advertisedUntil) / 86400000;
-  assert.ok(more > 27 && more < 32, `extended by about a month, got ${more.toFixed(1)} days`);
+  const restarted = (await admin('/api/admin/ad-stats')).data.stats.find((s) => s.id === id);
+  assert.equal(restarted.viewsBudget, 1000);
+  assert.equal(restarted.viewsUsed, 0);
 });
 
 // Deleting a transaction (0013). Test payments have to be removable, but
 // the removal is the thing that gets recorded forever.
 test('a transaction cannot be deleted without a reason', { skip }, async () => {
   const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Del ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
-  const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: listing.data.listing.id, months: 1, provider: 'moncash', senderPhone: PHONE } });
+  const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: listing.data.listing.id, amountHTG: 100, provider: 'moncash', senderPhone: PHONE } });
   const id = p.data.payment.id;
 
   // No reason, a blank one, and whitespace are all refused — and the
@@ -125,7 +129,7 @@ test('a transaction cannot be deleted without a reason', { skip }, async () => {
 
 test('deleting a transaction removes it but records it forever', { skip }, async () => {
   const listing = await as.L('/api/listings', { method: 'POST', body: { title: `Del2 ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
-  const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: listing.data.listing.id, months: 1, provider: 'moncash', senderPhone: PHONE } });
+  const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: listing.data.listing.id, amountHTG: 100, provider: 'moncash', senderPhone: PHONE } });
   const id = p.data.payment.id;
   const amount = p.data.payment.amountHTG;
   // Confirm it first: deleting CONFIRMED money is the case that actually

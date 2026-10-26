@@ -56,6 +56,9 @@ export default function Admin(props) {
   const [convertAmount, setConvertAmount] = useState('');
   const [moncashNumber, setMoncashNumber] = useState('');
   const [natcashNumber, setNatcashNumber] = useState('');
+  const [adViewsPer100, setAdViewsPer100] = useState(1000);
+  const [adClicksPer100, setAdClicksPer100] = useState(200);
+  const [adStats, setAdStats] = useState([]);
   const [numbersSaved, setNumbersSaved] = useState(false);
   const [presence, setPresence] = useState({ users: [], visitors: 0 });
 
@@ -115,6 +118,14 @@ export default function Admin(props) {
       setMoncashNumber(data.moncashNumber || '');
       setNatcashNumber(data.natcashNumber || '');
     }
+    const ares = await fetch('/api/admin/settings');
+    if (ares.ok) {
+      const data = await ares.json();
+      setAdViewsPer100(data.adViewsPer100 ?? 1000);
+      setAdClicksPer100(data.adClicksPer100 ?? 200);
+    }
+    const adres = await fetch('/api/admin/ad-stats');
+    if (adres.ok) setAdStats((await adres.json()).stats || []);
   }
 
   useEffect(() => {
@@ -135,7 +146,7 @@ export default function Admin(props) {
     await fetch('/api/admin/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ moncashNumber, natcashNumber }),
+      body: JSON.stringify({ moncashNumber, natcashNumber, adViewsPer100, adClicksPer100 }),
     });
     setNumbersSaved(true);
   }
@@ -337,6 +348,12 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           <div className="field"><label>{t.natcashNumber}</label>
             <input className="input" type="tel" value={natcashNumber} onChange={(e) => setNatcashNumber(e.target.value)} placeholder="+509 ____ ____" />
           </div>
+          <div className="field"><label>{t.adViewsPer100}</label>
+            <input className="input" type="number" min={0} step={1} value={adViewsPer100} onChange={(e) => setAdViewsPer100(Number(e.target.value))} />
+          </div>
+          <div className="field"><label>{t.adClicksPer100}</label>
+            <input className="input" type="number" min={0} step={1} value={adClicksPer100} onChange={(e) => setAdClicksPer100(Number(e.target.value))} />
+          </div>
           <button className="btn" type="submit" style={{ minHeight: 40, padding: '8px 16px' }}>{t.saveNumbers}</button>
           {numbersSaved && <p style={{ margin: 0 }}>{t.numbersSaved}</p>}
         </div>
@@ -376,7 +393,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                 <strong>{p.amountHTG.toLocaleString()} HTG</strong> · {p.provider === 'natcash' ? 'NatCash' : 'MonCash'} · <code style={{ fontSize: '1rem' }}>{p.senderPhone || p.reference}</code>
               </p>
               <p className="muted" style={{ margin: 0 }}>
-                {p.kind === 'advertising' ? `${t.payKindAdvertising} · ${p.months} ${t.payMonthUnit} · ${p.listingTitle || p.listingId}` : t.payKindActivation}
+                {p.kind === 'advertising' ? (p.months ? `${t.payKindAdvertising} · ${p.months} ${t.payMonthUnit} · ${p.listingTitle || p.listingId}` : `${t.payKindAdvertising} · ${p.listingTitle || p.listingId}`) : t.payKindActivation}
               </p>
               {p.status === 'confirmed' && (
                 <p style={{ margin: 0 }}>
@@ -553,6 +570,16 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                 {l.advertisedRequested && !l.advertised && <> · <span className="badge">{t.advertisedRequestedBadge}</span></>}
                 {l.verified && <> · <span className="badge-verified">✓ {t.verifiedListing}</span></>}
               </p>
+              {(() => {
+                const s = adStats.find((a) => a.id === l.id);
+                if (!s || s.amountHTG == null) return null;
+                return (
+                  <p className="muted" style={{ margin: '0 0 8px' }}>
+                    {s.amountHTG.toLocaleString()} HTG · {t.adViews} {s.viewsUsed.toLocaleString()}/{s.viewsBudget.toLocaleString()} · {t.adClicks} {s.clicksUsed.toLocaleString()}/{s.clicksBudget.toLocaleString()}
+                    {s.paused && <> · <strong>{t.adPausedNote}</strong></>}
+                  </p>
+                );
+              })()}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="btn btn-secondary" type="button" onClick={() => setVerifiedListing(l.id, !l.verified)} style={{ minHeight: 40, padding: '8px 16px' }}>{l.verified ? t.unverifyListing : `✓ ${t.verifyListing}`}</button>
                 {!l.advertised && (

@@ -7,10 +7,10 @@ import Icon from '@/components/Icon';
 // Listing card (design: docs/design/app-showcase.png, screen 4): photo
 // with the heart on top, title, place, blue price with its rent period,
 // then a small row of rooms / wifi / parking.
-export default function ListingCard({ listing, locale, t }) {
+export default function ListingCard({ listing, locale, t, adCardId }) {
   const d = listing.details || {};
   return (
-    <article className="lcard">
+    <article className="lcard" data-ad-card={adCardId || undefined}>
       <FavoriteButton listingId={listing.id} />
       <Link href={`/${locale}/listings/${listing.id}`}>
         {listing.photos?.length > 0 ? (
