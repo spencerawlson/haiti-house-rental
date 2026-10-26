@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
 import { hashPassword } from '@/lib/account';
 import Icon from '@/components/Icon';
@@ -237,6 +238,7 @@ export default function AdminUsers({ locale, t }) {
                   <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
                 )}
                 <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="key" /> {t.resetCodeButton}</button>
+                <Link className="btn btn-secondary" href={`/${locale}/admin/chats?username=${encodeURIComponent(a.username)}`} title={t.adminChatTitle} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="chat" /></Link>
                 {a.fraudSuspended ? (
                   <button className="btn" type="button" onClick={() => setFraudSuspended(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsReactivate}</button>
                 ) : (
