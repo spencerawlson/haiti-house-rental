@@ -43,8 +43,10 @@ export default function NearMe(props) {
   }
 
   const placed = listings
-    .filter((l) => typeof l.lat === 'number' && typeof l.lng === 'number')
-    .map((l) => ({ ...l, km: user ? distanceKm(user.lat, user.lng, l.lat, l.lng) : null }))
+    // Public distances are APPROXIMATE (Stage 2, B1): the public shape
+    // carries approxLat/approxLng, never the exact coordinates.
+    .filter((l) => typeof l.approxLat === 'number' && typeof l.approxLng === 'number')
+    .map((l) => ({ ...l, km: user ? distanceKm(user.lat, user.lng, l.approxLat, l.approxLng) : null }))
     .sort((a, b) => (a.km ?? 0) - (b.km ?? 0));
   const shown = radius === 'all' ? placed : placed.filter((l) => l.km <= Number(radius));
   const unplaced = listings.length - placed.length;

@@ -95,7 +95,8 @@ test('advertising: owner only, chosen 100–1,000 HTG, confirmation sets view/cl
   await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   const after = (await as.T(`/api/listings?id=${id}`)).data.listing;
   assert.equal(after.advertised, true);
-  assert.equal(after.adBalanceHTG, 300, 'full balance at activation');
+  const afterLib = (await as.L(`/api/listings?owner=${L.username}&all=1`)).data.listings.find((l) => l.id === id);
+  assert.equal(afterLib.adBalanceHTG, 300, 'full balance at activation');
   const stats = (await admin('/api/admin/ad-stats')).data.stats.find((s) => s.id === id);
   assert.equal(stats.viewsBudget, 3000, 'default rate: 1000 views per 100 HTG');
   assert.equal(stats.clicksBudget, 600, 'default rate: 200 clicks per 100 HTG');

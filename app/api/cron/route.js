@@ -31,6 +31,18 @@ function secretOk(given) {
   return timingSafeEqual(a, b);
 }
 
+// Reminder clock (Stage 2, A3). The regression suite pins "now" for the
+// reminder path only via KAY_FAKE_NOW_MS (today 11:00 Haiti, set by the
+// suite runner and by CI), so the window tests run at any real hour.
+// Test-only seam: never set in production, and ONLY this call reads it
+// — the billing sweep, due reminders, and metrics below keep real
+// time. Deliberately NOT a query param: this endpoint is
+// internet-reachable, and a caller-controlled clock would be a hole.
+function cronNow() {
+  const fake = Number(process.env.KAY_FAKE_NOW_MS);
+  return Number.isFinite(fake) ? fake : Date.now();
+}
+
 async function run(request) {
   if (!process.env.CRON_SECRET) {
     return Response.json({ error: 'cron disabled: CRON_SECRET is not set' }, { status: 503 });
@@ -54,7 +66,7 @@ async function run(request) {
     log('error', 'cron.sweep_failed', { message: e.message });
   }
   try {
-    const sent = await sendVisitReminders();
+    const sent = await sendVisitReminders({ now: cronNow() });
     result.remindersSent = sent.length;
     result.reminders = sent;
   } catch (e) {

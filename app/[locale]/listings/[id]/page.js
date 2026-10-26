@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
-import { getPublicListing } from '@/lib/listings-server';
+import { getSessionAccount } from '@/lib/session-server';
+import { isAdminCookie } from '@/lib/admin-auth';
+import { getViewerListing, getAdminListing } from '@/lib/listings-server';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
@@ -25,7 +28,14 @@ export default async function ListingDetail(props) {
   const params = await props.params;
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
-  const l = await getPublicListing(params.id);
+  // Viewer shape (Stage 2, B1): the owner and the admin see exact
+  // values, a tenant the landlord replied to sees the exact address and
+  // pin, everyone else the public shape. The address line below renders
+  // only when the shape carries one.
+  const jar = await cookies();
+  const me = await getSessionAccount({ cookies: jar }).catch(() => null);
+  const admin = await isAdminCookie(jar.get('kay_admin')?.value);
+  const l = admin ? await getAdminListing(params.id) : await getViewerListing(params.id, me?.username || null);
   if (!l || !['active', 'sold', 'leased'].includes(l.status)) notFound();
   // A sold or leased home stays visible, tagged, and uncontactable. The
   // deletion countdown is deliberately not shown here — only its owner

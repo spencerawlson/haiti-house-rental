@@ -86,6 +86,8 @@ them in `schema_migrations`.
   data steps. Those are still guarded by the legacy `migrations` table,
   so they never re-run.
 - `0002 audit_log` adds the audit table.
+- `0003 notifications` adds the in-app notifications table and each
+  account's language, so SMS/email go out in Kreyòl, French or English.
 - `0004 profile_photo` adds `accounts.avatar_url`.
 - `0005 listing_views` adds `listings.views`.
 - `0006 sold_leased` adds `listings.sold_at` and its index.
@@ -104,6 +106,21 @@ them in `schema_migrations`.
   transfer came from, which replaced the typed-in transaction id) and the
   permanent deletion record. Its `down()` drops the column but
   deliberately NOT the record table.
+- `0014 receiver_txn` adds the receiver's transaction ID, typed by the
+  admin, with a partial UNIQUE index on confirmed payments
+  (provider, receiver_txn_norm).
+- `0015 listing_limit` adds a per-account limit on live listings, set by
+  the admin.
+- `0016 revenue_source` adds the source of each revenue_entries row;
+  revenue is now the sum of confirmed payments at their real amounts.
+- `0017 currency` lets listings be priced in HTG or USD; the HTG-only
+  price_htg column becomes price plus a currency CHECK.
+- `0018 address` adds a free-text address on each listing; the pin comes
+  from the typed address.
+- `0019 ad_budgets` replaces the flat monthly advertising model with
+  view/click budgets; the landlord chooses 100–1,000 HTG.
+- `0020 admin_users` adds named admin accounts with a scope (partner
+  stats-only).
 - Rollback: set `MIGRATE_DOWN_TO` (see DEPLOY.md). Note that rolling back
   past `0013` leaves `payment_deletions` in place, on purpose.
 

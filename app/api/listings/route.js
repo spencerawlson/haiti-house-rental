@@ -1,4 +1,4 @@
-import { getListings, getListing, getPublicListing, getListingsForOwner, addListing, updateListing, withListingSlot } from '@/lib/listings-server';
+import { getListings, getListing, getListingsForOwner, getViewerListing, getAdminListings, getAdminListing, addListing, updateListing, withListingSlot } from '@/lib/listings-server';
 import { resolveCommune } from '@/lib/listings';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
@@ -9,9 +9,17 @@ export const dynamic = 'force-dynamic';
 export async function GET(request) {
   const params = new URL(request.url).searchParams;
   const id = params.get('id') || '';
+  // Full admins see the exact shape (Stage 2, B1); stats-scope tokens
+  // are NOT full admins (isAdminCookie requires the 3-part token) and
+  // get the public shape like everyone else.
+  const admin = await isAdminCookie(request.cookies.get('kay_admin')?.value);
   if (id) {
-    // Public read: also gone if the landlord's subscription has lapsed.
-    const listing = await getPublicListing(id);
+    // Viewer shape: the owner sees their own exact values, a tenant the
+    // landlord replied to sees the exact address/pin, everyone else the
+    // public shape. A lapsed owner's home is still gone here exactly
+    // as before (the viewer loader keeps the activation gate).
+    const me = admin ? null : await getSessionAccount(request).catch(() => null);
+    const listing = admin ? await getAdminListing(id) : await getViewerListing(id, me?.username || null);
     // Sold and leased homes are still served: they stay on the site with
     // their tag until the 48-hour sweep removes them.
     if (!listing || !['active', 'sold', 'leased'].includes(listing.status)) {
@@ -26,6 +34,7 @@ export async function GET(request) {
     if (!me || me.username !== owner) return Response.json({ listings: [] });
     return Response.json({ listings: await getListingsForOwner(owner) });
   }
+  if (admin) return Response.json({ listings: await getAdminListings() });
   const listings = await getListings();
   return Response.json({ listings: owner ? listings.filter((l) => l.owner === owner) : listings });
 }

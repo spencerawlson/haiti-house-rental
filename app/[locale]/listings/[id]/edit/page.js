@@ -33,38 +33,50 @@ export default function EditListing(props) {
   const [status, setStatus] = useState('');
 
   useEffect(() => {
-    fetch(`/api/listings?id=${encodeURIComponent(params.id)}`)
+    // The form populates ONLY from the owner shape (Stage 2, B1): the
+    // public shape no longer carries the exact address or pin, and
+    // populating from it would blank the address on save. The public
+    // fetch stays as the fallback for the display/gating below, but it
+    // never feeds the form.
+    const session = getSession();
+    const libPromise = session
+      ? fetch(`/api/listings?owner=${encodeURIComponent(session.username)}&all=1`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d) => (d?.listings || []).find((x) => x.id === params.id) || null)
+          .catch(() => null)
+      : Promise.resolve(null);
+    const pubPromise = fetch(`/api/listings?id=${encodeURIComponent(params.id)}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const l = d?.listing || null;
-        setListing(l);
-        setLoaded(true);
-        const session = getSession();
-        if (l && session && session.username === l.owner) {
-          setMine(true);
-          setF({
-            title: l.title || '',
-            description: l.description || '',
-            department: l.department || 'ouest',
-            commune: l.commune || '',
-            address: l.address || '',
-            price: String(l.price ?? ''),
-            currency: l.currency || 'HTG',
-            purpose: l.purpose || 'rent',
-            rentPeriod: l.rentPeriod || 'monthly',
-            homeType: l.type || 'house',
-            areaM2: String(l.areaM2 || ''),
-            bedrooms: String(l.bedrooms ?? ''),
-            bathrooms: String(l.bathrooms ?? ''),
-            advertisedRequested: !!l.advertisedRequested,
-            details: l.details || {},
-            photos: [...(l.photos || [])],
-            videos: [...(l.videos || [])],
-          });
-          setCoords(typeof l.lat === 'number' && typeof l.lng === 'number' ? { lat: l.lat, lng: l.lng } : null);
-        }
-      })
-      .catch(() => setLoaded(true));
+      .then((d) => d?.listing || null)
+      .catch(() => null);
+    Promise.all([libPromise, pubPromise]).then(([fromLib, fromPub]) => {
+      const l = fromLib || fromPub;
+      setListing(l);
+      setLoaded(true);
+      if (fromLib && session && session.username === fromLib.owner) {
+        setMine(true);
+        setF({
+          title: fromLib.title || '',
+          description: fromLib.description || '',
+          department: fromLib.department || 'ouest',
+          commune: fromLib.commune || '',
+          address: fromLib.address || '',
+          price: String(fromLib.price ?? ''),
+          currency: fromLib.currency || 'HTG',
+          purpose: fromLib.purpose || 'rent',
+          rentPeriod: fromLib.rentPeriod || 'monthly',
+          homeType: fromLib.type || 'house',
+          areaM2: String(fromLib.areaM2 || ''),
+          bedrooms: String(fromLib.bedrooms ?? ''),
+          bathrooms: String(fromLib.bathrooms ?? ''),
+          advertisedRequested: !!fromLib.advertisedRequested,
+          details: fromLib.details || {},
+          photos: [...(fromLib.photos || [])],
+          videos: [...(fromLib.videos || [])],
+        });
+        setCoords(typeof fromLib.lat === 'number' && typeof fromLib.lng === 'number' ? { lat: fromLib.lat, lng: fromLib.lng } : null);
+      }
+    });
   }, [params.id]);
 
   function set(field, value) {
@@ -208,6 +220,7 @@ export default function EditListing(props) {
                 <span className="muted">{t.pinLocationHint}</span>
                 <LocationPicker value={coords} onChange={setCoords} useMyLocationLabel={t.useMyLocation} unavailableLabel={t.locationUnavailable} />
               </div>
+              <p className="muted" style={{ margin: 0 }}>{t.locationPrivacyNote}</p>
               <div className="field"><label>{t.currency}</label>
                 <select className="input" value={f.currency} onChange={(e) => set('currency', e.target.value)}>
                   <option value="HTG">HTG</option>
