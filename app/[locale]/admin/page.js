@@ -35,6 +35,9 @@ export default function Admin(props) {
   // identity each render would restart that fetch in a loop.
   const onCounts = useCallback((c) => setCounts(c), []);
   const [reports, setReports] = useState([]);
+  // Fraud flags (0021): open reports rolled up per accused account.
+  // Review-only — suspension is a separate button below, never automatic.
+  const [flags, setFlags] = useState([]);
   const [payments, setPayments] = useState([]);
   const [paySummary, setPaySummary] = useState(null);
   // Which slice of the payment queue the board shows. Pending is the
@@ -116,6 +119,8 @@ export default function Admin(props) {
     if (audres.ok) setAuditEntries((await audres.json()).entries || []);
     const repres = await fetch('/api/admin/reports');
     if (repres.ok) setReports((await repres.json()).reports || []);
+    const flres = await fetch('/api/admin/flags');
+    if (flres.ok) setFlags((await flres.json()).flags || []);
     const sres = await fetch('/api/settings');
     if (sres.ok) {
       const data = await sres.json();
@@ -292,13 +297,39 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
     }
   }
 
-  async function resolveReport(id) {
+  async function resolveReport(id, actionTaken) {
     await fetch('/api/admin/reports', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id, actionTaken }),
     });
     setReports((prev) => prev.filter((r) => r.id !== id));
+  }
+
+  // Fraud suspension is admin-only and separate from billing: it never
+  // touches activated/billing_status, and payment never lifts it. The
+  // reason is admin-written and shown to the user as the category —
+  // never pasted report text, which could identify a reporter.
+  async function suspendForFraud(username) {
+    if (!window.confirm(t.flagsSuspendConfirm)) return;
+    const reason = window.prompt(t.flagsSuspendReasonPrompt, '');
+    if (!reason || !reason.trim()) return;
+    await fetch('/api/admin/flags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, action: 'suspend', reason: reason.trim() }),
+    });
+    load();
+  }
+
+  async function reactivateForFraud(username) {
+    if (!window.confirm(t.flagsReactivateConfirm)) return;
+    await fetch('/api/admin/flags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, action: 'reactivate' }),
+    });
+    load();
   }
 
   async function takeDown(id) {
@@ -550,7 +581,31 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                 {r.kind === 'listing' && (
                   <button className="btn btn-secondary" type="button" onClick={() => takeDown(r.listingId)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
                 )}
-                <button className="btn" type="button" onClick={() => resolveReport(r.id)} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.resolveReport}</button>
+                <button className="btn" type="button" onClick={() => resolveReport(r.id, true)} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.resolveReportAction}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => resolveReport(r.id, false)} style={{ minHeight: 40, padding: '8px 16px' }}>✓ {t.resolveReportNone}</button>
+              </div>
+            </div>
+          </section>
+        ))}
+      </div>
+      <h2 id="flags" className="admin-h2"><Icon name="flag" /> {t.flagsTitle} ({flags.length})</h2>
+      <div className="grid" style={{ marginBottom: 16 }}>
+        {flags.length === 0 && <p className="muted">{t.flagsEmpty}</p>}
+        {flags.map((f) => (
+          <section key={f.username} className="card">
+            <div className="card-body" style={{ display: 'grid', gap: 6 }}>
+              <p style={{ margin: 0 }}>
+                <strong>{f.name}</strong> · @{f.username} · {f.id} · {f.role}
+                {f.fraudSuspended && <> · <span className="notice" style={{ padding: '2px 8px' }}>{t.flagsSuspendedBadge}</span></>}
+              </p>
+              <p className="muted" style={{ margin: 0 }}>{t.flagsCount.replace('{n}', String(f.flagCount))}</p>
+              {f.message && <p style={{ margin: 0 }}>“{f.message}”</p>}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {f.fraudSuspended ? (
+                  <button className="btn" type="button" onClick={() => reactivateForFraud(f.username)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsReactivate}</button>
+                ) : (
+                  <button className="btn" type="button" onClick={() => suspendForFraud(f.username)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsSuspend}</button>
+                )}
               </div>
             </div>
           </section>

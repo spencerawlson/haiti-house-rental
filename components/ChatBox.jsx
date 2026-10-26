@@ -29,6 +29,9 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   // message either way — their history is theirs.
   const [closed, setClosed] = useState(false);
   const [landlordLeft, setLandlordLeft] = useState(false);
+  // otherSuspended = the counterpart is fraud-suspended (0021): the
+  // thread shows a neutral "unavailable" line, no reason, no label.
+  const [otherSuspended, setOtherSuspended] = useState(false);
 
   const threadTenant = isOwner ? tenant : null;
 
@@ -47,6 +50,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     setConversation(data.conversation);
     setClosed(!!data.closed);
     setLandlordLeft(!!data.landlordLeft);
+    setOtherSuspended(!!data.otherSuspended);
     // Opening the chat marks the thread read for this user, so the
     // unread badge clears once the messages have actually been seen.
     if (data.tenant !== null) {
@@ -119,7 +123,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   const ownerWithoutThread = isOwner && tenant === null;
   const blocked = !!conversation?.blocked;
   // The anonymous legacy thread has nobody to read a reply.
-  const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '') && !blocked && !closed;
+  const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '') && !blocked && !closed && !otherSuspended;
 
   return (
     <section className="card" style={{ marginTop: 20 }}>
@@ -190,6 +194,9 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
               <p className="notice" style={{ margin: '0 0 12px' }}>
                 {landlordLeft ? strings.chatLandlordLeft : strings.chatListingGone}
               </p>
+            )}
+            {otherSuspended && (
+              <p className="notice" style={{ margin: '0 0 12px' }}>{strings.fraudChatUnavailable}</p>
             )}
             {canWrite && (
               <form onSubmit={send} className="chat-composer">

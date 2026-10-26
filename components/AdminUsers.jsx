@@ -94,6 +94,30 @@ export default function AdminUsers({ locale, t }) {
     load();
   }
 
+  // Fraud suspension (0021) lives on the Users tab too, so an account
+  // can be reactivated even when no open report remains to flag it.
+  // Separate from billing: this never touches activated/billing_status.
+  async function setFraudSuspended(username, suspend) {
+    if (suspend) {
+      if (!window.confirm(t.flagsSuspendConfirm)) return;
+      const reason = window.prompt(t.flagsSuspendReasonPrompt, '');
+      if (!reason || !reason.trim()) return;
+      await fetch('/api/admin/flags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, action: 'suspend', reason: reason.trim() }),
+      });
+    } else {
+      if (!window.confirm(t.flagsReactivateConfirm)) return;
+      await fetch('/api/admin/flags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, action: 'reactivate' }),
+      });
+    }
+    load();
+  }
+
   // Admin-assisted recovery: confirm who is asking (call back the phone
   // on the account) before reading the code to them.
   // Set or clear how many homes an account may have live at once (0015).
@@ -213,7 +237,15 @@ export default function AdminUsers({ locale, t }) {
                   <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
                 )}
                 <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="key" /> {t.resetCodeButton}</button>
+                {a.fraudSuspended ? (
+                  <button className="btn" type="button" onClick={() => setFraudSuspended(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsReactivate}</button>
+                ) : (
+                  <button className="btn btn-secondary" type="button" onClick={() => setFraudSuspended(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsSuspend}</button>
+                )}
               </div>
+              {a.fraudSuspended && (
+                <p className="notice" style={{ margin: '8px 0 0' }}>{t.flagsSuspendedBadge}{a.fraudReason ? ` · ${a.fraudReason}` : ''}</p>
+              )}
               {a.role !== 'tenant' && (
                 <div className="limit-row">
                   <span><Icon name="home" /> {t.listingLimitLabel}: <strong>{a.liveListings ?? 0}{a.listingLimit !== null && a.listingLimit !== undefined ? ` / ${a.listingLimit}` : ''}</strong>{a.listingLimit === null || a.listingLimit === undefined ? <span className="muted"> · {t.listingLimitNone}</span> : ''}</span>

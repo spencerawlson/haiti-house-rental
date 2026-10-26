@@ -1,4 +1,5 @@
 import { getThread, postMessage, threadExists } from '@/lib/chat';
+import { query } from '@/lib/db';
 import { resolveThread } from '@/lib/chat-auth';
 import { ensureConversation, getConversation } from '@/lib/conversations-server';
 import { getSessionAccount, unauthorized } from '@/lib/session-server';
@@ -21,7 +22,18 @@ export async function GET(request) {
   }
   const listingId = thread.listingId;
   const conv = thread.conversation || (await getConversation(listingId, thread.tenant));
+  // Fraud suspension (0021): the counterpart sees only a neutral
+  // "unavailable" — no reason, no label. The other side is the tenant
+  // for the owner, and the listing owner (or the thread's landlord when
+  // the home is gone) for the tenant.
+  const otherUsername = thread.isOwner ? thread.tenant : (thread.listing?.owner || conv?.landlord || null);
+  let otherSuspended = false;
+  if (otherUsername) {
+    const { rows } = await query('SELECT fraud_suspended FROM accounts WHERE username = $1', [otherUsername]);
+    otherSuspended = rows[0]?.fraud_suspended === true;
+  }
   return Response.json({
+    otherSuspended,
     messages: await getThread(listingId, thread.tenant),
     isOwner: thread.isOwner,
     tenant: thread.tenant,
@@ -37,6 +49,10 @@ export async function GET(request) {
 export async function POST(request) {
   const me = await getSessionAccount(request);
   if (!me) return unauthorized();
+  // Fraud suspension blocks chat for either role: a suspended tenant
+  // cannot write, and a suspended landlord cannot reply — the other
+  // side sees the neutral "unavailable" line instead.
+  if (me.fraudSuspended) return Response.json({ error: 'suspended' }, { status: 403 });
   if (!rateLimit(`chat:${me.username}`, 30, 60 * 1000)) return tooMany();
   const { listingId, text, tenant } = await request.json().catch(() => ({}));
   const thread = await resolveThread(me, listingId, tenant);

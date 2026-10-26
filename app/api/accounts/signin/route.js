@@ -12,6 +12,13 @@ export async function POST(request) {
   }
   const account = await verifyAccount(data.username, data.passwordHash);
   if (!account) return Response.json({ error: 'Invalid login' }, { status: 401 });
+  // Fraud suspension (0021) blocks tenant sign-in outright, with the
+  // notice — never a bare failure. Landlords still sign in so they can
+  // see the notice and the appeal path on their account page. No
+  // session is created for a refused sign-in.
+  if (account.fraudSuspended && account.role === 'tenant') {
+    return Response.json({ error: 'suspended', reason: account.fraudReason || '' }, { status: 403 });
+  }
   await setAccountLocale(account.username, request.cookies.get('kay_locale')?.value);
   return Response.json({ account }, { headers: { 'Set-Cookie': await createSession(account.username) } });
 }

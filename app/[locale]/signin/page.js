@@ -23,7 +23,9 @@ export default function SignIn(props) {
     setError('');
     const result = await signIn(username.trim(), password);
     if (result.error) {
-      setError(t.invalidLogin);
+      setError(result.error === 'suspended'
+        ? t.fraudSigninSuspended.replace('{reason}', result.reason || '')
+        : t.invalidLogin);
       return;
     }
     router.push(`/${params.locale}/account`);
