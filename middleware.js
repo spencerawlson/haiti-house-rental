@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { isAdminCookie } from './lib/admin-auth.js';
+import { getAdminScope } from './lib/admin-auth.js';
 
 // 1. CSRF guard (Phase 1b): a state-changing /api request whose Origin
 //    is another site is refused. Session cookies are SameSite=Lax (admin:
@@ -8,7 +8,15 @@ import { isAdminCookie } from './lib/admin-auth.js';
 //    cross-site POSTs. Extra allowed origins: ALLOWED_ORIGINS (comma list).
 // 2. Admin gate: admin APIs, the admin page, and the full accounts list
 //    (single-profile lookup by username stays public, name + role only).
+//    A scoped ('stats') token may read the stats summary, sign out, and
+//    open the stats page — nothing else. Anything admin that is not on
+//    that list needs the full scope, so a scoped account can never reach
+//    money, individual accounts, settings, or the board itself.
 const SAFE = new Set(['GET', 'HEAD', 'OPTIONS']);
+const STATS_METHODS = {
+  '/api/admin/stats-summary': new Set(['GET']),
+  '/api/admin/logout': new Set(['POST']),
+};
 
 function sameSite(request) {
   const origin = request.headers.get('origin');
@@ -32,6 +40,7 @@ function needsAdmin(pathname, request) {
   if (pathname === '/api/admin/login') return false;
   if (pathname.startsWith('/api/admin/')) return true;
   if (/^\/[^/]+\/admin$/.test(pathname)) return true;
+  if (/^\/[^/]+\/stats$/.test(pathname)) return true;
   // Only the full accounts list is gated; creating an account (POST) and
   // the public ?username= lookup stay open.
   return pathname === '/api/accounts' && request.method === 'GET' && !request.nextUrl.searchParams.has('username');
@@ -43,15 +52,27 @@ export async function middleware(request) {
     return NextResponse.json({ error: 'Cross-site request refused' }, { status: 403 });
   }
   if (!needsAdmin(pathname, request)) return NextResponse.next();
-  const ok = await isAdminCookie(request.cookies.get('kay_admin')?.value);
-  if (ok) return NextResponse.next();
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Admin required' }, { status: 401 });
+  const scope = await getAdminScope(request.cookies.get('kay_admin')?.value);
+  if (!scope) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Admin required' }, { status: 401 });
+    }
+    const locale = pathname.split('/')[1] || 'ht';
+    return NextResponse.redirect(new URL(`/${locale}/admin-login`, request.url));
   }
-  const locale = pathname.split('/')[1] || 'ht';
-  return NextResponse.redirect(new URL(`/${locale}/admin-login`, request.url));
+  if (scope === 'stats') {
+    const allowed = (STATS_METHODS[pathname] && STATS_METHODS[pathname].has(request.method))
+      || /^\/[^/]+\/stats$/.test(pathname);
+    if (allowed) return NextResponse.next();
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Admin required' }, { status: 401 });
+    }
+    const locale = pathname.split('/')[1] || 'ht';
+    return NextResponse.redirect(new URL(`/${locale}/stats`, request.url));
+  }
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/:locale/admin'],
+  matcher: ['/api/:path*', '/:locale/admin', '/:locale/stats'],
 };

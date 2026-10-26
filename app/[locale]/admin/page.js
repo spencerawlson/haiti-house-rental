@@ -56,6 +56,10 @@ export default function Admin(props) {
   const [convertAmount, setConvertAmount] = useState('');
   const [moncashNumber, setMoncashNumber] = useState('');
   const [natcashNumber, setNatcashNumber] = useState('');
+  const [adminUsers, setAdminUsers] = useState([]);
+  const [newAdminUsername, setNewAdminUsername] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [adminUserMessage, setAdminUserMessage] = useState('');
   const [adViewsPer100, setAdViewsPer100] = useState(1000);
   const [adClicksPer100, setAdClicksPer100] = useState(200);
   const [adStats, setAdStats] = useState([]);
@@ -126,6 +130,8 @@ export default function Admin(props) {
     }
     const adres = await fetch('/api/admin/ad-stats');
     if (adres.ok) setAdStats((await adres.json()).stats || []);
+    const aures = await fetch('/api/admin/admin-users');
+    if (aures.ok) setAdminUsers((await aures.json()).users || []);
   }
 
   useEffect(() => {
@@ -149,6 +155,41 @@ export default function Admin(props) {
       body: JSON.stringify({ moncashNumber, natcashNumber, adViewsPer100, adClicksPer100 }),
     });
     setNumbersSaved(true);
+  }
+
+  // Named admin accounts (stats scope only). The full admin creates
+  // them here; the partner signs in with username + password and sees
+  // only the stats page — never this board.
+  async function createAdminAccount(e) {
+    e.preventDefault();
+    setAdminUserMessage('');
+    const res = await fetch('/api/admin/admin-users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: newAdminUsername.trim(), password: newAdminPassword }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setAdminUserMessage(data.error === 'exists' ? t.adminUserExists : data.error === 'password_too_short' ? t.adminPasswordTooShort : t.adminUserExists);
+      return;
+    }
+    setAdminUserMessage(t.adminUserCreated);
+    setNewAdminUsername('');
+    setNewAdminPassword('');
+    const rres = await fetch('/api/admin/admin-users');
+    if (rres.ok) setAdminUsers((await rres.json()).users || []);
+  }
+
+  async function removeAdminAccount(username) {
+    const res = await fetch('/api/admin/admin-users', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    if (res.ok) {
+      setAdminUserMessage(t.adminUserDeleted);
+      setAdminUsers((prev) => prev.filter((u) => u.username !== username));
+    }
   }
 
   // Verification is a human check (visit, documents, owner identity) —
@@ -358,6 +399,30 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           {numbersSaved && <p style={{ margin: 0 }}>{t.numbersSaved}</p>}
         </div>
       </form>
+      <h2 id="admin-users" className="admin-h2"><Icon name="users" /> {t.adminUsersTitle}</h2>
+      <p className="muted">{t.adminUsersNote}</p>
+      <form className="card" onSubmit={createAdminAccount}>
+        <div className="card-body" style={{ display: 'grid', gap: 14 }}>
+          <div className="field"><label>{t.username}</label>
+            <input className="input" value={newAdminUsername} onChange={(e) => setNewAdminUsername(e.target.value)} required />
+          </div>
+          <div className="field"><label>{t.password}</label>
+            <input className="input" type="password" value={newAdminPassword} onChange={(e) => setNewAdminPassword(e.target.value)} required />
+          </div>
+          <button className="btn" type="submit" style={{ minHeight: 40, padding: '8px 16px' }}>{t.adminUserCreate}</button>
+          {adminUserMessage && <p style={{ margin: 0 }}>{adminUserMessage}</p>}
+        </div>
+      </form>
+      <div className="grid" style={{ marginTop: 12 }}>
+        {adminUsers.map((u) => (
+          <section key={u.username} className="card">
+            <div className="card-body" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ margin: 0 }}><strong>{u.username}</strong> · {u.scope}</p>
+              <button className="btn btn-danger" type="button" onClick={() => removeAdminAccount(u.username)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.adminUserDelete}</button>
+            </div>
+          </section>
+        ))}
+      </div>
       {channels && (
         <p className="muted" style={{ marginTop: 24 }}><Icon name="bell" /> {t.notifyChannels}: SMS {channels.sms ? `✓ ${t.channelOn}` : t.channelOff} · WhatsApp {channels.whatsapp ? `✓ ${t.channelOn}` : t.channelOff} · Email {channels.email ? `✓ ${t.channelOn}` : t.channelOff}</p>
       )}
