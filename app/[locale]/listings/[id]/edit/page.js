@@ -11,6 +11,7 @@ import TabBar from '@/components/TabBar';
 import ListingDetailsFields from '@/components/ListingDetailsFields';
 import LocationPicker from '@/components/LocationPicker';
 import { compressImage } from '@/lib/image-compress';
+import { uploadErrorInfo, uploadErrorMessage } from '@/lib/upload-errors';
 
 // Landlord edit form: every field the creation form sets, pre-filled
 // from the listing. Existing photos/videos stay unless removed with ✕;
@@ -74,7 +75,12 @@ export default function EditListing(props) {
       const form = new FormData();
       form.append('file', await compressImage(file));
       const res = await fetch('/api/upload', { method: 'POST', body: form });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const e = new Error('Upload failed');
+        e.info = uploadErrorInfo(res, err, file.name);
+        throw e;
+      }
       const data = await res.json();
       urls.push(data.url);
     }
@@ -113,8 +119,9 @@ export default function EditListing(props) {
       });
       if (!res.ok) throw new Error('Save failed');
       router.push(`/${params.locale}/listings/${params.id}`);
-    } catch {
-      setStatus(t.editError);
+    } catch (e) {
+      if (e?.info) setStatus(uploadErrorMessage(t, e.info));
+      else setStatus(t.editError);
     }
   }
 
