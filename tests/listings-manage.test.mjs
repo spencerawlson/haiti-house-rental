@@ -128,7 +128,7 @@ test('the payment ledger survives a deleted listing', { skip }, async () => {
   const id = await newListing(`Paid ${run}`);
   const pay = await as.L('/api/payments', {
     method: 'POST',
-    body: { kind: 'advertising', listingId: id, months: 1, provider: 'natcash', senderPhone: '30000021' },
+    body: { kind: 'advertising', listingId: id, amountHTG: 100, provider: 'natcash', senderPhone: '30000021' },
   });
   assert.equal(pay.status, 200);
   // A pending payment blocks deletion: confirming it later would extend

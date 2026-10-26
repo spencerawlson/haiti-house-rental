@@ -6,10 +6,7 @@ import { getDict } from '@/lib/dictionaries';
 import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import PaymentForm from '@/components/PaymentForm';
-import { ADVERTISED_FEE_HTG_MONTH } from '@/lib/config';
 import Icon from '@/components/Icon';
-
-const AD_MONTHS = [1, 3, 6, 12];
 
 // How long a sold/leased home has before it is deleted. Hours while
 // there is more than one left, otherwise minutes, so the last stretch
@@ -44,6 +41,18 @@ export default function Library(props) {
       .then((r) => r.json())
       .then((d) => setHomes(d.listings || []))
       .catch(() => {});
+  }
+
+  // Pause/resume for one campaign. Pausing hides the ad at once and
+  // freezes the budget — nothing is consumed and nothing is charged
+  // while paused — and resuming spends nothing extra.
+  async function toggleAdPause(h) {
+    const res = await fetch('/api/ads/pause', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: h.id, paused: !h.adPaused }),
+    });
+    if (res.ok && me) load(me.username);
   }
 
   useEffect(() => {
@@ -174,6 +183,13 @@ export default function Library(props) {
                     {h.advertisedUntil && <span className="muted"> · {t.adUntil} {new Date(h.advertisedUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale)}</span>}
                   </p>
                 )}
+                {h.status === 'active' && h.adCampaign && (h.adPaused || h.adEnded || h.adBalanceHTG != null) && (
+                  <p style={{ margin: '0 0 8px' }}>
+                    {h.adPaused && <span className="muted">{t.adPausedNote} · </span>}
+                    {h.adEnded && <span className="muted">{t.adEndedNote}</span>}
+                    {!h.adEnded && h.adBalanceHTG != null && <span>{t.adBalance}: <strong>{h.adBalanceHTG.toLocaleString()} HTG</strong></span>}
+                  </p>
+                )}
                 {h.status === 'active' && pendingAds[h.id] && <p className="muted" style={{ margin: '0 0 8px' }}><Icon name="hourglass" /> {t.adPaymentPending}</p>}
                 {adOpen === h.id && !pendingAds[h.id] && (
                   <div className="card" style={{ boxShadow: 'none', marginBottom: 12 }}>
@@ -182,8 +198,6 @@ export default function Library(props) {
                       <PaymentForm
                         kind="advertising"
                         listingId={h.id}
-                        monthOptions={AD_MONTHS}
-                        monthlyHTG={ADVERTISED_FEE_HTG_MONTH}
                         destination={destination}
                         strings={t}
                         onSubmitted={(p) => { setPendingAds((prev) => ({ ...prev, [h.id]: p })); setAdOpen(null); }}
@@ -192,7 +206,10 @@ export default function Library(props) {
                   </div>
                 )}
                 <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
-                  {h.status === 'active' && !pendingAds[h.id] && adOpen !== h.id && (
+                  {h.status === 'active' && (h.advertised || h.adPaused) && (
+                    <button className="btn btn-secondary" type="button" onClick={() => toggleAdPause(h)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="megaphone" /> {h.adPaused ? t.adResume : t.adPause}</button>
+                  )}
+                  {h.status === 'active' && !pendingAds[h.id] && adOpen !== h.id && !h.advertised && !h.adPaused && (
                     <button className="btn btn-secondary" type="button" onClick={() => setAdOpen(h.id)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="megaphone" /> {h.advertised ? t.adExtend : t.adStart}</button>
                   )}
                   {h.status === 'active' && (

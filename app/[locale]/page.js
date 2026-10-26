@@ -71,7 +71,7 @@ export default async function LocaleHome(props) {
             <div className="section-head"><h2><Icon name="megaphone" /> {t.advertisedSection}</h2></div>
             <AdvertisedCarousel>
               {advertised.map((l) => (
-                <ListingCard key={l.id} listing={l} locale={params.locale} t={t} />
+                <ListingCard key={l.id} listing={l} locale={params.locale} t={t} adCardId={l.id} />
               ))}
             </AdvertisedCarousel>
           </>

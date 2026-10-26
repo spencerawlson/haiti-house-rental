@@ -4,9 +4,10 @@ import { getSessionAccount, unauthorized } from '@/lib/session-server';
 import { rateLimit, tooMany } from '@/lib/rate-limit';
 
 // A landlord submits the phone number they made a MonCash/NatCash
-// transfer from (subscription or advertising). The amount comes from
-// lib/config.js, never from the request. GET lists the caller's own
-// payments.
+// transfer from (subscription or advertising). Subscription and
+// activation amounts come from lib/config.js, never from the request;
+// an advertising amount is chosen by the landlord (100–1,000 HTG) and
+// validated server-side. GET lists the caller's own payments.
 //
 // `senderPhone` replaced the typed-in transaction id (0013). The old
 // field name is still accepted so a page left open across the deploy
@@ -31,7 +32,7 @@ export async function POST(request) {
     provider: data.provider,
     senderPhone: data.senderPhone ?? data.reference,
     listing,
-    months: Number(data.months),
+    amountHTG: data.amountHTG,
   });
   if (result.error) {
     const status = result.error === 'duplicate_reference' || result.error === 'already_pending' ? 409 : result.error === 'not_allowed' ? 403 : 400;
