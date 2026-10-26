@@ -59,8 +59,8 @@ container `kayayiti-web` on FedServ host port 8097.
 - **Two-sided marketplace:** landlords list homes; tenants search and find
   homes. Tenants browse free.
 - **Landlord fees (decided 2026-10-21):** account activation (one-time,
-  MonCash/NatCash) **1000 HTG**; advertising **75 HTG/month**,
-  admin-approved. Activation is manual: the user transfers from the phone
+  MonCash/NatCash) **1000 HTG**; advertising **100–1,000 HTG** chosen by the
+  landlord, admin-confirmed. Activation is manual: the user transfers from the phone
   number on their account to the admin-set MonCash (Digicel) / NatCash
   (Natcom) destination number, and the admin activates.
 - **Payments:** MonCash (Digicel) and NatCash (Natcom) mobile money — NOT
@@ -138,11 +138,11 @@ container `kayayiti-web` on FedServ host port 8097.
   deactivated and coming back costs the joining price again, **1500 HTG**.
   Tenants remain free, and partner accounts never pay.
 - Superseded: account activation as a one-time **1000 HTG** fee.
-- Advertising (rent or sale): **75 HTG/month**. This buys VISIBILITY, not
+- Advertising (rent or sale): **100–1,000 HTG** chosen by the landlord. This buys VISIBILITY, not
   rank: the home appears in the advertised carousel on the home page, with
   its price, where people see it without typing anything. Search order stays
-  fair for everyone — every advertiser pays the same price, so no home can
-  be "first" (corrected 2026-10-21: the old "put my house first" wording was
+  fair for everyone — advertising never boosts rank, whatever the amount
+  (corrected 2026-10-21: the old "put my house first" wording was
   unfair and is gone, from the copy and from the sort).
 - Admin-handled: nothing money-related is automatic. A landlord's
   advertising checkbox is only a REQUEST; the admin approves it on the Admin
