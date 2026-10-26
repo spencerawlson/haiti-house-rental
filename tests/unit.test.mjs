@@ -1,7 +1,7 @@
 // Pure-function tests — no server or database needed.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sortListings, filterListings } from '../lib/listings.js';
+import { sortListings, filterListings, priceInHtg } from '../lib/listings.js';
 import { sanitizeDetails } from '../lib/listing-details.js';
 import { dueReminder, haitiWallClockToMs } from '../lib/reminders-server.js';
 
@@ -32,6 +32,49 @@ test('filters: 24/7 power, furnished, verified', () => {
   assert.deepEqual(filterListings(list, { power24: '1' }).map((l) => l.id), ['p']);
   assert.deepEqual(filterListings(list, { furnished: '1' }).map((l) => l.id), ['f']);
   assert.deepEqual(filterListings(list, { verified: '1' }).map((l) => l.id), ['v']);
+});
+
+// Stage 2, B2: cross-currency price sort/filter. Rate 130 HTG per USD.
+// A 500 USD home is really 65,000 HTG — dearer than a 60,000 HTG home,
+// never "cheaper" the way raw numbers (500 < 60,000) claim. Bounds are
+// HTG (the app already labels saved-search bounds "HTG").
+test('price sorts convert across currencies via the rate', () => {
+  const list = [L('usd', 500, 1, { currency: 'USD' }), L('htg', 60000, 2, { currency: 'HTG' })];
+  assert.deepEqual(sortListings(list, 'price-asc', 130).map((l) => l.id), ['htg', 'usd']);
+  assert.deepEqual(sortListings(list, 'price-desc', 130).map((l) => l.id), ['usd', 'htg']);
+});
+
+test('price bounds compare converted HTG values', () => {
+  const list = [L('usd', 500, 1, { currency: 'USD' }), L('htg', 60000, 2, { currency: 'HTG' })];
+  assert.deepEqual(filterListings(list, { minPrice: '61000' }, 130).map((l) => l.id), ['usd']);
+  assert.deepEqual(filterListings(list, { maxPrice: '62000' }, 130).map((l) => l.id), ['htg']);
+});
+
+test('without a rate, price bounds are ignored, never raw-compared', () => {
+  // Raw comparison would drop the 500 USD home under a 61,000 floor —
+  // the exact bug. Ignoring the bound (with a UI notice, see the
+  // listings page) is honest; silently raw-comparing is not.
+  const list = [L('usd', 500, 1, { currency: 'USD' }), L('htg', 60000, 2, { currency: 'HTG' })];
+  assert.deepEqual(filterListings(list, { minPrice: '61000' }, null).map((l) => l.id), ['usd', 'htg']);
+});
+
+test('without a rate, an all-USD list also ignores bounds (bounds are HTG)', () => {
+  const list = [L('a', 500, 1, { currency: 'USD' }), L('b', 400, 2, { currency: 'USD' })];
+  assert.deepEqual(filterListings(list, { minPrice: '61000' }, null).map((l) => l.id), ['a', 'b']);
+  assert.deepEqual(sortListings(list, 'price-asc', null).map((l) => l.id), ['a', 'b']);
+});
+
+test('without a rate, price sort keeps server order', () => {
+  // Input order is the server order; raw comparison would put the
+  // 500 USD home first. With no rate, price sort must not reorder.
+  const list = [L('htg', 60000, 2, { currency: 'HTG' }), L('usd', 500, 1, { currency: 'USD' })];
+  assert.deepEqual(sortListings(list, 'price-asc', null).map((l) => l.id), ['htg', 'usd']);
+});
+
+test('priceInHtg leaves HTG untouched and converts USD', () => {
+  assert.equal(priceInHtg(L('a', 60000, 1, { currency: 'HTG' }), 130), 60000);
+  assert.equal(priceInHtg(L('b', 500, 1, { currency: 'USD' }), 130), 65000);
+  assert.equal(priceInHtg(L('c', 700, 1), 130), 700);
 });
 
 test('sanitizeDetails keeps only known keys and values', () => {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { matchesQuery, resolveDepartmentId } from '@/lib/listings';
+import { matchesQuery, resolveDepartmentId, priceInHtg, allPricesHtg } from '@/lib/listings';
 import { readSavedSearches, SAVED_KEY } from '@/components/SaveSearchButton';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -12,7 +12,12 @@ import Icon from '@/components/Icon';
 // Centris-style alerts, without accounts: every saved search re-runs against
 // the live listings, and listings created after the search was saved are
 // flagged as new.
-function matches(listing, query) {
+// Stage 2, B2: same cross-currency rule as the search page. Bounds are
+// HTG; without a rate they are ignored on a non-all-HTG set, never
+// raw-compared (the caller shows the rate notice). Kept as its own
+// matcher — it deliberately does NOT apply power24/furnished/verified,
+// unlike filterListings. applyPrice is (rate present OR all-HTG).
+function matches(listing, query, htgPerUsd, applyPrice) {
   const p = new URLSearchParams(query);
   const q = p.get('q') || '';
   if (q && !matchesQuery(listing, q)) return false;
@@ -20,8 +25,11 @@ function matches(listing, query) {
   if (dept && listing.department !== dept) return false;
   if (p.get('type') && listing.type !== p.get('type')) return false;
   if (p.get('purpose') && listing.purpose !== p.get('purpose')) return false;
-  if (p.get('minPrice') && listing.price < Number(p.get('minPrice'))) return false;
-  if (p.get('maxPrice') && listing.price > Number(p.get('maxPrice'))) return false;
+  if (applyPrice) {
+    const price = htgPerUsd !== null ? priceInHtg(listing, htgPerUsd) : listing.price;
+    if (p.get('minPrice') && price < Number(p.get('minPrice'))) return false;
+    if (p.get('maxPrice') && price > Number(p.get('maxPrice'))) return false;
+  }
   if (p.get('minBeds') && listing.bedrooms < Number(p.get('minBeds'))) return false;
   if (p.get('minBaths') && listing.bathrooms < Number(p.get('minBaths'))) return false;
   return true;
@@ -32,6 +40,12 @@ export default function SavedSearches(props) {
   const t = getDict(params.locale);
   const [searches, setSearches] = useState(null);
   const [listings, setListings] = useState([]);
+  // Stage 2, B2: the live rate, fetched once per page load (the route
+  // itself caches 1 h server-side). On failure, the last known rate
+  // from localStorage is the stale tier; with neither, price bounds
+  // pause and the notice below explains why — never raw-compared.
+  const [rate, setRate] = useState(null); // { htgPerUsd, stale } | null
+  const RATE_KEY = 'kay-rate-last';
 
   useEffect(() => {
     setSearches(readSavedSearches());
@@ -39,7 +53,28 @@ export default function SavedSearches(props) {
       .then((r) => r.json())
       .then((d) => setListings(d.listings))
       .catch(() => setListings([]));
+    fetch('/api/rates')
+      .then((r) => { if (!r.ok) throw new Error('rate unavailable'); return r.json(); })
+      .then((d) => {
+        setRate({ htgPerUsd: d.htgPerUsd, stale: false });
+        try { localStorage.setItem(RATE_KEY, JSON.stringify({ htgPerUsd: d.htgPerUsd, at: Date.now() })); } catch { /* private mode */ }
+      })
+      .catch(() => {
+        try {
+          const last = JSON.parse(localStorage.getItem(RATE_KEY) || 'null');
+          if (last && typeof last.htgPerUsd === 'number') setRate({ htgPerUsd: last.htgPerUsd, stale: true });
+          else setRate(null);
+        } catch { setRate(null); }
+      });
   }, []);
+
+  const htgPerUsd = rate ? rate.htgPerUsd : null;
+  const needsRate = !allPricesHtg(listings);
+  const applyPrice = htgPerUsd !== null || !needsRate;
+  const priceRequested = (searches || []).some((s) => {
+    const p = new URLSearchParams(s.query);
+    return p.get('minPrice') || p.get('maxPrice');
+  });
 
   function remove(query) {
     const next = readSavedSearches().filter((s) => s.query !== query);
@@ -52,9 +87,11 @@ export default function SavedSearches(props) {
       <main className="container">
         <h1 className="page-title"><Icon name="bell" /> {t.savedSearches}</h1>
         {searches === null && <p>...</p>}
+        {priceRequested && needsRate && rate === null && <p className="muted">{t.rateUnavailable}</p>}
+        {priceRequested && needsRate && rate !== null && rate.stale && <p className="muted">{t.rateStale}</p>}
         {searches?.length === 0 && <p>{t.noSavedSearches}</p>}
         {(searches || []).map((s) => {
-          const found = listings.filter((l) => matches(l, s.query));
+          const found = listings.filter((l) => matches(l, s.query, htgPerUsd, applyPrice));
           const fresh = found.filter((l) => l.createdAt && l.createdAt > s.createdAt);
           return (
             <section key={s.query} className="card" style={{ marginBottom: 20 }}>

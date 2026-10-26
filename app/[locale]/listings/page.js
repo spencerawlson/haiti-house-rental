@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
-import { filterListings, sortListings, resolveDepartmentId } from '@/lib/listings';
+import { getRateForSearch } from '@/lib/rates-server';
+import { filterListings, sortListings, resolveDepartmentId, allPricesHtg } from '@/lib/listings';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -21,6 +22,15 @@ export default async function Listings(props) {
   const t = getDict(params.locale);
   const base = `/${params.locale}`;
   const LISTINGS = await getListings();
+  // Stage 2, B2: one rate per render, from the shared 1 h cache — never
+  // a per-search provider call, never shifting mid-search. Null means
+  // no rate has ever been fetched: price bounds/sorts pause (never
+  // raw-compare) and the notice below explains why.
+  const rate = await getRateForSearch();
+  const htgPerUsd = rate ? rate.htgPerUsd : null;
+  // Notices only matter when conversion could change something: an
+  // all-HTG result set compares raw, correctly, with or without a rate.
+  const needsRate = !allPricesHtg(LISTINGS);
   const f = {
     q: searchParams.q || '',
     department: searchParams.department || '',
@@ -34,7 +44,8 @@ export default async function Listings(props) {
     furnished: searchParams.furnished || '',
     verified: searchParams.verified || '',
   };
-  const shown = sortListings(filterListings(LISTINGS, f), searchParams.sort || '');
+  const priceRequested = Boolean(f.minPrice || f.maxPrice || searchParams.sort === 'price-asc' || searchParams.sort === 'price-desc');
+  const shown = sortListings(filterListings(LISTINGS, f, htgPerUsd), searchParams.sort || '', htgPerUsd);
   const view = searchParams.view === 'map' ? 'map' : 'list';
   const activeFilters = ['department', 'type', 'minPrice', 'maxPrice', 'minBeds', 'minBaths', 'purpose', 'power24', 'furnished', 'verified'].filter((k) => f[k]).length;
   const withView = (v) => {
@@ -114,6 +125,8 @@ export default async function Listings(props) {
             </div>
           </details>
         </form>
+        {priceRequested && needsRate && rate === null && <p className="muted">{t.rateUnavailable}</p>}
+        {priceRequested && needsRate && rate !== null && rate.stale && <p className="muted">{t.rateStale}</p>}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
           <span className="muted" style={{ marginRight: 'auto' }}><strong>{shown.length}</strong> {t.resultsFound}</span>
           <Link className={`chip${view === 'list' ? ' active' : ''}`} href={withView('list')}>☰ {t.listView}</Link>
