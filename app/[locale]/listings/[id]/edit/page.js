@@ -187,7 +187,7 @@ export default function EditListing(props) {
                   <option value="USD">USD</option>
                 </select>
               </div>
-              <div className="field"><label>{t.priceLabel} ({f.currency}{f.purpose === 'rent' ? ` ${rentPeriodLabel(f.rentPeriod, t)}` : ''})</label>
+              <div className="field"><label>{t.priceLabel}</label>
                 <input className="input" type="number" value={f.price} onChange={(e) => set('price', e.target.value)} required />
               </div>
               {f.purpose === 'rent' && (
