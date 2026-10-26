@@ -116,7 +116,9 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
             type="button"
             onClick={() => setOpenIndex(null)}
             aria-label="Close"
-            style={{ position: 'absolute', top: 16, right: 16, zIndex: 2, width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}
+            // Below the notch/status bar: a fixed top put the X on top
+            // of the battery indicator on notched iPhones.
+            style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 12px)', right: 16, zIndex: 2, width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}
           >
             ✕
           </button>
@@ -164,7 +166,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
           </div>
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, alignItems: 'center', zIndex: 2 }}
+            style={{ position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, alignItems: 'center', zIndex: 2 }}
           >
             <button type="button" onClick={() => applyScale(scaleRef.current / 1.4)} aria-label="Zoom out" style={{ width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}>−</button>
             <span style={{ color: '#fff', fontWeight: 700, minWidth: 56, textAlign: 'center' }}>{Math.round(scale * 100)}%</span>
