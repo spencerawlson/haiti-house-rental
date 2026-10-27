@@ -109,19 +109,26 @@ test('promo countdown route: counts only, full-admin only', { skip }, async () =
   assert.equal((await client()('/api/admin/promo')).status, 401, 'anonymous refused');
 });
 
-test('landing page announces the promo with the live remaining count', { skip }, async () => {
+test('landing page announces the promo; fees show struck through', { skip }, async () => {
   const promo = (await admin('/api/admin/promo')).data;
+  assert.ok(promo.remaining > 150, 'early in the run: plenty of spots left');
   const { status, html } = await landingHtml();
   assert.equal(status, 200);
   assert.ok(html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'banner title renders');
-  assert.ok(html.includes('/ht/signup'), 'banner links to the locale-aware signup page');
-  const m = html.match(/Plas ki rete: (\d+) sou 400/);
-  assert.ok(m, 'banner shows a remaining count');
-  const shown = Number(m[1]);
-  // Other test files sign up landlords concurrently, so the count on
-  // the page can only have dropped slightly since the admin read.
-  assert.ok(shown <= promo.remaining && shown >= promo.remaining - 10, `shown ${shown} vs admin ${promo.remaining}`);
-  assert.ok(shown > 0, 'banner shows while spots remain');
+  assert.ok(html.includes('Plas limite: premye 400 pwopriyetè yo'), 'early on it says spots are limited');
+  assert.ok(!/Sèlman \d+ plas ki rete/.test(html), 'no "398 of 400" count while most spots are open');
+  assert.ok(html.includes('Apre premye ane a: 1,000 HTG chak 3 mwa.'), 'what happens after the year');
+  assert.ok(html.includes('/ht/signup?role=landlord'), 'banner goes straight to landlord signup');
+  assert.ok(html.includes('Mete kay ou gratis'), 'banner button says what it does');
+  // The landlord card no longer contradicts the banner: normal fees struck.
+  assert.match(html, /<s class="price-was">1,500 HTG<\/s>/);
+  assert.match(html, /<s class="price-was">1,000 HTG<\/s>/);
+  // Search comes before the banner: most visitors are looking for a home.
+  assert.ok(html.indexOf('name="q"') < html.indexOf('promo-banner'), 'search above the banner');
+  // Public counts for the client pages: spots and spots left only.
+  const pub = await (await fetch(`${BASE}/api/promo`)).json();
+  assert.deepEqual(Object.keys(pub).sort(), ['remaining', 'spots']);
+  assert.equal(pub.spots, 400);
 });
 
 test('promo landlord survives the billing sweep: the year counts as paid up', { skip }, async () => {
@@ -198,7 +205,21 @@ test('the 400 cap holds: the first untagged landlord ends the promo', { skip }, 
   // it SEES an untagged landlord rather than counting to 400 itself.
   // The signup response carries the account, so one request per try.
   let untagged = null;
+  let countSeen = false;
   for (let i = 0; i < 420; i++) {
+    // Once spots are scarce (<= 150 left), the banner shows the count
+    // and a progress bar. Checked once, around 100 left.
+    if (!countSeen) {
+      const left = (await (await fetch(`${BASE}/api/promo`)).json()).remaining;
+      if (left <= 100) {
+        const { html } = await landingHtml();
+        const m = html.match(/Sèlman (\d+) plas ki rete sou 400/);
+        assert.ok(m, 'scarce spots: the banner shows the count');
+        assert.ok(Number(m[1]) <= left && Number(m[1]) > 0, `shown ${m[1]} vs ${left}`);
+        assert.ok(html.includes('class="promo-meter"'), 'and a progress bar');
+        countSeen = true;
+      }
+    }
     const u = { name: 'Cap', username: `cap_${run}_${i}`, password: 'pw-cap', role: 'landlord' };
     const c = client();
     const r = await signup(c, u);
@@ -209,6 +230,7 @@ test('the 400 cap holds: the first untagged landlord ends the promo', { skip }, 
     }
   }
   assert.ok(untagged, 'a landlord past the cap comes back untagged');
+  assert.ok(countSeen, 'the count was shown while spots were scarce');
   const r = await admin('/api/admin/promo');
   assert.equal(r.data.tagged, 400, 'exactly 400 tagged, no overshoot');
   assert.equal(r.data.remaining, 0);
@@ -221,4 +243,7 @@ test('landing page hides the promo announcement once full', { skip }, async () =
   const { status, html } = await landingHtml();
   assert.equal(status, 200);
   assert.ok(!html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'no banner at 0 spots');
+  // Full promo: normal prices again, nothing struck through.
+  assert.ok(!html.includes('price-was'), 'normal fees once the promo is full');
+  assert.match(html, /1,500(<!-- -->)? HTG/, 'the joining fee shows normally');
 });
