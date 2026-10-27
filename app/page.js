@@ -64,13 +64,13 @@ export default async function Landing() {
         </section>
 
         {promo && promo.remaining > 0 && (
-          <section className="card" style={{ marginTop: 24, border: '2px solid #1d4ed8' }}>
+          <section className="card" style={{ marginTop: 24, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #db2777, #f97316)', color: '#fff' }}>
             <div className="card-body">
-              <h3 style={{ margin: '0 0 4px' }}>{t.promoLandingTitle}</h3>
-              <p className="muted" style={{ margin: '0 0 12px' }}>
+              <h3 style={{ margin: '0 0 4px', color: '#fff' }}>🎉 {t.promoLandingTitle}</h3>
+              <p style={{ margin: '0 0 12px', color: 'rgba(255,255,255,0.92)' }}>
                 {t.promoLandingBody.replaceAll('{remaining}', String(promo.remaining)).replaceAll('{spots}', String(promo.spots))}
               </p>
-              <Link className="btn" href={`/${lang}/signup`}>{t.createAccount}</Link>
+              <Link className="btn" href={`/${lang}/signup`} style={{ background: '#fff', color: '#1e293b' }}>{t.createAccount}</Link>
             </div>
           </section>
         )}
