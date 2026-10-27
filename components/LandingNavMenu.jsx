@@ -17,7 +17,7 @@ export default function LandingNavMenu({ accountHref, accountLabel, postHref, po
       </button>
       <div id="lp-menu" className={open ? 'lp-menu open' : 'lp-menu'}>
         <Link className="lp-menu-link" href={accountHref} onClick={() => setOpen(false)}>{accountLabel}</Link>
-        <Link className="btn lp-menu-post" href={postHref} onClick={() => setOpen(false)}>{postLabel}</Link>
+        <Link className="lp-menu-link" href={postHref} onClick={() => setOpen(false)}>{postLabel}</Link>
         <Link className="lp-menu-link" href={howHref} onClick={() => setOpen(false)}>{howLabel}</Link>
       </div>
     </div>
