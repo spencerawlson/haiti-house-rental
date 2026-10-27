@@ -99,6 +99,7 @@ export default async function Landing() {
         </nav>
         <div className="lp-nav-right">
           <LandingLangSwitch current={lang} />
+          <Link className="lp-signin" href={`/${lang}/how-it-works`}>{t.howTitle}</Link>
           {me ? (
             <Link className="lp-signin" href={`/${lang}/account`}>{t.tabAccount}</Link>
           ) : (
@@ -235,12 +236,6 @@ export default async function Landing() {
           </div>
         </div>
 
-        <h2 className="lp-how-title">{t.howTitle}</h2>
-        <div className="grid">
-          <div className="card"><div className="card-body"><strong>1. {t.howStep1}</strong></div></div>
-          <div className="card"><div className="card-body"><strong>2. {t.scheduleVisit}</strong></div></div>
-          <div className="card"><div className="card-body"><strong>3. {t.howStep3}</strong></div></div>
-        </div>
 
         <footer className="lp-footer">
           <Link href={`/${lang}/privacy`}>{t.privacy}</Link>
