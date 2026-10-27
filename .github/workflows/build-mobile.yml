@@ -127,12 +127,19 @@ jobs:
         if: steps.secrets-check.outputs.present == 'true'
         working-directory: ios/App
         run: |
+          # App Store Connect rejects a build number it has already seen, and
+          # the project file says 1 (uploaded on 23 Oct). Every run of this
+          # workflow has a higher run number, so each upload is accepted; the
+          # +100 keeps it clear of any build number uploaded by hand.
+          BUILD_NUMBER=$(( GITHUB_RUN_NUMBER + 100 ))
+          echo "iOS build number: $BUILD_NUMBER"
           # Archive requires a scheme; the scaffold shipped none, so the repo
           # now carries a shared App scheme — build via -project/-scheme.
           xcodebuild -project App.xcodeproj \
             -scheme App \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/KayAyiti.xcarchive" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             archive
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/KayAyiti.xcarchive" \
