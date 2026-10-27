@@ -98,7 +98,7 @@ export default function AdminTraffic({ locale, t, onCounts }) {
             className="chip"
             aria-pressed={grain === g}
             onClick={() => setGrain(g)}
-            style={grain === g ? { borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: 800 } : undefined}
+            style={grain === g ? { borderColor: '#dc2626', color: '#dc2626', fontWeight: 800 } : undefined}
           >
             {t[`grain_${g}`]}
           </button>
@@ -116,7 +116,7 @@ export default function AdminTraffic({ locale, t, onCounts }) {
             className="chip"
             aria-pressed={metric === s.key}
             onClick={() => setMetric(s.key)}
-            style={metric === s.key ? { borderColor: 'var(--primary)', color: 'var(--primary)', fontWeight: 800 } : undefined}
+            style={metric === s.key ? { borderColor: '#dc2626', color: '#dc2626', fontWeight: 800 } : undefined}
           >
             <Icon name={s.icon} /> {label(s.key)}
           </button>
