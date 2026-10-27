@@ -34,8 +34,10 @@ export async function GET(request) {
     if (!me || me.username !== owner) return Response.json({ listings: [] });
     return Response.json({ listings: await getListingsForOwner(owner) });
   }
-  if (admin) return Response.json({ listings: await getAdminListings() });
-  const listings = await getListings();
+  // The owner filter applies to everyone, admins included. It used to be
+  // skipped for an admin cookie, so a landlord who was also signed in to
+  // the Admin Board saw every home on the site counted as "my listings".
+  const listings = admin ? await getAdminListings() : await getListings();
   return Response.json({ listings: owner ? listings.filter((l) => l.owner === owner) : listings });
 }
 
