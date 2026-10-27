@@ -472,7 +472,7 @@ a:hover { text-decoration: underline; }
 [data-theme="dark"] .hero-btn { background: rgba(15, 23, 42, 0.85); color: #f1f5f9; }
 [data-theme="dark"] .lcard-art { background: linear-gradient(135deg, #1e3a8a, #0c4a6e); color: #dbeafe; }
 [data-theme="dark"] .search-pill button, [data-theme="dark"] .chip.active, [data-theme="dark"] .role-card.selected, [data-theme="dark"] .seg label:has(input:checked) { background: #ef4444; border-color: #ef4444; color: #fff; }
-[data-theme="dark"] .btn { background: #ef4444; border-color: #ef4444; color: #fff; } [data-theme="dark"] .btn:hover { background: #dc2626; border-color: #dc2626; } [data-theme="dark"] .btn-secondary { color: var(--ink); }
+[data-theme="dark"] .btn { background: #ef4444; border-color: #ef4444; color: #fff; } [data-theme="dark"] .btn:hover { background: #dc2626; border-color: #dc2626; } [data-theme="dark"] .btn-secondary { background: var(--card); border-color: var(--line); color: var(--ink); box-shadow: none; } [data-theme="dark"] .btn-secondary:hover { background: color-mix(in srgb, var(--card) 80%, white); }
 
 /* Phase 7 — first-visit splash (screen 1) and onboarding (screen 2) */
 .splash { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; z-index: 60; }
