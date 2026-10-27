@@ -10,10 +10,13 @@ import AdminUsers from '@/components/AdminUsers';
 import AdminTraffic from '@/components/AdminTraffic';
 import Icon from '@/components/Icon';
 
-// Admin: approve or remove advertising, track activation revenue, and
-// convert it. Nothing here is automatic — a landlord's advertising
-// checkbox is only a request until the admin approves, and revenue is
-// logged only when the admin activates an account.
+// Admin: remove advertising, track activation revenue, and convert
+// it. Nothing here is automatic — advertising starts only when the
+// admin confirms an advertising payment in the payments queue, and
+// revenue is logged only when the admin activates an account. A
+// landlord's advertising checkbox is only a request, so there is no
+// approve button: one here used to flip the flag without starting the
+// ad, because a campaign shows only with a paid budget behind it.
 //
 // The board is TABBED rather than one long scroll. Accounts moved behind
 // their own tab (components/AdminUsers.jsx) because the list is a page of
@@ -743,9 +746,6 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
               })()}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <button className="btn btn-secondary" type="button" onClick={() => setVerifiedListing(l.id, !l.verified)} style={{ minHeight: 40, padding: '8px 16px' }}>{l.verified ? t.unverifyListing : `✓ ${t.verifyListing}`}</button>
-                {!l.advertised && (
-                  <button className="btn" type="button" onClick={() => set(l.id, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.approveAdvertised}</button>
-                )}
                 {l.advertised && (
                   <button className="btn btn-secondary" type="button" onClick={() => set(l.id, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.removeAdvertised}</button>
                 )}
