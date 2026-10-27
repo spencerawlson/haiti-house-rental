@@ -4,7 +4,22 @@ import PresencePing from '@/components/PresencePing';
 
 const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
 
-export const metadata = { title: 'Kay Ayiti — House rentals in Haiti' };
+// Defaults for every page, including link previews (WhatsApp, Facebook)
+// of pages that do not set their own. metadataBase turns relative image
+// paths into the absolute URLs previews require.
+export const metadata = {
+  metadataBase: new URL(process.env.PUBLIC_BASE_URL || 'https://kayayiti.app'),
+  title: 'Kay Ayiti — Kay pou lwe ak pou vann an Ayiti',
+  description: 'Jwenn kay pou lwe oswa pou vann nan tout depatman Ayiti. Pale ak pwopriyetè a, pwograme yon vizit, gratis pou lokatè.',
+  openGraph: {
+    type: 'website',
+    siteName: 'Kay Ayiti',
+    title: 'Kay Ayiti — Kay pou lwe ak pou vann an Ayiti',
+    description: 'Jwenn kay pou lwe oswa pou vann nan tout depatman Ayiti. Gratis pou lokatè.',
+    images: [{ url: '/images/landing-house.jpg', width: 1200, height: 1200 }],
+  },
+  twitter: { card: 'summary_large_image' },
+};
 
 // viewport-fit=cover lets the safe-area env() vars report the real iPhone
 // notch/Dynamic Island insets inside the Capacitor webview; without it

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
 import { getRateForSearch } from '@/lib/rates-server';
-import { filterListings, sortListings, resolveDepartmentId, allPricesHtg } from '@/lib/listings';
+import { filterListings, sortListings, resolveDepartmentId, allPricesHtg, mapPins } from '@/lib/listings';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -134,7 +134,7 @@ export default async function Listings(props) {
           <SaveSearchButton savedLabel={t.saveSearch} />
         </div>
         {view === 'map' ? (
-          <ListingMap listings={shown} locale={params.locale} t={t} />
+          <ListingMap listings={mapPins(shown)} locale={params.locale} t={t} />
         ) : (
           <div className="listing-grid">
             {shown.map((l) => (

@@ -6,6 +6,7 @@ import { getSession } from '@/lib/account';
 import ReportForm from './ReportForm';
 import VisitScheduler from './VisitScheduler';
 import Icon from '@/components/Icon';
+import { photoSrc } from '@/lib/photo-url';
 
 // A private conversation between one tenant and the listing owner
 // (design: docs/design/app-showcase.png, screen 9 — listing card on top,
@@ -130,7 +131,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
       <div className="card-body">
         {listing && (
           <Link href={`/${locale}/listings/${listing.id}`} className="chat-listing" style={{ color: 'inherit', marginBottom: 14 }}>
-            {listing.photos?.[0] ? <img src={listing.photos[0]} alt="" /> : <span className="thumb" />}
+            {listing.photos?.[0] ? <img src={photoSrc(listing.photos[0], 320)} alt="" /> : <span className="thumb" />}
             <span style={{ minWidth: 0 }}>
               <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.title}</strong>
               <span className="muted" style={{ fontSize: '0.88rem' }}>{Number(listing.price || 0).toLocaleString()} {listing.currency || 'HTG'} · {listing.commune}</span>
