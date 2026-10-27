@@ -1,5 +1,4 @@
-import { unlink } from 'fs/promises';
-import path from 'path';
+import { removeUpload } from '@/lib/upload-files';
 import { getListing, deleteListingForGood } from '@/lib/listings-server';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
@@ -33,9 +32,9 @@ export async function POST(request) {
   }
   // Files last: the rows are already gone, and an unlink cannot be rolled
   // back. A failure here leaves an unreferenced file, which is harmless.
-  const dir = path.join(process.cwd(), 'public', 'uploads');
+  // removeUpload also drops the resized copies of each photo.
   for (const url of result.files) {
-    await unlink(path.join(dir, path.basename(url))).catch(() => {});
+    await removeUpload(url);
   }
   await audit(admin ? 'admin' : me.username, 'listing.delete', data.id, {
     title: result.listing.title,

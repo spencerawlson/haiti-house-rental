@@ -574,3 +574,10 @@ a:hover { text-decoration: underline; }
 
 /* A stat tile that is a <button> lines up like the link tiles. */
 button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%; }
+
+/* Share row on a listing: WhatsApp (brand green) + the phone's share sheet. */
+.share-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 0; }
+.share-row .btn { min-height: 42px; padding: 8px 16px; }
+.btn-whatsapp { background: #1fa855; border-color: #1fa855; color: #fff; }
+.btn-whatsapp:hover { background: #17924a; }
+[data-theme="dark"] .btn-whatsapp { color: #fff; }

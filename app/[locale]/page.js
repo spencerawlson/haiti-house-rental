@@ -8,6 +8,7 @@ import ListingMap from '@/components/ListingMap';
 import AdvertisedCarousel from '@/components/AdvertisedCarousel';
 import NotificationBell from '@/components/NotificationBell';
 import Icon from '@/components/Icon';
+import { mapPins } from '@/lib/listings';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +65,7 @@ export default async function LocaleHome(props) {
 
         <div className="section-head"><h2><Icon name="pin" /> {t.mapView}</h2><Link href={`${base}/listings`}>{t.seeAll}</Link></div>
         <div style={{ marginBottom: 8 }}>
-          <ListingMap listings={LISTINGS} locale={params.locale} t={t} height={360} />
+          <ListingMap listings={mapPins(LISTINGS)} locale={params.locale} t={t} height={360} />
         </div>
 
         {advertised.length > 0 && (

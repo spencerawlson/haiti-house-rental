@@ -3,7 +3,7 @@ import {
   CirclePause, CircleX, ClipboardList, Coins, CreditCard, Download, Droplet, Eye, Flag, Footprints,
   Globe, Handshake, Heart, Hourglass, House, KeyRound, LogOut, Map as MapIcon, MapPin, Megaphone,
   MessageCircle, Moon, OctagonX, PenLine, Receipt, Repeat, Ruler, Search, Settings, Shield, Sofa, Sparkles,
-  Sprout, Star, Sun, SunMoon, Tag, Timer, Trash2, TrendingUp, TriangleAlert, Undo2, User, Users,
+  Share2, Sprout, Star, Sun, SunMoon, Tag, Timer, Trash2, TrendingUp, TriangleAlert, Undo2, User, Users,
   Wifi, Zap,
 } from 'lucide-react';
 
@@ -51,6 +51,7 @@ const ICONS = {
   returning: Undo2,
   search: Search,
   settings: Settings,
+  share: Share2,
   shield: Shield,
   signout: LogOut,
   signup: PenLine,

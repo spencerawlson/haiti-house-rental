@@ -7,6 +7,7 @@ import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import PaymentForm from '@/components/PaymentForm';
 import Icon from '@/components/Icon';
+import { photoSrc } from '@/lib/photo-url';
 
 // How long a sold/leased home has before it is deleted. Hours while
 // there is more than one left, otherwise minutes, so the last stretch
@@ -155,7 +156,7 @@ export default function Library(props) {
           {homes.map((h) => (
             <section key={h.id} className="card">
               {h.photos?.length > 0 ? (
-                <img src={h.photos[0]} alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
+                <img src={photoSrc(h.photos[0], 480)} alt="" style={{ width: '100%', height: 180, objectFit: 'cover', display: 'block' }} />
               ) : (
                 <div className="house-art" style={{ height: 120 }}>{h.commune}</div>
               )}

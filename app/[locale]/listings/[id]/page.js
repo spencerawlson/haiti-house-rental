@@ -4,7 +4,9 @@ import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
 import { getSessionAccount } from '@/lib/session-server';
 import { isAdminCookie } from '@/lib/admin-auth';
-import { getViewerListing, getAdminListing } from '@/lib/listings-server';
+import { getViewerListing, getAdminListing, getPublicListing } from '@/lib/listings-server';
+import ShareButtons from '@/components/ShareButtons';
+import { photoSrc } from '@/lib/photo-url';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
@@ -24,6 +26,36 @@ export const dynamic = 'force-dynamic';
 // photo with back + favorite, a sheet with title, place, blue price, the
 // rooms row, fact tiles, description, then visits — and a sticky
 // "Contact the owner" button.
+// Link preview (Open Graph) for a shared listing: the first photo (JPEG,
+// 1200 px — what WhatsApp and Facebook render reliably), the title, and
+// "price · place · rooms". Built from the PUBLIC shape, so a shared link
+// never reveals more than an anonymous visitor would see.
+function previewText(l, t, locale) {
+  const price = `${Number(l.price || 0).toLocaleString('en-US')} ${l.currency || 'HTG'}${l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}`;
+  const place = `${communeName(l.commune, locale)}, ${departmentName(l.department, locale)}`;
+  const rooms = l.type === 'land' ? t.land : `${l.bedrooms} ${t.bedrooms} · ${l.bathrooms} ${t.bathrooms}`;
+  return { price, place, rooms };
+}
+
+export async function generateMetadata(props) {
+  const params = await props.params;
+  const t = getDict(params.locale);
+  const l = await getPublicListing(params.id).catch(() => null);
+  if (!l || !['active', 'sold', 'leased'].includes(l.status)) return {};
+  const { price, place, rooms } = previewText(l, t, params.locale);
+  const title = `${l.title} · ${price}`;
+  const description = [place, rooms, String(l.description || '').slice(0, 140)].filter(Boolean).join(' · ');
+  const image = l.photos?.[0] ? photoSrc(l.photos[0], 1200, 'jpg') : '/images/landing-house.jpg';
+  const url = `/${params.locale}/listings/${l.id}`;
+  return {
+    title: `${title} — Kay Ayiti`,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: 'website', siteName: 'Kay Ayiti', url, title, description, images: [{ url: image, width: 1200 }] },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
+  };
+}
+
 export default async function ListingDetail(props) {
   const params = await props.params;
   const t = getDict(params.locale);
@@ -89,6 +121,12 @@ export default async function ListingDetail(props) {
           {l.views > 0 && (
             <p className="muted" style={{ margin: '8px 0 0', fontWeight: 700 }}><Icon name="eye" /> {l.views.toLocaleString()} {t.viewsLabel}</p>
           )}
+          {/* Share: WhatsApp first — it is how homes travel in Haiti. */}
+          <ShareButtons
+            url={`${(process.env.PUBLIC_BASE_URL || 'https://kayayiti.app').replace(/\/$/, '')}${base}/listings/${l.id}`}
+            text={`${l.title} · ${previewText(l, t, params.locale).price} · ${previewText(l, t, params.locale).place}`}
+            strings={t}
+          />
           <ListingFacts details={l.details} t={t} locale={params.locale} />
           {l.description && (
             <>
