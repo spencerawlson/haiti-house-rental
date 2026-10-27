@@ -90,7 +90,7 @@ export default async function Landing() {
     <div className="lp">
       <header className="lp-nav">
         <Link href="/" className="lp-logo">
-          <img src="/logo.jpg" alt="Kay Ayiti" className="logo-img" />
+          <img src="/logo.png" alt="Kay Ayiti" className="logo-img" />
         </Link>
         <nav className="lp-links" aria-label="Kay Ayiti">
           <Link href={`/${lang}/listings?purpose=rent`}>{t.forRent}</Link>
