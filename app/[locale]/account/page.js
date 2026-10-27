@@ -42,6 +42,7 @@ export default function Account(props) {
   const [destination, setDestination] = useState({ moncashNumber: '', natcashNumber: '' });
   const [visits, setVisits] = useState([]);
   const [threads, setThreads] = useState([]);
+  const [adminUnread, setAdminUnread] = useState(0);
   const [myHomes, setMyHomes] = useState([]);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function Account(props) {
       if (!a) return;
       fetch('/api/visits').then((r) => r.json()).then((d) => setVisits(d.visits || [])).catch(() => {});
       fetch('/api/chat/inbox').then((r) => r.json()).then((d) => setThreads(d.threads || [])).catch(() => {});
+      fetch('/api/admin-chat/unread').then((r) => r.json()).then((d) => setAdminUnread(d.unread || 0)).catch(() => {});
       if (a.role !== 'tenant') {
         fetch('/api/payments').then((r) => r.json()).then((d) => setPayments(d.payments || [])).catch(() => {});
         fetch(`/api/listings?owner=${encodeURIComponent(a.username)}`).then((r) => r.json()).then((d) => setMyHomes(d.listings || [])).catch(() => {});
@@ -193,7 +195,7 @@ export default function Account(props) {
 
         <nav className="menu card" style={{ marginTop: 20 }}>
           {me && <MenuRow href={`${base}/chats`} icon="chat" label={t.myMessages} badge={unread} />}
-          {me && <MenuRow href={`${base}/admin-chat`} icon="chat" label={t.contactAdmin} badge={0} />}
+          {me && <MenuRow href={`${base}/admin-chat`} icon="chat" label={t.contactAdmin} badge={adminUnread} />}
           {me && <MenuRow href={`${base}/notifications`} icon="bell" label={t.notificationsTitle} badge={0} />}
           {me && <MenuRow href={`${base}/visits`} icon="calendar" label={t.myVisits} badge={0} />}
           <MenuRow href={`${base}/favorites`} icon="heart" label={t.favorites} />
