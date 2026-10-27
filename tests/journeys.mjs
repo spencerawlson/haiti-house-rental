@@ -9,7 +9,7 @@
 // - tenant: search finds it, detail + gallery load, chat, visit request
 // - landlord: reads and replies, confirms, the visit is rescheduled and
 //   cancelled, notifications arrive on both sides
-// - an advertising payment is submitted and REJECTED by the admin, and a
+// - a 100 HTG advertising budget is submitted and REJECTED by the admin, and a
 //   report is filed and resolved, so both admin queues are exercised
 // - cleanup: the listing is taken down (hidden). Accounts stay (there is
 //   no account deletion), named qa_… so they are easy to spot.
@@ -154,7 +154,7 @@ await step('visit: tenant reschedules, landlord confirms, tenant cancels', async
 });
 await step('advertising payment submitted, then rejected by the admin (no revenue)', async () => {
   const p = await landlord('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId, amountHTG: 100, provider: 'moncash', senderPhone: '30000099' } });
-  expect(p.status === 200 && p.data.payment.amountHTG === 75, `payment ${p.status} ${p.text}`);
+  expect(p.status === 200 && p.data.payment.amountHTG === 100, `payment ${p.status} ${p.text}`);
   const r = await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'rejected', note: 'QA test — not a real payment' } });
   expect(r.data?.payment?.status === 'rejected', 'reject');
 });
