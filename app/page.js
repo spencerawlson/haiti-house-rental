@@ -189,7 +189,11 @@ export default async function Landing() {
                 </>
               )}
               <p className="promo-after">{fill(t.promoAfterYear)}</p>
-              <Link className="btn promo-cta" href={`/${lang}/signup?role=landlord`}>{t.promoCta}</Link>
+              {/* Signed in: go straight to posting — existing landlords
+                  were tagged retroactively, so signup would ask them to
+                  create an account they already have. Guests keep the
+                  signup funnel, which is where promo tagging happens. */}
+              <Link className="btn promo-cta" href={me ? `/${lang}/list` : `/${lang}/signup?role=landlord`}>{t.promoCta}</Link>
             </div>
           </section>
         )}
