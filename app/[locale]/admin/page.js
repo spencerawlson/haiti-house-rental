@@ -73,6 +73,8 @@ export default function Admin(props) {
   // countdown, and thread heads (last message + unread) for the chats.
   const [promo, setPromo] = useState(null);
   const [adminThreads, setAdminThreads] = useState([]);
+  // Total unread across admin-chat threads, for the nav chip badge.
+  const adminUnreadTotal = adminThreads.reduce((sum, th) => sum + (th.unread || 0), 0);
 
   async function loadRates(fresh) {
     const res = await fetch(`/api/rates${fresh ? '?fresh=1' : ''}`);
@@ -144,6 +146,13 @@ export default function Admin(props) {
     if (aures.ok) setAdminUsers((await aures.json()).users || []);
     const pres = await fetch('/api/admin/promo');
     if (pres.ok) setPromo(await pres.json());
+    await loadAdminThreads();
+  }
+
+  // Thread heads only (last message + unread) — light enough to poll,
+  // unlike the full load(). Does NOT mark anything read: only opening
+  // a thread (?username=) does that.
+  async function loadAdminThreads() {
     const thres = await fetch('/api/admin/admin-chat');
     if (thres.ok) setAdminThreads((await thres.json()).threads || []);
   }
@@ -153,7 +162,8 @@ export default function Admin(props) {
     loadRates(false);
     loadPresence();
     const pid = setInterval(loadPresence, 30000);
-    return () => clearInterval(pid);
+    const tid = setInterval(loadAdminThreads, 30000);
+    return () => { clearInterval(pid); clearInterval(tid); };
   }, []);
 
   async function loadPresence() {
@@ -400,7 +410,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
       </div>
       <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
         {[['promo', 'tag', t.promoSpotsTitle], ['admin-chats', 'chat', t.adminChatsTitle], ['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
-          <a key={id} className="chip" href={`#${id}`}><Icon name={icon} /> {label}</a>
+          <a key={id} className="chip" href={`#${id}`}><Icon name={icon} /> {label}{id === 'admin-chats' && adminUnreadTotal > 0 && (<> <span className="count-badge">{adminUnreadTotal}</span></>)}</a>
         ))}
       </nav>
       <h2 id="promo" className="admin-h2"><Icon name="tag" /> {t.promoSpotsTitle}</h2>
