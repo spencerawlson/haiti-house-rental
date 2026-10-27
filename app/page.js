@@ -1,5 +1,9 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
+// Imported, not written as "/logo.png": the import gives the file a
+// content-hashed URL, so a new logo reaches phones at once instead of
+// waiting out the 4-hour max-age on the unhashed public/ path.
+import logo from '@/public/logo.png';
 import { getSessionAccount } from '@/lib/session-server';
 import { getPromoCounts } from '@/lib/promo-server';
 import { getDict } from '@/lib/dictionaries';
@@ -90,7 +94,7 @@ export default async function Landing() {
     <div className="lp">
       <header className="lp-nav">
         <Link href="/" className="lp-logo">
-          <img src="/logo.png" alt="Kay Ayiti" className="logo-img" />
+          <img src={logo.src} alt="Kay Ayiti" className="logo-img" />
         </Link>
         <nav className="lp-links" aria-label="Kay Ayiti">
           <Link href={`/${lang}/listings?purpose=rent`}>{t.forRent}</Link>

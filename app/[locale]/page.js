@@ -1,4 +1,6 @@
 import Link from 'next/link';
+// Content-hashed URL; see the note in app/page.js.
+import logo from '@/public/logo.png';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
@@ -39,7 +41,7 @@ export default async function LocaleHome(props) {
       <main className="container">
         <header className="topbar">
           <Link href={base} className="logo">
-            <img src="/logo.png" alt="Kay Ayiti" className="logo-img" />
+            <img src={logo.src} alt="Kay Ayiti" className="logo-img" />
           </Link>
           <NotificationBell locale={params.locale} label={t.notificationsTitle} />
         </header>
