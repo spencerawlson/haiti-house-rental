@@ -467,8 +467,8 @@ a:hover { text-decoration: underline; }
 .seg label { position: relative; text-align: center; padding: 8px; border-radius: 10px; cursor: pointer; font-weight: 700; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
 .seg label:has(input:checked) { background: #dc2626; color: #fff; }
-[data-theme="dark"] .tone-blue { background: #172554; } [data-theme="dark"] .tone-green { background: #052e16; }
-[data-theme="dark"] .tone-purple { background: #2e1065; } [data-theme="dark"] .tone-amber { background: #431407; }
+[data-theme="dark"] .tone-blue { background: #1c1c1e; } [data-theme="dark"] .tone-green { background: #1c1c1e; }
+[data-theme="dark"] .tone-purple { background: #1c1c1e; } [data-theme="dark"] .tone-amber { background: #1c1c1e; }
 [data-theme="dark"] .hero-btn { background: rgba(0, 0, 0, 0.85); color: #ffffff; }
 [data-theme="dark"] .lcard-art { background: linear-gradient(135deg, #1e3a8a, #0c4a6e); color: #dbeafe; }
 [data-theme="dark"] .search-pill button, [data-theme="dark"] .chip.active, [data-theme="dark"] .role-card.selected, [data-theme="dark"] .seg label:has(input:checked) { background: #ef4444; border-color: #ef4444; color: #fff; }
