@@ -39,8 +39,7 @@ export default async function LocaleHome(props) {
       <main className="container">
         <header className="topbar">
           <Link href={base} className="logo">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true"><path d="M3 11 12 4l9 7" /><path d="M5 10v10h14V10" /><path d="M10 20v-5h4v5" /></svg>
-            Kay Ayiti
+            <img src="/logo.jpg" alt="Kay Ayiti" className="logo-img" />
           </Link>
           <NotificationBell locale={params.locale} label={t.notificationsTitle} />
         </header>
