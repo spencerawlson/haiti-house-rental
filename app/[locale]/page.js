@@ -39,7 +39,7 @@ export default async function LocaleHome(props) {
       <main className="container">
         <header className="topbar">
           <Link href={base} className="logo">
-            <img src="/logo.jpg" alt="Kay Ayiti" className="logo-img" />
+            <img src="/logo.png" alt="Kay Ayiti" className="logo-img" />
           </Link>
           <NotificationBell locale={params.locale} label={t.notificationsTitle} />
         </header>
