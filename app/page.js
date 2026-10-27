@@ -9,6 +9,7 @@ import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT } from '@/l
 import Icon from '@/components/Icon';
 import PromoPrice from '@/components/PromoPrice';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
+import LandingNavMenu from '@/components/LandingNavMenu';
 import ListingCard from '@/components/ListingCard';
 import Splash from '@/components/Splash';
 
@@ -106,6 +107,14 @@ export default async function Landing() {
             <Link className="lp-signin" href={`/${lang}/signin`}>{t.signIn}</Link>
           )}
           <Link className="btn lp-post" href={`/${lang}/list`}>{t.postHome}</Link>
+          <LandingNavMenu
+            accountHref={me ? `/${lang}/account` : `/${lang}/signin`}
+            accountLabel={me ? t.tabAccount : t.signIn}
+            postHref={`/${lang}/list`}
+            postLabel={t.postHome}
+            howHref={`/${lang}/how-it-works`}
+            howLabel={t.howTitle}
+          />
         </div>
       </header>
 
