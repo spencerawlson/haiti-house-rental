@@ -582,9 +582,10 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
 .btn-whatsapp:hover { background: #17924a; }
 [data-theme="dark"] .btn-whatsapp { color: #fff; }
 
-/* Landlord promo banner (landing). The gradient ends in deep orange, not
-   bright orange, so white text keeps at least 4.5:1 contrast across it. */
-.promo-banner { margin-top: 20px; border: none; color: #fff; background: linear-gradient(135deg, #6d28d9, #be185d 55%, #c2410c); }
+/* Landlord promo banner (landing): a warm sunset (red, orange, deep
+   amber) that stands out from the app's blue. Every stop is dark enough
+   for white text at 4.5:1 or better (6.5, 5.2 and 5.0:1). */
+.promo-banner { margin-top: 20px; border: none; color: #fff; background: linear-gradient(135deg, #b91c1c, #c2410c 55%, #b45309); }
 .promo-banner h3 { margin: 0 0 6px; color: #fff; display: flex; gap: 8px; align-items: center; }
 .promo-banner p { margin: 0 0 8px; color: #fff; }
 .promo-banner .promo-after { font-size: 0.9rem; opacity: 0.95; margin-bottom: 14px; }
