@@ -1,4 +1,4 @@
-/* Kay Ayiti design system — clean, red buttons on white, mobile-first.
+/* Kay Ayiti design system — clean, red primary on white, mobile-first.
    Target look: docs/design/app-showcase.png (Phase 5). */
 :root {
   --bg: #f5f7fb;
@@ -6,9 +6,9 @@
   --ink: #0f172a;
   --muted: #64748b;
   --line: #e5e9f0;
-  --primary-soft: #eff4ff;
-  --primary: #1d4ed8;
-  --primary-dark: #1e40af;
+  --primary-soft: #fef2f2;
+  --primary: #dc2626;
+  --primary-dark: #b91c1c;
   --accent: #0f766e;
   --radius: 20px;
   --shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 10px 28px rgba(17, 24, 39, 0.07);
@@ -309,8 +309,8 @@ a:hover { text-decoration: underline; }
   --ink: #f1f5f9;
   --muted: #94a3b8;
   --line: #334155;
-  --primary: #93c5fd;
-  --primary-dark: #60a5fa;
+  --primary: #ef4444;
+  --primary-dark: #dc2626;
   --accent: #2dd4bf;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 28px rgba(0, 0, 0, 0.4);
 }
@@ -461,7 +461,7 @@ a:hover { text-decoration: underline; }
 .role-card.selected .muted { color: rgba(255, 255, 255, 0.85); }
 .role-icon { flex: none; width: 48px; height: 48px; border-radius: 999px; display: grid; place-items: center; background: var(--primary-soft); font-size: 1.4rem; }
 .role-card.selected .role-icon { background: rgba(255, 255, 255, 0.2); }
-.price-pin { background: #1d4ed8; color: #fff; font: 800 12px/1 Nunito, system-ui, sans-serif; padding: 6px 8px; border-radius: 10px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); display: inline-block; cursor: pointer; }
+.price-pin { background: #dc2626; color: #fff; font: 800 12px/1 Nunito, system-ui, sans-serif; padding: 6px 8px; border-radius: 10px; white-space: nowrap; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); display: inline-block; cursor: pointer; }
 .seg { display: grid; grid-template-columns: 1fr 1fr 1fr; background: var(--primary-soft); border-radius: 12px; padding: 4px; gap: 4px; }
 .seg label { position: relative; text-align: center; padding: 8px; border-radius: 10px; cursor: pointer; font-weight: 700; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -545,7 +545,7 @@ a:hover { text-decoration: underline; }
    (too light, too desaturated — it reads grey next to the surface). These
    two steps were each validated against their own mode's surface, which
    is why dark is a chosen step rather than an automatic flip. */
-.chart { --chart-fill: #1d4ed8; }
+.chart { --chart-fill: #dc2626; }
 [data-theme='dark'] .chart { --chart-fill: #3b82f6; }
 .chart { width: 100%; height: auto; display: block; }
 /* 4px rounded data-ends, anchored to the baseline. */
