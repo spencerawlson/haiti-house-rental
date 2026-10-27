@@ -639,7 +639,6 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
 .lp-menu.open { display: flex; }
 .lp-menu-link { padding: 10px 12px; color: var(--ink); font-weight: 600; text-decoration: none; border-radius: 10px; white-space: nowrap; }
 .lp-menu-link:hover { color: var(--primary); }
-.lp-menu-post { justify-content: center; white-space: nowrap; }
 @media (max-width: 899px) {
   .lp-nav { flex-wrap: nowrap; }
   .lp-nav-right > .lp-signin, .lp-nav-right > .lp-post { display: none; }
