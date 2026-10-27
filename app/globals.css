@@ -581,3 +581,21 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
 .btn-whatsapp { background: #1fa855; border-color: #1fa855; color: #fff; }
 .btn-whatsapp:hover { background: #17924a; }
 [data-theme="dark"] .btn-whatsapp { color: #fff; }
+
+/* Landlord promo banner (landing). The gradient ends in deep orange, not
+   bright orange, so white text keeps at least 4.5:1 contrast across it. */
+.promo-banner { margin-top: 20px; border: none; color: #fff; background: linear-gradient(135deg, #6d28d9, #be185d 55%, #c2410c); }
+.promo-banner h3 { margin: 0 0 6px; color: #fff; display: flex; gap: 8px; align-items: center; }
+.promo-banner p { margin: 0 0 8px; color: #fff; }
+.promo-banner .promo-after { font-size: 0.9rem; opacity: 0.95; margin-bottom: 14px; }
+.promo-banner .promo-cta { background: #fff; color: #1e293b; border-color: #fff; }
+.promo-meter { height: 8px; border-radius: 999px; background: rgba(255,255,255,0.3); overflow: hidden; margin: 0 0 10px; }
+.promo-meter span { display: block; height: 100%; min-width: 4px; background: #fff; border-radius: inherit; }
+
+/* A fee the promo waives: normal price struck through, then "Free". */
+.price-was { color: var(--muted, #64748b); text-decoration-thickness: 2px; }
+.price-free { color: #15803d; }
+[data-theme="dark"] .price-free { color: #4ade80; }
+/* On a selected (blue) role card, both follow the card's white text. */
+.role-card.selected .price-was { color: inherit; opacity: 0.8; }
+.role-card.selected .price-free { color: inherit; }

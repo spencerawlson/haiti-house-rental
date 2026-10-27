@@ -5,6 +5,8 @@ import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { JOIN_FEE_HTG, QUARTER_FEE_HTG, PAYMENT_PROVIDERS } from '@/lib/config';
+import PromoPrice from '@/components/PromoPrice';
+import { usePromo } from '@/lib/promo-client';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import { getSession, getMyAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
@@ -20,6 +22,8 @@ import Icon from '@/components/Icon';
 export default function ListHome(props) {
   const params = use(props.params);
   const t = getDict(params.locale);
+  const promo = usePromo();
+  const promoOpen = Boolean(promo && promo.remaining > 0);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [department, setDepartment] = useState('ouest');
@@ -139,7 +143,11 @@ export default function ListHome(props) {
             <li>{t.landlordStep2}</li>
             <li>{t.landlordStep3}</li>
           </ol>
-          <p>{t.activationFee}: <strong>{JOIN_FEE_HTG.toLocaleString()} HTG</strong> ({t.oneTime}) · <strong>{QUARTER_FEE_HTG.toLocaleString()} HTG</strong> {t.quarterFeeLabel}</p>
+          {promoOpen ? (
+            <p>{t.activationFee}: <PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> ({t.oneTime}) · {t.quarterFeeLabel}: <PromoPrice amount={QUARTER_FEE_HTG} free={t.promoFirstYear} /></p>
+          ) : (
+            <p>{t.activationFee}: <strong>{JOIN_FEE_HTG.toLocaleString()} HTG</strong> ({t.oneTime}) · <strong>{QUARTER_FEE_HTG.toLocaleString()} HTG</strong> {t.quarterFeeLabel}</p>
+          )}
         </>
       )}
       <p className="muted">{t.advertisedFee}: <strong>{t.adFeeRange}</strong></p>

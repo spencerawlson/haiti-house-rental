@@ -5,6 +5,8 @@ import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { getDict } from '@/lib/dictionaries';
 import { JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
+import PromoPrice from '@/components/PromoPrice';
+import { usePromo } from '@/lib/promo-client';
 
 // Onboarding (design: docs/design/app-showcase.png, screen 2): three short
 // slides after the first-visit splash — find a home, talk and visit,
@@ -16,12 +18,21 @@ export default function Welcome(props) {
   const t = getDict(params.locale);
   const router = useRouter();
   const [i, setI] = useState(0);
+  const promo = usePromo();
+  const promoOpen = Boolean(promo && promo.remaining > 0);
   const slides = [
     { title: t.onb1Title, text: t.onb1Text },
     { title: t.onb2Title, text: t.onb2Text },
     {
       title: t.onb3Title,
-      text: t.onb3Text
+      // While promo spots remain: the joining fee struck through, and the
+      // promo terms, instead of the normal prices.
+      text: promoOpen ? (
+        <>
+          <PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> ·{' '}
+          {t.onb3PromoText.replace('{spots}', String(promo.spots)).replace('{quarter}', QUARTER_FEE_HTG.toLocaleString())}
+        </>
+      ) : t.onb3Text
         .replace('{fee}', JOIN_FEE_HTG.toLocaleString())
         .replace('{quarter}', QUARTER_FEE_HTG.toLocaleString()),
     },

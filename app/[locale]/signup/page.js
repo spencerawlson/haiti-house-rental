@@ -11,6 +11,8 @@ import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
 import Icon from '@/components/Icon';
+import PromoPrice from '@/components/PromoPrice';
+import { usePromo } from '@/lib/promo-client';
 
 // Account creation, in Spencer's order: identity first, then location.
 // Step 0 (design screen 3): choose a role — tenant (free, own signup
@@ -23,6 +25,9 @@ export default function Signup(props) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [role, setRole] = useState('landlord');
+  const [promoUntil, setPromoUntil] = useState(null);
+  const promo = usePromo();
+  const promoOpen = Boolean(promo && promo.remaining > 0);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -123,6 +128,13 @@ export default function Signup(props) {
       setError(t.requiredField);
       return;
     }
+    // A promo landlord is already active for a year: nothing to pay, so
+    // they get the promo welcome instead of the joining-fee transfer.
+    if (result.account?.promoTagged) {
+      setPromoUntil(result.account.promoUntil);
+      setStep(4);
+      return;
+    }
     setStep(3);
   }
 
@@ -143,7 +155,14 @@ export default function Signup(props) {
             <div className="role-cards" role="radiogroup" aria-label={t.chooseRole}>
               {[
                 { id: 'tenant', icon: 'user', title: t.roleTenant, sub: t.roleTenantSub, extra: t.free },
-                { id: 'landlord', icon: 'home', title: t.roleLandlord, sub: t.roleLandlordSub, extra: `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}` },
+                {
+                  id: 'landlord', icon: 'home', title: t.roleLandlord, sub: t.roleLandlordSub,
+                  // While promo spots remain, the normal fees show struck
+                  // through: free to join, and the first year free.
+                  extra: promoOpen
+                    ? <><PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> · {t.promoLandlordRole}</>
+                    : `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}`,
+                },
                 { id: 'admin', icon: 'shield', title: t.roleAdmin, sub: '', extra: '' },
               ].map((r) => (
                 <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={`role-card${role === r.id ? ' selected' : ''}`} onClick={() => setRole(r.id)}>
@@ -213,6 +232,16 @@ export default function Signup(props) {
               <button className="btn btn-secondary" type="button" onClick={() => setStep(1)}>← {t.back}</button>
             </div>
           </form>
+        )}
+        {step === 4 && (
+          <div className="card">
+            <div className="card-body" style={{ display: 'grid', gap: 14 }}>
+              <h2 style={{ margin: 0 }}><Icon name="sparkles" /> {t.promoWelcomeTitle}</h2>
+              <p style={{ margin: 0 }}>{t.promoWelcomeBody.replace('{date}', promoUntil ? new Date(promoUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale) : '')}</p>
+              <Link className="btn" href={`/${params.locale}/list`}>{t.postHome}</Link>
+              <Link href={`/${params.locale}/account`}>{t.tabAccount} ›</Link>
+            </div>
+          </div>
         )}
         {step === 3 && (
           <div className="card">

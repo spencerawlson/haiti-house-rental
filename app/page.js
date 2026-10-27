@@ -4,7 +4,9 @@ import { getSessionAccount } from '@/lib/session-server';
 import { getPromoCounts } from '@/lib/promo-server';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
-import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
+import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT } from '@/lib/config';
+import Icon from '@/components/Icon';
+import PromoPrice from '@/components/PromoPrice';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
 import Splash from '@/components/Splash';
 
@@ -31,6 +33,12 @@ export default async function Landing() {
   // only, nothing about any account. A failed count hides the banner
   // instead of breaking the landing page.
   const promo = await getPromoCounts().catch(() => null);
+  const promoOpen = Boolean(promo && promo.remaining > 0);
+  const showCount = promoOpen && promo.remaining <= PROMO_SHOW_COUNT_AT;
+  const fill = (s) => s
+    .replaceAll('{remaining}', String(promo?.remaining ?? ''))
+    .replaceAll('{spots}', String(promo?.spots ?? ''))
+    .replaceAll('{quarter}', QUARTER_FEE_HTG.toLocaleString('en-US'));
   const backgrounds = [
     '/images/landing-mountain.jpg',
     '/images/landing-beach.jpg',
@@ -63,22 +71,30 @@ export default async function Landing() {
           <p>{t.landingSub}</p>
         </section>
 
-        {promo && promo.remaining > 0 && (
-          <section className="card" style={{ marginTop: 24, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #db2777, #f97316)', color: '#fff' }}>
-            <div className="card-body">
-              <h3 style={{ margin: '0 0 4px', color: '#fff' }}>🎉 {t.promoLandingTitle}</h3>
-              <p style={{ margin: '0 0 12px', color: 'rgba(255,255,255,0.92)' }}>
-                {t.promoLandingBody.replaceAll('{remaining}', String(promo.remaining)).replaceAll('{spots}', String(promo.spots))}
-              </p>
-              <Link className="btn" href={`/${lang}/signup`} style={{ background: '#fff', color: '#1e293b' }}>{t.createAccount}</Link>
-            </div>
-          </section>
-        )}
-
+        {/* Search first: most visitors are looking for a home. */}
         <form action={`/${lang}/listings`} method="get" style={{ display: 'flex', gap: 8, marginTop: 8 }}>
           <input name="q" className="input" placeholder={t.searchPlaceholder} style={{ flex: 1 }} />
           <button className="btn" type="submit">{t.browse}</button>
         </form>
+
+        {promoOpen && (
+          <section className="card promo-banner">
+            <div className="card-body">
+              <h3><Icon name="sparkles" /> {t.promoLandingTitle}</h3>
+              <p>{fill(t.promoLandingLimited)}</p>
+              {showCount && (
+                <>
+                  <p><strong>{fill(t.promoLandingCount)}</strong></p>
+                  <div className="promo-meter" role="progressbar" aria-valuemin={0} aria-valuemax={promo.spots} aria-valuenow={promo.spots - promo.remaining}>
+                    <span style={{ width: `${Math.round(((promo.spots - promo.remaining) / promo.spots) * 100)}%` }} />
+                  </div>
+                </>
+              )}
+              <p className="promo-after">{fill(t.promoAfterYear)}</p>
+              <Link className="btn promo-cta" href={`/${lang}/signup?role=landlord`}>{t.promoCta}</Link>
+            </div>
+          </section>
+        )}
 
         <div className="grid grid-2" style={{ marginTop: 24 }}>
           <div className="card">
@@ -92,7 +108,13 @@ export default async function Landing() {
             <div className="card-body">
               <h3 style={{ margin: '0 0 4px' }}>{t.landlordTitle}</h3>
               <p className="muted" style={{ margin: '0 0 12px' }}>
-                {t.activationOnce} {JOIN_FEE_HTG.toLocaleString()} HTG · {t.quarterFeeLabel}: {QUARTER_FEE_HTG.toLocaleString()} HTG · {t.payNote}
+                {promoOpen ? (
+                  <>
+                    {t.activationOnce} <PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> · {t.quarterFeeLabel}: <PromoPrice amount={QUARTER_FEE_HTG} free={t.promoFirstYear} />
+                  </>
+                ) : (
+                  <>{t.activationOnce} {JOIN_FEE_HTG.toLocaleString()} HTG · {t.quarterFeeLabel}: {QUARTER_FEE_HTG.toLocaleString()} HTG · {t.payNote}</>
+                )}
               </p>
               <Link className="btn" href={`/${lang}/list`}>{t.postHome}</Link>
             </div>
