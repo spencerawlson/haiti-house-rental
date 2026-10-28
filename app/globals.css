@@ -726,3 +726,113 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
   }
   .lp-cta { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---------------------------------------------------------------------
+   Chat, structured like WhatsApp / Messenger (reference: the two
+   screenshots in PR #85). Two screens:
+   - a thread list of full-width rows: avatar, name, one-line preview,
+     time top-right, unread pill;
+   - a conversation that fills the viewport: pinned header, a scrolling
+     message area, composer at the bottom.
+   The older .bubble / .chat-box rules stay where they are — the admin
+   chat still uses them and is not part of this redesign.
+   --------------------------------------------------------------------- */
+:root { --chat-mine: #fde8e8; --chat-theirs: #ffffff; }
+[data-theme="dark"] { --chat-mine: #3b2122; --chat-theirs: #1c1c1e; }
+
+/* Thread list. Rows run edge to edge, so they cancel .container padding. */
+.wa-list { margin: 0 -20px; }
+.wa-row {
+  position: relative; display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 10px 16px; background: none; border: 0;
+  font: inherit; color: var(--ink); text-align: left; cursor: pointer;
+}
+.wa-row:hover { background: var(--primary-soft); }
+/* Divider starts after the avatar, as in both apps. */
+.wa-row + .wa-row::before {
+  content: ""; position: absolute; left: 78px; right: 0; top: 0;
+  height: 1px; background: var(--line);
+}
+.wa-avatar {
+  width: 54px; height: 54px; border-radius: 999px; flex: none;
+  object-fit: cover; display: grid; place-items: center; overflow: hidden;
+  background: var(--primary); color: #fff; font-weight: 800; font-size: 1.15rem;
+}
+.wa-row-main { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.wa-row-top { display: flex; align-items: baseline; gap: 8px; }
+.wa-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wa-time { margin-left: auto; flex: none; font-size: 0.74rem; color: var(--muted); }
+.wa-row-bottom { display: flex; align-items: center; gap: 5px; }
+.wa-preview { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; color: var(--muted); }
+.wa-unread {
+  flex: none; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: var(--primary); color: #fff; font-size: 0.72rem; font-weight: 800;
+  display: grid; place-items: center;
+}
+/* An unread thread leans heavier, the way both apps mark one. */
+.wa-row-unread .wa-name { font-weight: 800; }
+.wa-row-unread .wa-preview { color: var(--ink); }
+.wa-tick { flex: none; display: inline-flex; color: var(--muted); font-size: 0.78rem; }
+.wa-tick-read { color: #53bdeb; }
+
+/* Conversation. Fixed so the message area scrolls on its own and the
+   composer stays put when the keyboard opens; the tab bar is hidden
+   while a thread is open (see app/[locale]/chats/page.js). */
+.wa-chat { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--bg); }
+.wa-chat-head {
+  flex: none; display: flex; align-items: center; gap: 10px;
+  padding: calc(8px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
+  background: var(--card); border-bottom: 1px solid var(--line);
+}
+.wa-icon-btn {
+  flex: none; background: none; border: 0; padding: 6px; cursor: pointer;
+  color: var(--ink); display: grid; place-items: center; border-radius: 999px;
+}
+.wa-icon-btn:hover { background: var(--primary-soft); }
+.wa-head-main { flex: 1; min-width: 0; display: grid; }
+.wa-head-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wa-head-sub { font-size: 0.78rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wa-menu {
+  position: absolute; top: calc(100% - 4px); right: 8px; z-index: 2;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: var(--shadow); padding: 6px; display: grid; min-width: 190px;
+}
+.wa-menu button { background: none; border: 0; font: inherit; color: var(--ink); text-align: left; padding: 10px 12px; border-radius: 10px; cursor: pointer; }
+.wa-menu button:hover { background: var(--primary-soft); }
+
+.wa-msgs {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 10px max(10px, env(safe-area-inset-right)) 14px max(10px, env(safe-area-inset-left));
+}
+.wa-day {
+  align-self: center; margin: 12px 0 6px; padding: 4px 12px; border-radius: 10px;
+  background: var(--card); border: 1px solid var(--line); font-size: 0.74rem; color: var(--muted);
+}
+.wa-b {
+  max-width: 80%; padding: 6px 10px 7px; border-radius: 12px; margin: 0;
+  font-size: 0.97rem; line-height: 1.35; overflow-wrap: anywhere;
+}
+.wa-b-mine { align-self: flex-end; background: var(--chat-mine); }
+.wa-b-theirs { align-self: flex-start; background: var(--chat-theirs); border: 1px solid var(--line); }
+/* Only the first bubble of a run gets the tail; the rest sit flush under
+   it, which is what makes a back-and-forth readable at a glance. */
+.wa-b-first { margin-top: 8px; }
+.wa-b-mine.wa-b-first { border-top-right-radius: 4px; }
+.wa-b-theirs.wa-b-first { border-top-left-radius: 4px; }
+/* Floated so the text wraps around the time instead of above it. */
+.wa-meta { float: right; margin: 7px 0 -1px 10px; font-size: 0.66rem; color: var(--muted); display: inline-flex; align-items: center; gap: 3px; }
+
+.wa-composer {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  padding: 8px max(10px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background: var(--card); border-top: 1px solid var(--line);
+}
+.wa-composer .input { flex: 1; border-radius: 999px; min-height: 42px; }
+.wa-send { flex: none; width: 44px; height: 44px; border-radius: 999px; background: var(--primary); color: #fff; border: 0; cursor: pointer; display: grid; place-items: center; font-size: 1.05rem; }
+.wa-send:disabled { opacity: 0.5; cursor: default; }
+.wa-foot-note {
+  flex: none; margin: 0; text-align: center; color: var(--muted); font-size: 0.88rem;
+  padding: 12px max(14px, env(safe-area-inset-left)) calc(12px + env(safe-area-inset-bottom));
+  background: var(--card); border-top: 1px solid var(--line);
+}
