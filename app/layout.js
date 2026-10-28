@@ -1,8 +1,27 @@
 import './globals.css';
-import { Nunito } from 'next/font/google';
+import localFont from 'next/font/local';
 import PresencePing from '@/components/PresencePing';
 
-const nunito = Nunito({ subsets: ['latin'], weight: ['400', '600', '700', '800'] });
+// Nunito, self-hosted. next/font/google fetches from Google at build
+// time, so a blocked or flaky fetch fails the whole build: it broke CI
+// on main twice in a row with "An error occurred in next/font", and the
+// same fetch runs in the FedServ rebuild, which is why a merge could
+// stop deploying. Nothing is fetched now.
+//
+// The file is the variable woff2 Google itself serves for the latin
+// subset — one file covers the whole weight axis, so this is the same
+// typeface, not a substitute.
+//
+// weight is the font's real wght axis (200-1000, read from its fvar
+// table), not the four weights the old config listed. The CSS asks for
+// 900 in places, which those four could not actually render.
+const nunito = localFont({
+  src: './fonts/nunito-latin-var.woff2',
+  weight: '200 1000',
+  style: 'normal',
+  display: 'swap',
+  fallback: ['system-ui', 'sans-serif'],
+});
 
 // Defaults for every page, including link previews (WhatsApp, Facebook)
 // of pages that do not set their own. metadataBase turns relative image
