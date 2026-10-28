@@ -198,7 +198,9 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
         </span>
         {conversation && !blocked && !closed && (
           <button type="button" className="wa-icon-btn" aria-label={strings.scheduleVisit} onClick={() => { setScheduling((s) => !s); setReporting(false); setMenuOpen(false); }}>
-            <Icon name="calendar" />
+            {/* Sized to match the back chevron; the 1em default left it
+                visibly smaller than the other two header controls. */}
+            <Icon name="calendar" size={22} />
           </button>
         )}
         {conversation && (
