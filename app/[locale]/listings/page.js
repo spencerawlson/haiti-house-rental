@@ -48,6 +48,14 @@ export default async function Listings(props) {
   const shown = sortListings(filterListings(LISTINGS, f, htgPerUsd), searchParams.sort || '', htgPerUsd);
   const view = searchParams.view === 'map' ? 'map' : 'list';
   const activeFilters = ['department', 'type', 'minPrice', 'maxPrice', 'minBeds', 'minBaths', 'purpose', 'power24', 'furnished', 'verified'].filter((k) => f[k]).length;
+  // The search as it gets saved: view and sort are presentation, not
+  // filters, so they never belong in a saved search or its identity.
+  const savedQuery = (() => {
+    const p = new URLSearchParams(searchParams);
+    p.delete('view');
+    p.delete('sort');
+    return p.toString();
+  })();
   const withView = (v) => {
     const p = new URLSearchParams(searchParams);
     if (v === 'map') p.set('view', 'map'); else p.delete('view');
@@ -131,7 +139,13 @@ export default async function Listings(props) {
           <span className="muted" style={{ marginRight: 'auto' }}><strong>{shown.length}</strong> {t.resultsFound}</span>
           <Link className={`chip${view === 'list' ? ' active' : ''}`} href={withView('list')}>☰ {t.listView}</Link>
           <Link className={`chip${view === 'map' ? ' active' : ''}`} href={withView('map')}><Icon name="map" /> {t.mapView}</Link>
-          <SaveSearchButton savedLabel={t.saveSearch} />
+          <SaveSearchButton
+            savedLabel={t.saveSearch}
+            query={savedQuery}
+            alertsHref={`${base}/saved-searches`}
+            savedText={t.searchSaved}
+            failedText={t.searchSaveFailed}
+          />
         </div>
         {view === 'map' ? (
           <ListingMap listings={mapPins(shown)} locale={params.locale} t={t} />
