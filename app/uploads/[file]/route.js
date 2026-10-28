@@ -26,6 +26,8 @@ const TYPES = {
   '.mp4': 'video/mp4',
   '.mov': 'video/quicktime',
   '.webm': 'video/webm',
+  '.weba': 'audio/webm',
+  '.m4a': 'audio/mp4',
 };
 const RESIZABLE = new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']);
 const CACHE = { 'Cache-Control': 'public, max-age=31536000, immutable' };

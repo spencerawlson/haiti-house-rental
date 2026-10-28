@@ -139,7 +139,7 @@ export default function Chats(props) {
                         </span>
                         <span className="wa-row-bottom">
                           {fromMe && <span className="wa-tick" aria-hidden="true">✓</span>}
-                          <span className="wa-preview">{th.lastText}</span>
+                          <span className="wa-preview">{th.lastIsVoice ? `🎤 ${t.voiceMessage}` : th.lastText}</span>
                           {th.unread > 0 && <span className="wa-unread">{th.unread}</span>}
                         </span>
                         {/* Which home the thread is about — WhatsApp has no

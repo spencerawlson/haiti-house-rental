@@ -5,6 +5,8 @@ import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { getSession } from '@/lib/account';
 import ReportForm from './ReportForm';
 import VisitScheduler from './VisitScheduler';
+import VoiceRecorder from './VoiceRecorder';
+import VoiceMessage from './VoiceMessage';
 import Icon from '@/components/Icon';
 import { photoSrc } from '@/lib/photo-url';
 
@@ -39,6 +41,15 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   // otherSuspended = the counterpart is fraud-suspended (0021): the
   // thread shows a neutral "unavailable" line, no reason, no label.
   const [otherSuspended, setOtherSuspended] = useState(false);
+  // Typing/delivered/read ride the same 5s poll as everything else — see
+  // app/api/chat/route.js GET. otherTyping expires on its own server-side
+  // (lib/typing.js TTL); readThroughAt/deliveredThroughAt are the other
+  // person's timestamps, compared against each of MY OWN messages to
+  // pick the tick: one check (sent), two (delivered), two blue (read).
+  const [otherTyping, setOtherTyping] = useState(false);
+  const [readThroughAt, setReadThroughAt] = useState(0);
+  const [deliveredThroughAt, setDeliveredThroughAt] = useState(0);
+  const typingPingRef = useRef(0);
   const endRef = useRef(null);
   const countRef = useRef(0);
 
@@ -60,6 +71,9 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     setClosed(!!data.closed);
     setLandlordLeft(!!data.landlordLeft);
     setOtherSuspended(!!data.otherSuspended);
+    setOtherTyping(!!data.otherTyping);
+    setReadThroughAt(Number(data.readThroughAt) || 0);
+    setDeliveredThroughAt(Number(data.deliveredThroughAt) || 0);
     // Opening the chat marks the thread read for this user, so the
     // unread badge clears once the messages have actually been seen.
     if (data.tenant !== null) {
@@ -116,6 +130,46 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     }
     setDraft('');
     load();
+  }
+
+  // A voice note has already been uploaded (VoiceRecorder) by the time
+  // this runs — same POST/error-handling shape as send(), just with
+  // audio fields instead of text.
+  async function sendVoice(url, durationMs, peaks) {
+    setSendError('');
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, tenant: threadTenant, audioUrl: url, audioDurationMs: durationMs, audioPeaks: peaks }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.error === 'landlord_left') {
+        setLandlordLeft(true);
+        setClosed(true);
+        setSendError('');
+        return;
+      }
+      setSendError(data.error === 'blocked' ? strings.chatBlocked : strings.chatSendError);
+      return;
+    }
+    load();
+  }
+
+  // Debounced "I'm typing" ping — at most once every ~2.5s while the
+  // draft keeps changing, so a whole message isn't one ping per keystroke.
+  function onDraftChange(e) {
+    const value = e.target.value;
+    setDraft(value);
+    const now = Date.now();
+    if (value.trim() && now - typingPingRef.current > 2500) {
+      typingPingRef.current = now;
+      fetch('/api/chat/typing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ listingId, tenant: threadTenant }),
+      }).catch(() => {});
+    }
   }
 
   async function toggleBlock() {
@@ -248,19 +302,38 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
           // First of a run: a new sender, or the first message of a day.
           const newDay = !prev || dayKey(prev.at) !== dayKey(m.at);
           const first = newDay || prevMine !== mine;
+          // Per-message receipt, same tick WhatsApp uses: one check once
+          // it's on the server, two once the other side's device has
+          // been in contact with the server since (login_events, via the
+          // presence ping), two in blue once they've actually opened
+          // this thread (chat_reads) — see app/api/chat/route.js GET.
+          const tickStatus = mine ? (m.at <= readThroughAt ? 'read' : m.at <= deliveredThroughAt ? 'delivered' : 'sent') : null;
           return (
             <Fragment key={m.id}>
               {newDay && <span className="wa-day">{dayLabel(m.at)}</span>}
               <p className={`wa-b ${mine ? 'wa-b-mine' : 'wa-b-theirs'}${first ? ' wa-b-first' : ''}`}>
-                <span className="sr-only">{label(m)}: </span>{m.text}
+                <span className="sr-only">{label(m)}: </span>
+                {m.audioUrl ? (
+                  <VoiceMessage url={m.audioUrl} durationMs={m.audioDurationMs} peaks={m.audioPeaks} label={strings.voiceMessage} />
+                ) : m.text}
                 <span className="wa-meta">
                   {at(m.at)}
-                  {mine && <span className="wa-tick" aria-hidden="true">✓</span>}
+                  {mine && (
+                    <span className={`wa-tick${tickStatus === 'read' ? ' wa-tick-read' : ''}`} aria-hidden="true">
+                      {tickStatus === 'sent' ? '✓' : '✓✓'}
+                    </span>
+                  )}
+                  {mine && tickStatus !== 'sent' && (
+                    <span className="sr-only">{tickStatus === 'read' ? strings.statusRead : strings.statusDelivered}</span>
+                  )}
                 </span>
               </p>
             </Fragment>
           );
         })}
+        {otherTyping && (
+          <p className="wa-b wa-b-theirs wa-b-first" style={{ fontStyle: 'italic' }}>{strings.typingIndicator}</p>
+        )}
         <span ref={endRef} />
       </div>
 
@@ -270,12 +343,16 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
         <form onSubmit={send} className="wa-composer">
           <input
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={onDraftChange}
             placeholder={isOwner ? strings.ownerPlaceholder : strings.chatPlaceholder}
             className="input"
             maxLength={2000}
           />
-          <button className="wa-send" type="submit" aria-label={strings.send} disabled={!draft.trim()}>➤</button>
+          {draft.trim() ? (
+            <button className="wa-send" type="submit" aria-label={strings.send}>➤</button>
+          ) : (
+            <VoiceRecorder listingId={listingId} tenant={threadTenant} onSend={sendVoice} strings={strings} />
+          )}
         </form>
       )}
     </div>
