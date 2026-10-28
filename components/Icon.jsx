@@ -1,8 +1,8 @@
 import {
   ArrowLeftRight, Ban, Banknote, Bath, BedDouble, Bell, CalendarDays, Camera, Car, CircleCheck,
-  CirclePause, CircleX, ClipboardList, Coins, CreditCard, Download, Droplet, Eye, Flag, Footprints,
+  CirclePause, CirclePlay, CircleX, ClipboardList, Coins, CreditCard, Download, Droplet, Eye, Flag, Footprints,
   Globe, Handshake, Heart, Hourglass, House, KeyRound, LogOut, Map as MapIcon, MapPin, Megaphone,
-  MessageCircle, Moon, OctagonX, PenLine, Receipt, Repeat, Ruler, Search, Settings, Shield, Sofa, Sparkles,
+  Mic, MessageCircle, Moon, OctagonX, PenLine, Receipt, Repeat, Ruler, Search, Settings, Shield, Sofa, Sparkles,
   Share2, Sprout, Star, Sun, SunMoon, Tag, Timer, Trash2, TrendingUp, TriangleAlert, Undo2, User, Users,
   Wifi, Zap,
 } from 'lucide-react';
@@ -39,12 +39,14 @@ const ICONS = {
   live: null, // a filled green dot, drawn below
   map: MapIcon,
   megaphone: Megaphone,
+  mic: Mic,
   money: Banknote,
   moon: Moon,
   overview: ClipboardList,
   partner: Handshake,
   pause: CirclePause,
   pin: MapPin,
+  play: CirclePlay,
   power: Zap,
   receipt: Receipt,
   repeat: Repeat,
