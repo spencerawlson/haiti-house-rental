@@ -1,22 +1,27 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { getSession } from '@/lib/account';
 import ReportForm from './ReportForm';
 import VisitScheduler from './VisitScheduler';
 import Icon from '@/components/Icon';
 import { photoSrc } from '@/lib/photo-url';
 
-// A private conversation between one tenant and the listing owner
-// (design: docs/design/app-showcase.png, screen 9 — listing card on top,
-// bubbles, round send button). The server decides who is who from the
+// A private conversation between one tenant and the listing owner,
+// structured like WhatsApp / Messenger: a pinned header, a message area
+// that scrolls on its own and stays on the newest message, and a
+// composer at the bottom. The server decides who is who from the
 // session: a tenant always sees their own thread; the owner sees the
 // tenant thread passed as `tenant`. Either side can block (no new
-// messages) or report the conversation to the admin. Either side can
-// also schedule a visit from here — the same scheduler as the listing
-// page, so a proposal made in chat is answered in chat. Polls every 5s.
-export default function ChatBox({ listingId, tenant = null, listing = null, strings, locale }) {
+// messages) or report the conversation to the admin, and either side can
+// schedule a visit — the same scheduler as the listing page, so a
+// proposal made in chat is answered in chat. Polls every 5s.
+//
+// Visiting a home is what the product is for, so the calendar stays a
+// one-tap button in the header; block and report sit behind the overflow
+// menu, where both apps keep the rare, destructive actions.
+export default function ChatBox({ listingId, tenant = null, listing = null, strings, locale, otherName = null, onBack = null }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState('');
@@ -25,6 +30,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   const [conversation, setConversation] = useState(null);
   const [reporting, setReporting] = useState(false);
   const [scheduling, setScheduling] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // closed = no new messages. landlordLeft = the home was deleted, so the
   // landlord is out of the conversation for good. The tenant keeps every
   // message either way — their history is theirs.
@@ -33,6 +39,8 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   // otherSuspended = the counterpart is fraud-suspended (0021): the
   // thread shows a neutral "unavailable" line, no reason, no label.
   const [otherSuspended, setOtherSuspended] = useState(false);
+  const endRef = useRef(null);
+  const countRef = useRef(0);
 
   const threadTenant = isOwner ? tenant : null;
 
@@ -73,6 +81,16 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     return () => clearInterval(timer);
   }, [load]);
 
+  // Stay on the newest message: jump on first paint, glide afterwards,
+  // and only when the count actually grew — a 5s poll that changes
+  // nothing must not yank someone who scrolled up to read.
+  useEffect(() => {
+    if (messages.length === countRef.current) return;
+    const first = countRef.current === 0;
+    countRef.current = messages.length;
+    endRef.current?.scrollIntoView({ block: 'end', behavior: first ? 'auto' : 'smooth' });
+  }, [messages]);
+
   async function send(e) {
     e.preventDefault();
     const text = draft.trim();
@@ -101,6 +119,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   }
 
   async function toggleBlock() {
+    setMenuOpen(false);
     const blocking = !conversation?.blocked;
     if (blocking && !window.confirm(strings.blockConfirm)) return;
     const res = await fetch('/api/chat/block', {
@@ -116,8 +135,25 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     return isOwner ? strings.tenantLabel : strings.youLabel;
   }
 
+  const intl = locale === 'ht' ? 'fr' : locale;
+
   function at(ms) {
-    return new Date(ms).toLocaleTimeString(locale === 'ht' ? 'fr' : locale, { hour: '2-digit', minute: '2-digit' });
+    return new Date(ms).toLocaleTimeString(intl, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  // Day separators. Today and yesterday are translated; anything older
+  // uses the locale's own date format.
+  function dayKey(ms) {
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+  function dayLabel(ms) {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (dayKey(ms) === dayKey(now.getTime())) return strings.chatToday;
+    if (dayKey(ms) === dayKey(yesterday.getTime())) return strings.chatYesterday;
+    return new Date(ms).toLocaleDateString(intl, { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
   // The owner opened their own listing without picking a tenant thread.
@@ -125,97 +161,121 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   const blocked = !!conversation?.blocked;
   // The anonymous legacy thread has nobody to read a reply.
   const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '') && !blocked && !closed && !otherSuspended;
+  const title = otherName || listing?.title || strings.chatTitle;
+  const initial = (otherName || listing?.title || '?').trim().charAt(0).toUpperCase();
+
+  // One line at the foot of the thread, in place of the composer, when
+  // writing is not possible.
+  function footNote() {
+    if (ownerWithoutThread) return strings.chatPickThread;
+    if (blocked) return conversation.blockedByMe ? strings.chatBlockedByMe : strings.chatBlocked;
+    if (closed) return landlordLeft ? strings.chatLandlordLeft : strings.chatListingGone;
+    if (otherSuspended) return strings.fraudChatUnavailable;
+    return null;
+  }
+  const note = signedIn ? footNote() : null;
 
   return (
-    <section className="card" style={{ marginTop: 20 }}>
-      <div className="card-body">
-        {listing && (
-          <Link href={`/${locale}/listings/${listing.id}`} className="chat-listing" style={{ color: 'inherit', marginBottom: 14 }}>
-            {listing.photos?.[0] ? <img src={photoSrc(listing.photos[0], 320)} alt="" /> : <span className="thumb" />}
-            <span style={{ minWidth: 0 }}>
-              <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{listing.title}</strong>
-              <span className="muted" style={{ fontSize: '0.88rem' }}>{Number(listing.price || 0).toLocaleString()} {listing.currency || 'HTG'} · {listing.commune}</span>
-            </span>
-          </Link>
+    <div className="wa-chat">
+      <header className="wa-chat-head" style={{ position: 'relative' }}>
+        {onBack && (
+          <button type="button" className="wa-icon-btn" onClick={onBack} aria-label={strings.back}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+          </button>
         )}
-        <div className="chat-head">
-          <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{strings.chatTitle}</h2>
-          {conversation && (
-            <span style={{ display: 'flex', gap: 4 }}>
-              {!blocked && !closed && (
-                <button type="button" className="link-btn" onClick={() => { setScheduling((s) => !s); setReporting(false); }}><Icon name="calendar" /> {strings.scheduleVisit}</button>
-              )}
-              {(!blocked || conversation.blockedByMe) && (
-                <button type="button" className="link-btn" onClick={toggleBlock}>{blocked ? strings.unblockChat : `⊘ ${strings.blockChat}`}</button>
-              )}
-              <button type="button" className="link-btn" onClick={() => { setReporting((r) => !r); setScheduling(false); }}><Icon name="flag" /> {strings.reportChat}</button>
-            </span>
+        {listing?.photos?.[0] ? (
+          <img className="wa-avatar" style={{ width: 38, height: 38 }} src={photoSrc(listing.photos[0], 160)} alt="" />
+        ) : (
+          <span className="wa-avatar" style={{ width: 38, height: 38, fontSize: '0.95rem' }} aria-hidden="true">{initial}</span>
+        )}
+        <span className="wa-head-main">
+          <span className="wa-head-name">{title}</span>
+          {listing && (
+            <Link className="wa-head-sub" href={`/${locale}/listings/${listing.id}`}>
+              {listing.title} · {Number(listing.price || 0).toLocaleString()} {listing.currency || 'HTG'}
+            </Link>
           )}
-        </div>
+        </span>
+        {conversation && !blocked && !closed && (
+          <button type="button" className="wa-icon-btn" aria-label={strings.scheduleVisit} onClick={() => { setScheduling((s) => !s); setReporting(false); setMenuOpen(false); }}>
+            <Icon name="calendar" />
+          </button>
+        )}
+        {conversation && (
+          <button type="button" className="wa-icon-btn" aria-label={strings.reportChat} aria-expanded={menuOpen} onClick={() => setMenuOpen((m) => !m)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
+          </button>
+        )}
+        {menuOpen && conversation && (
+          <div className="wa-menu">
+            {(!blocked || conversation.blockedByMe) && (
+              <button type="button" onClick={toggleBlock}>{blocked ? strings.unblockChat : strings.blockChat}</button>
+            )}
+            <button type="button" onClick={() => { setReporting((r) => !r); setScheduling(false); setMenuOpen(false); }}>{strings.reportChat}</button>
+          </div>
+        )}
+      </header>
+
+      <div className="wa-msgs" onClick={() => menuOpen && setMenuOpen(false)}>
         {reporting && conversation && (
-          <div style={{ marginBottom: 14 }}>
+          <div style={{ marginBottom: 10 }}>
             <ReportForm kind="conversation" listingId={listingId} tenant={threadTenant} strings={strings} onDone={() => setReporting(false)} />
           </div>
         )}
         {scheduling && conversation && (
-          <div style={{ marginBottom: 14 }}>
+          <div style={{ marginBottom: 10 }}>
             <VisitScheduler listingId={listingId} owner={listing?.owner} strings={strings} locale={locale} />
           </div>
         )}
         {signedIn === false && (
-          <>
-            <p style={{ margin: '0 0 12px' }}>{strings.chatSignIn}</p>
-            <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
+          <div style={{ margin: 'auto', textAlign: 'center' }}>
+            <p>{strings.chatSignIn}</p>
+            <p style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link className="btn" href={`/${locale}/signin`}>{strings.signIn}</Link>
               <Link className="btn btn-secondary" href={`/${locale}/tenants`}>{strings.createAccount}</Link>
             </p>
-          </>
+          </div>
         )}
-        {ownerWithoutThread && <p className="muted" style={{ margin: 0 }}>{strings.chatPickThread}</p>}
-        {signedIn && !ownerWithoutThread && (
-          <>
-            {isOwner && <p className="muted" style={{ margin: '0 0 14px' }}>{strings.replyAsOwner}</p>}
-            <div className="chat-box" style={{ marginBottom: 16 }}>
-              {messages.map((m) => {
-                const mine = isOwner ? m.sender === 'owner' : m.sender === 'tenant';
-                return (
-                  <div key={m.id} style={{ display: 'grid', justifyItems: mine ? 'end' : 'start', gap: 2 }}>
-                    <p className={`bubble ${mine ? 'bubble-mine' : 'bubble-theirs'}`} style={{ margin: 0 }}>
-                      <span className="sr-only">{label(m)}: </span>{m.text}
-                    </p>
-                    <span className="muted" style={{ fontSize: '0.72rem' }}>{at(m.at)}</span>
-                  </div>
-                );
-              })}
-            </div>
-            {blocked && (
-              <p className="notice" style={{ margin: '0 0 12px' }}>{conversation.blockedByMe ? strings.chatBlockedByMe : strings.chatBlocked}</p>
-            )}
-            {!blocked && closed && (
-              <p className="notice" style={{ margin: '0 0 12px' }}>
-                {landlordLeft ? strings.chatLandlordLeft : strings.chatListingGone}
+        {signedIn && isOwner && !ownerWithoutThread && (
+          <span className="wa-day" style={{ marginTop: 0 }}>{strings.replyAsOwner}</span>
+        )}
+        {signedIn && messages.map((m, i) => {
+          const mine = isOwner ? m.sender === 'owner' : m.sender === 'tenant';
+          const prev = messages[i - 1];
+          const prevMine = prev && (isOwner ? prev.sender === 'owner' : prev.sender === 'tenant');
+          // First of a run: a new sender, or the first message of a day.
+          const newDay = !prev || dayKey(prev.at) !== dayKey(m.at);
+          const first = newDay || prevMine !== mine;
+          return (
+            <Fragment key={m.id}>
+              {newDay && <span className="wa-day">{dayLabel(m.at)}</span>}
+              <p className={`wa-b ${mine ? 'wa-b-mine' : 'wa-b-theirs'}${first ? ' wa-b-first' : ''}`}>
+                <span className="sr-only">{label(m)}: </span>{m.text}
+                <span className="wa-meta">
+                  {at(m.at)}
+                  {mine && <span className="wa-tick" aria-hidden="true">✓</span>}
+                </span>
               </p>
-            )}
-            {otherSuspended && (
-              <p className="notice" style={{ margin: '0 0 12px' }}>{strings.fraudChatUnavailable}</p>
-            )}
-            {canWrite && (
-              <form onSubmit={send} className="chat-composer">
-                <input
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder={isOwner ? strings.ownerPlaceholder : strings.chatPlaceholder}
-                  className="input"
-                  style={{ flex: 1 }}
-                  maxLength={2000}
-                />
-                <button className="send-btn" type="submit" aria-label={strings.send}>➤</button>
-              </form>
-            )}
-            {sendError && <p style={{ margin: '8px 0 0', color: '#b91c1c' }}>{sendError}</p>}
-          </>
-        )}
+            </Fragment>
+          );
+        })}
+        <span ref={endRef} />
       </div>
-    </section>
+
+      {sendError && <p className="wa-foot-note" style={{ color: '#b91c1c' }}>{sendError}</p>}
+      {note && <p className="wa-foot-note">{note}</p>}
+      {canWrite && (
+        <form onSubmit={send} className="wa-composer">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder={isOwner ? strings.ownerPlaceholder : strings.chatPlaceholder}
+            className="input"
+            maxLength={2000}
+          />
+          <button className="wa-send" type="submit" aria-label={strings.send} disabled={!draft.trim()}>➤</button>
+        </form>
+      )}
+    </div>
   );
 }
