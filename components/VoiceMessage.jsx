@@ -36,15 +36,23 @@ export default function VoiceMessage({ url, durationMs, peaks, label }) {
     };
   }, []);
 
-  function toggle() {
+  // play() is async and can reject (format/network error) — setting
+  // "playing" unconditionally right after calling it left the button
+  // showing pause with nothing audible and the bar never advancing
+  // whenever playback actually failed to start.
+  async function toggle() {
     const audio = audioRef.current;
     if (!audio) return;
     if (playing) {
       audio.pause();
       setPlaying(false);
-    } else {
-      audio.play().catch(() => {});
+      return;
+    }
+    try {
+      await audio.play();
       setPlaying(true);
+    } catch {
+      setPlaying(false);
     }
   }
 

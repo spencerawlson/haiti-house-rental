@@ -33,4 +33,11 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Capacitor's own BridgeWebChromeClient.onPermissionRequest() requests
+         RECORD_AUDIO and MODIFY_AUDIO_SETTINGS together for a getUserMedia
+         audio request, and only grants if both come back approved. An
+         undeclared permission can never be granted regardless of what the
+         user taps, so without this one too the mic request would still be
+         denied even after a successful RECORD_AUDIO prompt. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>

@@ -1,4 +1,6 @@
-import { readFile, writeFile, mkdir, rename } from 'fs/promises';
+import { createReadStream } from 'fs';
+import { readFile, writeFile, mkdir, rename, stat } from 'fs/promises';
+import { Readable } from 'stream';
 import path from 'path';
 import { PHOTO_WIDTHS } from '@/lib/photo-url';
 
@@ -75,9 +77,28 @@ export async function GET(request, props) {
     }
   }
 
+  // Range requests (audio/video): Safari in particular refuses to play
+  // <audio>/<video> from a server that doesn't honor Range — it probes
+  // with a small range request before committing to play at all, so a
+  // flat 200-with-the-whole-file response left voice notes silently
+  // unplayable there.
   try {
-    const buf = await readFile(full);
-    return new Response(buf, { headers: { 'Content-Type': type, ...CACHE } });
+    const stats = await stat(full);
+    const headers = { 'Content-Type': type, 'Accept-Ranges': 'bytes', ...CACHE };
+    const range = request.headers.get('range');
+    const match = range && /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (match) {
+      const start = match[1] ? parseInt(match[1], 10) : 0;
+      const end = match[2] ? parseInt(match[2], 10) : stats.size - 1;
+      if (Number.isNaN(start) || Number.isNaN(end) || start > end || end >= stats.size) {
+        return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${stats.size}`, ...headers } });
+      }
+      return new Response(Readable.toWeb(createReadStream(full, { start, end })), {
+        status: 206,
+        headers: { ...headers, 'Content-Range': `bytes ${start}-${end}/${stats.size}`, 'Content-Length': String(end - start + 1) },
+      });
+    }
+    return new Response(Readable.toWeb(createReadStream(full)), { headers: { ...headers, 'Content-Length': String(stats.size) } });
   } catch {
     return new Response('Not found', { status: 404 });
   }
