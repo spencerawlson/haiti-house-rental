@@ -6,6 +6,8 @@ import { getDict } from '@/lib/dictionaries';
 import { getSession } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import ChatBox from '@/components/ChatBox';
+import Icon from '@/components/Icon';
+import { photoSrc } from '@/lib/photo-url';
 
 // The dedicated chat spot, structured like WhatsApp / Messenger: a list
 // of thread rows (avatar, name, one-line preview, time, unread pill),
@@ -131,7 +133,11 @@ export default function Chats(props) {
                       onContextMenu={(e) => { e.preventDefault(); deleteThread(th); }}
                       aria-label={`${name}${th.unread > 0 ? ` (${th.unread})` : ''}`}
                     >
-                      <span className="wa-avatar" aria-hidden="true">{(name || '?').trim().charAt(0).toUpperCase()}</span>
+                      {th.otherAvatarUrl ? (
+                        <img className="wa-avatar" src={photoSrc(th.otherAvatarUrl, 160)} alt="" aria-hidden="true" />
+                      ) : (
+                        <span className="wa-avatar" aria-hidden="true"><Icon name="user" /></span>
+                      )}
                       <span className="wa-row-main">
                         <span className="wa-row-top">
                           <span className="wa-name">{name}</span>
@@ -164,6 +170,7 @@ export default function Chats(props) {
             tenant={selectedTenant}
             listing={listing}
             otherName={selectedThread?.otherName || null}
+            otherAvatarUrl={selectedThread?.otherAvatarUrl || null}
             onBack={backToList}
             strings={t}
             locale={params.locale}
