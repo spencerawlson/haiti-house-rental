@@ -2,6 +2,7 @@ import './globals.css';
 import localFont from 'next/font/local';
 import PresencePing from '@/components/PresencePing';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import OutboxFlusher from '@/components/OutboxFlusher';
 
 // Nunito, self-hosted. next/font/google fetches from Google at build
 // time, so a blocked or flaky fetch fails the whole build: it broke CI
@@ -60,6 +61,7 @@ export default function RootLayout({ children }) {
         />
         <PresencePing />
         <ServiceWorkerRegister />
+        <OutboxFlusher />
         {children}
       </body>
     </html>

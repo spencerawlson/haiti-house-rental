@@ -9,6 +9,7 @@ import VoiceRecorder from './VoiceRecorder';
 import VoiceMessage from './VoiceMessage';
 import Icon from '@/components/Icon';
 import { photoSrc } from '@/lib/photo-url';
+import { enqueue, pendingChat, subscribe, newClientId, flush } from '@/lib/outbox';
 
 // A private conversation between one tenant and the listing owner,
 // structured like WhatsApp / Messenger: a pinned header, a message area
@@ -25,6 +26,8 @@ import { photoSrc } from '@/lib/photo-url';
 // menu, where both apps keep the rare, destructive actions.
 export default function ChatBox({ listingId, tenant = null, listing = null, strings, locale, otherName = null, otherAvatarUrl = null, onBack = null }) {
   const [messages, setMessages] = useState([]);
+  // Messages typed with no connection, waiting in the offline outbox.
+  const [pending, setPending] = useState([]);
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState('');
   const [isOwner, setIsOwner] = useState(false);
@@ -91,9 +94,27 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
       return undefined;
     }
     load();
-    const timer = setInterval(load, 5000);
+    // Each tick also drains the outbox, so a message typed with no signal
+    // goes out within 5s of the connection returning even without leaving
+    // the chat. flush() is a no-op when the queue is empty.
+    const timer = setInterval(async () => {
+      await flush(); // send queued messages first, so the reload below shows them
+      load().catch(() => {});
+    }, 5000);
     return () => clearInterval(timer);
   }, [load]);
+
+  // The outbox messages still waiting for THIS thread, shown as faded
+  // "sending" bubbles until the server confirms them. Refreshed on the
+  // outbox's own change events (this tab and others).
+  const refreshPending = useCallback(() => {
+    setPending(pendingChat(listingId, isOwner ? tenant : null));
+  }, [listingId, tenant, isOwner]);
+
+  useEffect(() => {
+    refreshPending();
+    return subscribe(refreshPending);
+  }, [refreshPending]);
 
   // Stay on the newest message: jump on first paint, glide afterwards,
   // and only when the count actually grew — a 5s poll that changes
@@ -110,26 +131,37 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
     const text = draft.trim();
     if (!text) return;
     setSendError('');
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId, text, tenant: threadTenant }),
-    });
-    // A failed send keeps the draft and says so, instead of silently
-    // losing the message.
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      if (data.error === 'landlord_left') {
-        setLandlordLeft(true);
-        setClosed(true);
-        setSendError('');
+    // The idempotency key (0025) travels with the message, so a retry from
+    // the outbox can never post it twice.
+    const body = { listingId, text, tenant: threadTenant, clientId: newClientId() };
+    setDraft('');
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data.error === 'landlord_left') {
+          setLandlordLeft(true);
+          setClosed(true);
+          return;
+        }
+        // The server rejected it (blocked, suspended, …): it won't succeed
+        // on retry, so don't queue it. Put the text back so they can see
+        // what happened and decide.
+        setSendError(data.error === 'blocked' ? strings.chatBlocked : strings.chatSendError);
+        setDraft(text);
         return;
       }
-      setSendError(data.error === 'blocked' ? strings.chatBlocked : strings.chatSendError);
-      return;
+      load();
+    } catch {
+      // No connection: queue it durably and show it pending. The flusher
+      // (and the 5s poll above) send it once the connection returns.
+      enqueue({ kind: 'chat', url: '/api/chat', body });
+      refreshPending();
     }
-    setDraft('');
-    load();
   }
 
   // A voice note has already been uploaded (VoiceRecorder) by the time
@@ -330,6 +362,20 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
             </Fragment>
           );
         })}
+        {/* Still in the outbox: my messages typed offline, hidden once the
+            server confirms them (same clientId arrives in `messages`). */}
+        {signedIn && pending
+          .filter((p) => !messages.some((m) => m.clientId && m.clientId === p.body.clientId))
+          .map((p) => (
+            <p key={p.id} className="wa-b wa-b-mine wa-b-first" style={{ opacity: 0.6 }}>
+              {p.body.text}
+              <span className="wa-meta">
+                {at(p.createdAt)}
+                <span className="wa-tick" aria-hidden="true">🕗</span>
+                <span className="sr-only">{strings.chatQueued}</span>
+              </span>
+            </p>
+          ))}
         {otherTyping && (
           <p className="wa-b wa-b-theirs wa-b-first" style={{ fontStyle: 'italic' }}>{strings.typingIndicator}</p>
         )}

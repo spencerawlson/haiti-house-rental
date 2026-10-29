@@ -147,6 +147,22 @@ self.addEventListener('activate', async () => {
 });
 ```
 
+## Offline send queue (Phase 14c-2)
+
+A chat message typed with no signal is queued, not lost. `lib/outbox.js` is
+a durable (localStorage) queue; `components/OutboxFlusher.jsx` (in the root
+layout) drains it on load, on `online`, and on tab refocus, and `ChatBox`'s
+5s poll also flushes. A queued message shows as a faded "sending" bubble and
+goes out on reconnect; a `clientId` (migration 0025) makes the replay
+idempotent, so it can never post twice. Server rejections (blocked,
+suspended) are not queued — they can't succeed on retry.
+
+**Testing (manual — needs a browser):** open a chat, DevTools → Offline (or
+airplane mode in the shell), send a message → it appears "sending"; go back
+online → within ~5s it sends and the clock turns into a tick. Only text
+chat is queued so far (voice notes need an upload that can't happen offline;
+visit requests are 14c-3).
+
 ## What is NOT done yet
 
 - No keystore exists yet for local signed Android builds (CI builds
