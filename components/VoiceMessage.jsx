@@ -75,7 +75,7 @@ export default function VoiceMessage({ url, durationMs, peaks, label }) {
     <span className="voice-msg">
       <audio ref={audioRef} src={url} preload="none" />
       <button type="button" className="voice-play-btn" onClick={toggle} aria-label={label}>
-        <Icon name={playing ? 'pause' : 'play'} />
+        <Icon name={playing ? 'pause' : 'play'} size={22} />
       </button>
       <span className="voice-bars" onClick={seek} role="presentation">
         {bars.map((v, i) => (
