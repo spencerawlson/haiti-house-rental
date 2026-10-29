@@ -348,11 +348,8 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
             className="input"
             maxLength={2000}
           />
-          {draft.trim() ? (
-            <button className="wa-send" type="submit" aria-label={strings.send}>➤</button>
-          ) : (
-            <VoiceRecorder listingId={listingId} tenant={threadTenant} onSend={sendVoice} strings={strings} />
-          )}
+          <VoiceRecorder listingId={listingId} tenant={threadTenant} onSend={sendVoice} strings={strings} />
+          <button className="wa-send" type="submit" aria-label={strings.send} disabled={!draft.trim()}>➤</button>
         </form>
       )}
     </div>
