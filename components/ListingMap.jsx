@@ -31,18 +31,48 @@ export default function ListingMap({ listings, locale, t, userLocation, height =
       // A tap on a price pin opens that listing straight away — no popup
       // in between, on this map or any other map in the app.
       const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+      // Public pins are APPROXIMATE (Stage 2, B1): the public shape
+      // carries approxLat/approxLng, grid-snapped to ~440m cells
+      // (lib/listings-server.js approxCoord), never the exact
+      // coordinates. Two listings in the same cell land on the exact
+      // same point — group by that shared coordinate and fan each
+      // group out in a small circle around it, so every pin stays
+      // independently tappable instead of stacking with only the
+      // topmost one clickable. Spread is computed at a fixed reference
+      // zoom (not the map's current/eventual zoom, which isn't settled
+      // until fitBounds below) so the real-world spacing stays small
+      // and predictable regardless of what the map ends up fitting to.
+      const SPREAD_ZOOM = 15;
+      const SPREAD_RADIUS_PX = 20;
+      const groups = new Map();
       for (const l of listings) {
-        // Public pins are APPROXIMATE (Stage 2, B1): the public shape
-        // carries approxLat/approxLng, never the exact coordinates.
         if (typeof l.approxLat !== 'number' || typeof l.approxLng !== 'number') continue;
-        points.push([l.approxLat, l.approxLng]);
-        // Price pins (design screen 5): the rent/sale price on the map
-        // itself, so people compare without opening every marker.
-        const short = l.price >= 1000 ? `${Math.round(l.price / 1000).toLocaleString()}k` : String(l.price || 0);
-        const marker = L.marker([l.approxLat, l.approxLng], {
-          icon: L.divIcon({ className: '', html: `<span class="price-pin">${esc(short)} ${esc(l.currency || 'HTG')}</span>`, iconSize: null, iconAnchor: [30, 28] }),
-        }).addTo(map);
-        marker.on('click', () => { window.location.href = `/${locale}/listings/${encodeURIComponent(l.id)}`; });
+        const key = `${l.approxLat},${l.approxLng}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(l);
+      }
+      for (const group of groups.values()) {
+        const [lat, lng] = [group[0].approxLat, group[0].approxLng];
+        const center = group.length > 1 ? map.project([lat, lng], SPREAD_ZOOM) : null;
+        group.forEach((l, i) => {
+          let pinLat = lat;
+          let pinLng = lng;
+          if (center) {
+            const angle = (2 * Math.PI * i) / group.length;
+            const offset = L.point(Math.cos(angle) * SPREAD_RADIUS_PX, Math.sin(angle) * SPREAD_RADIUS_PX);
+            const spread = map.unproject(center.add(offset), SPREAD_ZOOM);
+            pinLat = spread.lat;
+            pinLng = spread.lng;
+          }
+          points.push([pinLat, pinLng]);
+          // Price pins (design screen 5): the rent/sale price on the map
+          // itself, so people compare without opening every marker.
+          const short = l.price >= 1000 ? `${Math.round(l.price / 1000).toLocaleString()}k` : String(l.price || 0);
+          const marker = L.marker([pinLat, pinLng], {
+            icon: L.divIcon({ className: '', html: `<span class="price-pin">${esc(short)} ${esc(l.currency || 'HTG')}</span>`, iconSize: null, iconAnchor: [30, 28] }),
+          }).addTo(map);
+          marker.on('click', () => { window.location.href = `/${locale}/listings/${encodeURIComponent(l.id)}`; });
+        });
       }
       if (points.length > 1) map.fitBounds(points, { padding: [30, 30] });
       else if (points.length === 1) map.setView(points[0], 12);
