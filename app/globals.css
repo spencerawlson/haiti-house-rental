@@ -121,6 +121,20 @@ a:hover { text-decoration: underline; }
 .btn:active { transform: scale(0.98); }
 .btn:hover { background: var(--primary-dark); border-color: var(--primary-dark); text-decoration: none; }
 .btn:disabled { opacity: 0.5; cursor: default; }
+/* Fluorescent press feedback: a bright red glow ring flashes around a
+   solid-red action button on tap/click, instead of the button itself
+   changing color. Same effect in both themes — it reads well against
+   both the light and (especially) the near-black dark surfaces. */
+.btn:active, .btn:focus-visible,
+.wa-send:active, .wa-send:focus-visible,
+.send-btn:active, .send-btn:focus-visible,
+.lp-post:active, .lp-post:focus-visible,
+.lp-go:active, .lp-go:focus-visible,
+.onb-next:active, .onb-next:focus-visible,
+.search-pill button:active, .search-pill button:focus-visible {
+  box-shadow: 0 0 0 4px rgba(255, 45, 45, 0.5), 0 0 20px 6px rgba(255, 45, 45, 0.45);
+  outline: none;
+}
 .btn-secondary {
   background: var(--card);
   color: var(--ink);
