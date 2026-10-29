@@ -465,3 +465,37 @@ or visit request, show it pending, replay on reconnect via Background Sync
 with an `online`-event fallback, keyed by the `clientId` this phase made
 safe) — plus the optimistic "sending" UI in `ChatBox`/`VisitScheduler`.
 Verified manually, as the service-worker/outbox behaviour needs a browser.
+
+## Phase 14c-2 — offline chat outbox ✅
+
+A message typed with no signal is no longer lost: it is queued, shown
+"sending", and goes out on its own when the connection returns. Scoped to
+**text chat** — the primary case and the one that needed the 14c-1
+idempotency groundwork; queuing a visit request reuses the same outbox and
+is left to 14c-3, and offline voice notes stay out of scope (the audio
+upload itself can't happen offline).
+
+- **`lib/outbox.js`** — a small, durable (localStorage) queue. `flush()`
+  replays each item oldest-first and removes it once the server gives ANY
+  definitive response (a 2xx, or a 409 `already_requested` for a visit, or
+  a rejection that can't succeed on retry); an item is kept only on a
+  network error, and the loop stops so order is preserved. Every storage
+  access is guarded, so a blocked store just means no queuing.
+- **`components/OutboxFlusher.jsx`** — headless, mounted once in the root
+  layout; flushes on load, on `online`, and on tab refocus.
+- **`ChatBox`** — `send()` carries a `clientId` and, on a network error,
+  enqueues the message and shows it as a faded "sending" bubble. Its 5s
+  poll now flushes first, then reloads, so a reconnected message never
+  flickers. Confirmed messages dedupe the pending copy by `clientId`
+  (`mapMessage` now returns it). A server-side rejection (blocked,
+  suspended) is NOT queued — the text is restored so the person can see
+  what happened. Composer stays usable offline.
+- `chatQueued` string added in all three languages.
+
+No Background Sync yet (Chromium-only; iOS WebView lacks it). The `online`
++ refocus + 5s-poll flush cover the realistic case — the person is in the
+app when the signal returns. Outbox/UI behaviour is verified manually
+(DevTools Offline, airplane mode in the shells) per `MOBILE.md`.
+
+Still open: **14c-3** — queue a visit request the same way (small; reuses
+the outbox, already retry-safe via `already_requested`).
