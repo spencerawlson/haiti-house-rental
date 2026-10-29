@@ -437,3 +437,31 @@ offline page and manifest are served.
 
 Still open: **14c** (queue-and-retry a chat message / visit request made
 offline).
+
+## Phase 14c-1 — idempotent chat sends ✅
+
+The foundation for an offline send queue, split out because it is the one
+piece that can be tested in CI (the browser-side outbox cannot) and because
+chat is the one action that is not already safe to replay — a visit request
+is (a duplicate returns `already_requested`), but a chat message has no
+dedup, so a retry after a lost reply would post twice.
+
+- **Migration 0025** adds `chat_messages.client_id` and a partial unique
+  index `(listing_id, tenant, client_id) WHERE client_id IS NOT NULL`.
+- `postMessage` accepts an optional `clientId`. The insert is
+  `ON CONFLICT … DO NOTHING`; when the key was already used it returns the
+  message the first send created, so a retry is a successful no-op instead
+  of a duplicate or an error. No key (the field is absent) behaves exactly
+  as before — only tagged messages are deduplicated, each within its own
+  thread.
+- `POST /api/chat` threads `clientId` through. The chat notification is
+  already throttled to one per conversation per 15 minutes, so a retry
+  never produces a second alert.
+- `tests/chat-idempotency.test.mjs`: same key → one message (and the
+  original is returned); no key → two; different keys → two.
+
+Still open: **14c-2** — the browser outbox itself (store a failed chat send
+or visit request, show it pending, replay on reconnect via Background Sync
+with an `online`-event fallback, keyed by the `clientId` this phase made
+safe) — plus the optimistic "sending" UI in `ChatBox`/`VisitScheduler`.
+Verified manually, as the service-worker/outbox behaviour needs a browser.

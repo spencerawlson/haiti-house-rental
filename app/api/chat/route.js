@@ -75,7 +75,7 @@ export async function POST(request) {
   // side sees the neutral "unavailable" line instead.
   if (me.fraudSuspended) return Response.json({ error: 'suspended' }, { status: 403 });
   if (!rateLimit(`chat:${me.username}`, 30, 60 * 1000)) return tooMany();
-  const { listingId, text, tenant, audioUrl, audioDurationMs, audioPeaks } = await request.json().catch(() => ({}));
+  const { listingId, text, tenant, audioUrl, audioDurationMs, audioPeaks, clientId } = await request.json().catch(() => ({}));
   // Voice-note fields are only ever trusted if they look like what step 3
   // (the upload route) just handed back — defense in depth, since the
   // real authorization boundary for who may upload into this thread
@@ -122,8 +122,12 @@ export async function POST(request) {
     audioUrl: cleanAudioUrl,
     audioDurationMs: cleanAudioDurationMs,
     audioPeaks: cleanAudioPeaks,
+    clientId,
   });
   if (!msg) return Response.json({ error: 'Invalid message' }, { status: 400 });
+  // When a resend was deduplicated (migration 0025) the notify below still
+  // fires, but it is throttled to one per conversation per 15 min anyway,
+  // so a retry seconds later never produces a second alert.
   // Tell the other side (SMS/email only — the Messages tab counts chats),
   // at most once per conversation every 15 minutes. A voice-only message
   // has no text to preview, so fall back to a locale-agnostic mic emoji —
