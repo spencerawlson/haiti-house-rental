@@ -123,6 +123,16 @@ deleted on activate. `/sw.js` is served `no-cache` (a rule in
 `next.config.js`), so a new worker is noticed on the next visit; the page
 then shows a small "Mete ajou" prompt rather than reloading under the user.
 
+**Edge caching note:** in production kayayiti.app sits behind Cloudflare,
+which caches `.js` by extension and rewrites `/sw.js` to `cache-control:
+max-age=14400` — overriding our origin `no-cache`. Two things keep the
+worker always updatable anyway: we register with `updateViaCache: 'none'`
+(the browser fetches `/sw.js` from the network on every update check), and
+Cloudflare's edge revalidates against origin (`cf-cache-status:
+REVALIDATED`). For belt-and-suspenders, add a Cloudflare **Cache Rule** —
+`URI Path equals /sw.js` → *Bypass cache* (or set Browser Cache TTL to
+"Respect Existing Headers") — so the browser gets our `no-cache` verbatim.
+
 **Kill switch (if a worker ever misbehaves):** replace the body of
 `public/sw.js` with the two lines below and redeploy. Every client unregisters
 itself and clears the caches on its next visit, returning to plain network

@@ -21,7 +21,12 @@ export default function ServiceWorkerRegister() {
     navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
 
     navigator.serviceWorker
-      .register('/sw.js')
+      // updateViaCache: 'none' makes the browser fetch /sw.js from the
+      // network on every update check, never the HTTP cache. Cloudflare
+      // caches .js by extension and hands the browser a max-age that would
+      // otherwise override our no-cache header — this keeps the worker (and
+      // the kill switch) always able to update regardless of that.
+      .register('/sw.js', { updateViaCache: 'none' })
       .then((reg) => {
         // A worker already finished installing on a previous load.
         if (reg.waiting && navigator.serviceWorker.controller) setWaiting(reg.waiting);
