@@ -23,7 +23,7 @@ import { photoSrc } from '@/lib/photo-url';
 // Visiting a home is what the product is for, so the calendar stays a
 // one-tap button in the header; block and report sit behind the overflow
 // menu, where both apps keep the rare, destructive actions.
-export default function ChatBox({ listingId, tenant = null, listing = null, strings, locale, otherName = null, onBack = null }) {
+export default function ChatBox({ listingId, tenant = null, listing = null, strings, locale, otherName = null, otherAvatarUrl = null, onBack = null }) {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
   const [sendError, setSendError] = useState('');
@@ -216,7 +216,6 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
   // The anonymous legacy thread has nobody to read a reply.
   const canWrite = signedIn && !ownerWithoutThread && !(isOwner && tenant === '') && !blocked && !closed && !otherSuspended;
   const title = otherName || listing?.title || strings.chatTitle;
-  const initial = (otherName || listing?.title || '?').trim().charAt(0).toUpperCase();
 
   // One line at the foot of the thread, in place of the composer, when
   // writing is not possible.
@@ -237,10 +236,10 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
           </button>
         )}
-        {listing?.photos?.[0] ? (
-          <img className="wa-avatar" style={{ width: 38, height: 38 }} src={photoSrc(listing.photos[0], 160)} alt="" />
+        {otherAvatarUrl ? (
+          <img className="wa-avatar" style={{ width: 38, height: 38 }} src={photoSrc(otherAvatarUrl, 160)} alt="" />
         ) : (
-          <span className="wa-avatar" style={{ width: 38, height: 38, fontSize: '0.95rem' }} aria-hidden="true">{initial}</span>
+          <span className="wa-avatar" style={{ width: 38, height: 38 }} aria-hidden="true"><Icon name="user" size={18} /></span>
         )}
         <span className="wa-head-main">
           <span className="wa-head-name">{title}</span>
