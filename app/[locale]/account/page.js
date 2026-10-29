@@ -122,7 +122,7 @@ export default function Account(props) {
             <AvatarUpload account={me} onChange={setMe} t={t} />
             <div style={{ minWidth: 0 }}>
               <h2 style={{ margin: 0 }}>{me.name}</h2>
-              <p style={{ margin: '2px 0 0', color: 'var(--primary)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
+              <p style={{ margin: '2px 0 0', color: 'var(--ink)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
               <p className="muted" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
                 @{me.username}{me.id ? ` · ${me.id}` : ''}
               </p>

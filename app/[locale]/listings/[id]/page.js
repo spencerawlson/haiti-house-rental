@@ -89,7 +89,7 @@ export default async function ListingDetail(props) {
             <TakeDownButton listingId={l.id} owner={l.owner} locale={params.locale} confirmText={t.takeDownConfirm} label={t.takeDown} />
           </p>
           <h1 style={{ margin: '0 0 4px', fontSize: '1.5rem' }}>{l.title}</h1>
-          <p style={{ margin: 0, color: 'var(--primary)', fontWeight: 700 }}>
+          <p style={{ margin: 0, color: 'var(--ink)', fontWeight: 700 }}>
             <Icon name="pin" /> {communeName(l.commune, params.locale)}, {departmentName(l.department, params.locale)}
           </p>
           {l.address ? <p style={{ margin: '4px 0 0' }}>{l.address}</p> : null}
@@ -100,7 +100,7 @@ export default async function ListingDetail(props) {
               {l.advertised && <span className="badge"><Icon name="megaphone" /> {t.advertised}</span>}
             </p>
           )}
-          <p style={{ margin: '12px 0 0', fontSize: '1.6rem', fontWeight: 900, color: 'var(--primary)' }}>
+          <p style={{ margin: '12px 0 0', fontSize: '1.6rem', fontWeight: 900, color: 'var(--ink)' }}>
             {l.price.toLocaleString()} {l.currency || 'HTG'}
             {l.purpose === 'rent' && <span style={{ fontSize: '1rem', fontWeight: 600 }}> {rentPeriodLabel(l.rentPeriod, t)}</span>}
           </p>
