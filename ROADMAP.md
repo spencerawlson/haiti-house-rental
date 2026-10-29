@@ -365,3 +365,39 @@ a thousand users that is slow; at a hundred thousand it does not render.
   `adminClient()` now shares one session across the suite.
 - Kreyòl wording: the featured-homes section is "Kay vedèt yo" rather than
   "Kay an piblisite".
+
+## Phase 14a — Offline shell & installable PWA ✅
+
+First slice of low-connectivity resilience. Smallest and safest piece:
+the app stops showing a dead white screen when the network drops, and it
+becomes a real installable app. Caching of listings/photos/API data is
+deliberately left to 14b so a stale cache can never hide a changed price.
+
+- **Service worker** (`public/sw.js`, registered by
+  `components/ServiceWorkerRegister.jsx` in the root layout). It precaches a
+  self-contained offline page and only intercepts **fresh navigations**
+  (cold open, refresh, address bar): if one can't reach the network it
+  serves `public/offline.html` instead of a blank screen. Everything else —
+  API, `_next`, uploads, Next's soft client-side navigations — goes
+  straight to the network, unchanged.
+- **Offline page** (`public/offline.html`): inline styles only, so it never
+  depends on a stylesheet or font that might not be cached; dark-mode aware;
+  the message is in Kreyòl, French and English with a retry button.
+- **Installable manifest**: `public/manifest.webmanifest` gained `name`,
+  `start_url` (`/ht`), `scope`, `display: standalone`, `theme_color` and
+  `background_color` (`#bae6fd`, matching the native splash), and its icon
+  types were corrected from `image/png` to `image/webp`. Linked from the
+  root layout's `metadata.manifest`.
+- **Update safety:** a new worker is not swapped in under the user — the
+  page shows a small "Mete ajou" prompt that activates it on tap. `/sw.js`
+  is served `no-cache` (`next.config.js`) so a fix always propagates, and a
+  one-paste kill switch is documented in `MOBILE.md`.
+- Works inside both Capacitor shells (Android WebView / iOS WKWebView over
+  the https remote URL).
+- `tests/offline.test.mjs`: `/sw.js` is served as uncached JavaScript (never
+  `immutable`), `/offline.html` carries the offline message, and the
+  manifest is complete enough to install.
+
+Still open: **14b** (cache-first `_next`/photos, stale-while-revalidate
+listings feed, network-first navigations with a cached fallback) and
+**14c** (queue-and-retry a chat message / visit request made offline).

@@ -78,6 +78,43 @@ Both stores require a privacy policy URL. The app will have one at
 `/[locale]/privacy` (per-language, e.g. https://kayayiti.app/ht/privacy).
 Point the Play and App Store listings at that URL once the page ships.
 
+## Service worker & offline (Phase 14a)
+
+`public/sw.js` is a small service worker registered by
+`components/ServiceWorkerRegister.jsx` (rendered once in `app/layout.js`).
+It works in both native shells — Android WebView and iOS WKWebView run
+service workers for an https remote URL, which is exactly our setup.
+
+What it does today (14a): precaches a self-contained offline page
+(`public/offline.html`) and the logo, and serves that page when a **fresh
+navigation** (cold open, refresh, address bar) can't reach the network —
+no more dead white screen on a dropped signal. It does **not** cache
+listings, photos, API data or `_next` assets yet; those go straight to the
+network as before. Caching real content is Phase 14b.
+
+The web manifest (`public/manifest.webmanifest`) is now complete enough to
+install as a standalone app (`start_url` `/ht`, `display` standalone,
+`theme_color`/`background_color` `#bae6fd` to match the native splash).
+
+**Updating the worker:** bump `CACHE_VERSION` in `public/sw.js`. Old caches
+are deleted on activate. `/sw.js` is served `no-cache` (a rule in
+`next.config.js`), so a new worker is noticed on the next visit; the page
+then shows a small "Mete ajou" prompt rather than reloading under the user.
+
+**Kill switch (if a worker ever misbehaves):** replace the body of
+`public/sw.js` with the two lines below and redeploy. Every client unregisters
+itself and clears the caches on its next visit, returning to plain network
+fetching. Because `/sw.js` is uncached, this propagates on the next load.
+
+```js
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', async () => {
+  await self.registration.unregister();
+  for (const k of await caches.keys()) await caches.delete(k);
+  for (const c of await self.clients.matchAll()) c.navigate(c.url);
+});
+```
+
 ## What is NOT done yet
 
 - No keystore exists yet for local signed Android builds (CI builds

@@ -1,6 +1,7 @@
 import './globals.css';
 import localFont from 'next/font/local';
 import PresencePing from '@/components/PresencePing';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 // Nunito, self-hosted. next/font/google fetches from Google at build
 // time, so a blocked or flaky fetch fails the whole build: it broke CI
@@ -28,6 +29,7 @@ const nunito = localFont({
 // paths into the absolute URLs previews require.
 export const metadata = {
   metadataBase: new URL(process.env.PUBLIC_BASE_URL || 'https://kayayiti.app'),
+  manifest: '/manifest.webmanifest',
   title: 'Kay Ayiti — Kay pou lwe ak pou vann an Ayiti',
   description: 'Jwenn kay pou lwe oswa pou vann nan tout depatman Ayiti. Pale ak pwopriyetè a, pwograme yon vizit, gratis pou lokatè.',
   openGraph: {
@@ -43,7 +45,7 @@ export const metadata = {
 // viewport-fit=cover lets the safe-area env() vars report the real iPhone
 // notch/Dynamic Island insets inside the Capacitor webview; without it
 // safe-area-inset-top is 0 and the top bar slides under the status bar.
-export const viewport = { viewportFit: 'cover' };
+export const viewport = { viewportFit: 'cover', themeColor: '#bae6fd' };
 
 export default function RootLayout({ children }) {
   return (
@@ -56,7 +58,9 @@ export default function RootLayout({ children }) {
             __html: `(function(){try{var t=localStorage.getItem('kay_theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}document.documentElement.dataset.theme=t;}catch(e){}})();`,
           }}
         />
-        <PresencePing />{children}
+        <PresencePing />
+        <ServiceWorkerRegister />
+        {children}
       </body>
     </html>
   );
