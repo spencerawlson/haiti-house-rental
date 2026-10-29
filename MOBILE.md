@@ -78,26 +78,48 @@ Both stores require a privacy policy URL. The app will have one at
 `/[locale]/privacy` (per-language, e.g. https://kayayiti.app/ht/privacy).
 Point the Play and App Store listings at that URL once the page ships.
 
-## Service worker & offline (Phase 14a)
+## Service worker & offline (Phase 14a + 14b)
 
-`public/sw.js` is a small service worker registered by
+`public/sw.js` is the service worker registered by
 `components/ServiceWorkerRegister.jsx` (rendered once in `app/layout.js`).
 It works in both native shells — Android WebView and iOS WKWebView run
 service workers for an https remote URL, which is exactly our setup.
 
-What it does today (14a): precaches a self-contained offline page
+**14a (shell):** precaches a self-contained offline page
 (`public/offline.html`) and the logo, and serves that page when a **fresh
 navigation** (cold open, refresh, address bar) can't reach the network —
-no more dead white screen on a dropped signal. It does **not** cache
-listings, photos, API data or `_next` assets yet; those go straight to the
-network as before. Caching real content is Phase 14b.
+no more dead white screen on a dropped signal.
 
-The web manifest (`public/manifest.webmanifest`) is now complete enough to
+**14b (caching what costs data):** runtime caches so repeat visits transfer
+almost nothing and already-seen pages open with no signal. Each strategy is
+picked so a stale copy can't mislead:
+- `/_next/static/*` — **cache-first** (filenames are build-hashed, so a
+  cached copy is identical forever).
+- `/uploads/...?w=` — **cache-first, capped at ~60**. Only the resized photo
+  thumbnails cards/galleries use; full-size originals, videos and voice
+  notes are left to the network so the cache can't balloon.
+- `GET /api/listings` with no query — **stale-while-revalidate** (the public
+  feed shows instantly and refreshes behind it). The owner/admin/viewer
+  variants carry a query string and are never cached, so no signed-in data
+  is stored.
+- navigations — **network-first** (always fresh online; offline, the last
+  good copy of that page, else the offline page). Pages that can carry
+  signed-in content (`/account`, `/admin*`, `/library`, `/chats`,
+  `/payments`, `/visits`, auth) are never stored.
+
+The web manifest (`public/manifest.webmanifest`) is complete enough to
 install as a standalone app (`start_url` `/ht`, `display` standalone,
 `theme_color`/`background_color` `#bae6fd` to match the native splash).
 
-**Updating the worker:** bump `CACHE_VERSION` in `public/sw.js`. Old caches
-are deleted on activate. `/sw.js` is served `no-cache` (a rule in
+**Testing the caching (manual — the node test harness can't drive a service
+worker):** in Chrome DevTools → Application → Service Workers, load the site,
+then tick **Offline** and reload — a previously-viewed page and its photos
+should still render. In the Network tab, a second visit should show
+`_next/static` and `?w=` photos served "(ServiceWorker)". Lighthouse's PWA
+audit should pass. Repeat inside the Android/iOS shells with airplane mode.
+
+**Updating the worker:** bump `VERSION` in `public/sw.js`. Every old cache is
+deleted on activate. `/sw.js` is served `no-cache` (a rule in
 `next.config.js`), so a new worker is noticed on the next visit; the page
 then shows a small "Mete ajou" prompt rather than reloading under the user.
 

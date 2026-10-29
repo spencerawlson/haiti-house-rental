@@ -401,3 +401,39 @@ deliberately left to 14b so a stale cache can never hide a changed price.
 Still open: **14b** (cache-first `_next`/photos, stale-while-revalidate
 listings feed, network-first navigations with a cached fallback) and
 **14c** (queue-and-retry a chat message / visit request made offline).
+
+## Phase 14b — Cache what costs data ✅
+
+Builds on 14a's worker (`public/sw.js`, `VERSION` → `v2`). Repeat visits
+now transfer almost nothing and already-seen pages open with no signal. The
+strategies are chosen so a stale copy can never mislead:
+
+- **`/_next/static/*` — cache-first.** Build-hashed filenames, so a cached
+  copy is byte-identical to the network's forever. The biggest repeat-visit
+  win (all JS/CSS/fonts).
+- **`/uploads/...?w=` — cache-first, capped at ~60 (oldest evicted).** Only
+  the resized photo thumbnails the cards and galleries request; full-size
+  originals, videos and voice notes are deliberately left to the network so
+  the cache can't balloon on a cheap phone. A resized URL always names the
+  same bytes, so cache-first is safe.
+- **`GET /api/listings` (no query) — stale-while-revalidate.** The public
+  feed renders instantly from cache and refreshes behind it. Only the bare
+  feed: the owner (`?owner=&all=1`), detail/viewer (`?id=`) and admin
+  variants all carry a query string and go straight to the network, so no
+  personalised or signed-in data is ever cached.
+- **Navigations — network-first**, falling back offline to the last good
+  copy of that page, then the offline page. Pages that can carry signed-in
+  content (`/account`, `/admin*`, `/library`, `/chats`, `/payments`,
+  `/visits`, auth) are never stored, so a shared phone can't surface a
+  cached private page.
+- Everything else — API writes, admin, auth, upload originals — is left to
+  the network untouched.
+
+The service-worker caching can't be exercised by the node test harness (it
+needs a browser), so it is verified manually (DevTools → Offline, Lighthouse
+PWA, and the native shells in airplane mode); the checklist is in
+`MOBILE.md`. 14a's `tests/offline.test.mjs` still guards that the worker,
+offline page and manifest are served.
+
+Still open: **14c** (queue-and-retry a chat message / visit request made
+offline).
