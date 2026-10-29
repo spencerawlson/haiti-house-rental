@@ -11,6 +11,13 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // The service worker must never be cached long, or a fix cannot
+        // reach browsers that already registered an old one — the classic
+        // way to brick a PWA. Revalidate it on every visit.
+        source: '/sw.js',
+        headers: [{ key: 'Cache-Control', value: 'no-cache, must-revalidate' }],
+      },
+      {
         source: '/:path*',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },

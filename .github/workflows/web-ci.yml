@@ -50,6 +50,14 @@ jobs:
           echo "KAY_FAKE_NOW_MS=$(node -e 'const f = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Port-au-Prince", year: "numeric", month: "2-digit", day: "2-digit" }); const p = Object.fromEntries(f.formatToParts(new Date()).filter((x) => x.type !== "literal").map((x) => [x.type, x.value])); const naive = Date.parse(p.year + "-" + p.month + "-" + p.day + "T11:00:00Z"); const off = (ms) => { const d = new Date(ms); return new Date(d.toLocaleString("en-US", { timeZone: "America/Port-au-Prince" })).getTime() - new Date(d.toLocaleString("en-US", { timeZone: "UTC" })).getTime(); }; console.log(naive - off(naive));')" >> "$GITHUB_ENV"
       - name: Start app
         run: |
+          # The standalone server serves /public and /_next/static only
+          # from alongside server.js. The Dockerfile copies them in for
+          # production (COPY public ./public, COPY .next/static ...), so CI
+          # must do the same — otherwise every public asset (offline.html,
+          # sw.js, manifest.webmanifest, /images/*) 404s and falls through
+          # to the [locale] route, and the app is not tested as it ships.
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
           node .next/standalone/server.js > server.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://localhost:3000/api/health && break; sleep 2; done
         env:
