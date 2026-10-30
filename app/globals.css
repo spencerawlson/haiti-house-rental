@@ -622,7 +622,23 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
    switches on at 900px. Colours come from the existing tokens, so dark
    mode follows without a second set of rules.
    --------------------------------------------------------------------- */
-.lp { min-height: 100vh; background: var(--bg); }
+/* The landing is ALWAYS light, whatever theme the app is set to. These
+   restore the light palette for the landing subtree, overriding any
+   [data-theme="dark"] values inherited from :root, and color-scheme keeps
+   the native form controls (the search selects) light too. */
+.lp {
+  --bg: #f5f7fb;
+  --card: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e5e9f0;
+  --primary-soft: #fef2f2;
+  --primary: rgba(248, 113, 113, 0.55);
+  --primary-dark: rgba(239, 68, 68, 0.55);
+  --shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 10px 28px rgba(17, 24, 39, 0.07);
+  color-scheme: light;
+  min-height: 100vh; background: var(--bg);
+}
 
 .lp-nav {
   display: flex;
@@ -711,7 +727,8 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
   display: grid; gap: 10px; background: #0f172a; color: #e2e8f0;
 }
 .lp-why li { display: flex; align-items: center; gap: 9px; font-size: 0.9rem; font-weight: 600; }
-[data-theme="dark"] .lp-why { background: #000000; color: #ffffff; }
+/* No dark-theme override: the landing is forced light, so the strip keeps
+   its by-design dark-slate pill in every theme. */
 .lp-why svg { flex: none; opacity: 0.85; }
 
 .lp-main { padding-top: 26px; padding-bottom: 40px; }
@@ -733,7 +750,7 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
   .lp-fields { grid-template-columns: 1.4fr 1fr auto; align-items: end; }
   .lp-purpose { max-width: 260px; }
   .lp-why {
-    position: absolute; right: 32px; bottom: 26px; z-index: 1;
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 26px; right: auto; z-index: 1;
     grid-template-columns: repeat(4, max-content); gap: 22px;
     border-radius: 14px; padding: 14px 20px; background: rgba(15, 23, 42, 0.92);
   }
