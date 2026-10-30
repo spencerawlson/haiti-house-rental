@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getSession } from '@/lib/account';
 import Icon from '@/components/Icon';
+import { enqueue, flush } from '@/lib/outbox';
 
 // Visit appointments on a listing (design: docs/design/app-showcase.png,
 // screen 10 — month calendar, time-slot pills, optional note). A tenant
@@ -95,6 +96,8 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
   const [rescheduling, setRescheduling] = useState(null); // visit id
   const [newDate, setNewDate] = useState('');
   const [newTime, setNewTime] = useState('');
+  // A request made offline sits in the outbox, shown as a one-line note.
+  const [queued, setQueued] = useState(false);
 
   const isOwner = !!session && !!owner && session.username === owner;
 
@@ -106,7 +109,12 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
   useEffect(() => {
     setSession(getSession());
     load();
-    const timer = setInterval(load, 15000);
+    // Also drain the outbox, so a request made offline goes out when the
+    // connection returns even without leaving this page.
+    const timer = setInterval(async () => {
+      await flush();
+      load().catch(() => {});
+    }, 15000);
     return () => clearInterval(timer);
   }, [load]);
 
@@ -122,23 +130,36 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
   async function propose(e) {
     e.preventDefault();
     setError('');
+    setQueued(false);
     if (!date || !time) {
       setError(strings.visitInvalid);
       return;
     }
-    const res = await fetch('/api/visits', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ listingId, date, time, message }),
-    });
-    if (!res.ok) {
-      setError(errorText((await res.json().catch(() => ({}))).error));
-      return;
+    const body = { listingId, date, time, message };
+    try {
+      const res = await fetch('/api/visits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        setError(errorText((await res.json().catch(() => ({}))).error));
+        return;
+      }
+      setDate('');
+      setTime('');
+      setMessage('');
+      load();
+    } catch {
+      // No connection: queue it. A visit request is already safe to replay
+      // — the server returns already_requested for a duplicate, so the
+      // outbox drops it on that 409 exactly like a success.
+      enqueue({ kind: 'visit', url: '/api/visits', body });
+      setDate('');
+      setTime('');
+      setMessage('');
+      setQueued(true);
     }
-    setDate('');
-    setTime('');
-    setMessage('');
-    load();
   }
 
   async function act(id, action, extra = {}) {
@@ -184,6 +205,7 @@ export default function VisitScheduler({ listingId, owner, strings, locale }) {
           </form>
         ) : null}
         {error && <p style={{ color: '#dc2626', margin: '12px 0 0' }}>{error}</p>}
+        {!hasActive && queued && <p className="muted" style={{ margin: '12px 0 0' }}>{strings.visitQueued}</p>}
         <div style={{ display: 'grid', gap: 12, marginTop: 20 }}>
           {mine.map((v) => {
             const role = v.owner === session.username ? 'owner' : 'tenant';

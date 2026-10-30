@@ -499,3 +499,24 @@ app when the signal returns. Outbox/UI behaviour is verified manually
 
 Still open: **14c-3** — queue a visit request the same way (small; reuses
 the outbox, already retry-safe via `already_requested`).
+
+## Phase 14c-3 — offline visit requests ✅
+
+Closes out 14c. A visit request made with no signal is queued and sent on
+reconnect, reusing the 14c-2 outbox. Client-only — no migration, because a
+visit request was already safe to replay: `createVisit` returns
+`already_requested` for a duplicate, so `flush()` drops the item on that 409
+exactly as it would on success.
+
+- **`VisitScheduler`** — `propose()` enqueues a `{ kind: 'visit' }` item on a
+  network error and shows a one-line "waiting for connection" note
+  (`visitQueued`, ht/fr/en) instead of silently failing. Its 15s poll now
+  flushes before reloading, so a request sent while the form is open goes
+  out within one tick of reconnecting; the note clears itself once the visit
+  lands in the list (`hasActive`). An HTTP error (already_requested, invalid)
+  still shows inline as before.
+
+With this, both outbound actions a visitor can take with no signal — a chat
+message and a visit request — survive and send themselves. Offline voice
+notes remain out of scope (the upload can't happen offline). Verified
+manually per `MOBILE.md`.
