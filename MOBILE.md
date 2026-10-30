@@ -157,11 +157,16 @@ goes out on reconnect; a `clientId` (migration 0025) makes the replay
 idempotent, so it can never post twice. Server rejections (blocked,
 suspended) are not queued — they can't succeed on retry.
 
+Both outbound actions a visitor can take with no signal queue this way: a
+**chat message** (14c-2) and a **visit request** (14c-3, via
+`VisitScheduler`, which shows a "waiting for connection" note). Offline voice
+notes stay out of scope — the audio upload itself can't happen offline.
+
 **Testing (manual — needs a browser):** open a chat, DevTools → Offline (or
 airplane mode in the shell), send a message → it appears "sending"; go back
-online → within ~5s it sends and the clock turns into a tick. Only text
-chat is queued so far (voice notes need an upload that can't happen offline;
-visit requests are 14c-3).
+online → within ~5s it sends and the clock turns into a tick. Same for a
+visit request: propose one offline → "waiting for connection" note → it
+sends on reconnect.
 
 ## What is NOT done yet
 
