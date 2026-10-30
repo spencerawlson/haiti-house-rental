@@ -738,6 +738,14 @@ button.stat-tile { text-align: left; font: inherit; cursor: pointer; width: 100%
     border-radius: 14px; padding: 14px 20px; background: rgba(15, 23, 42, 0.92);
   }
   .lp-cta { grid-template-columns: 1fr 1fr; }
+  /* Everything below the hero shares the hero's width and left edge instead
+     of dropping to the 860px app container — which left it both narrower
+     than and indented from the hero above it on a wide screen. */
+  .lp-main { max-width: 1180px; padding-left: 32px; padding-right: 32px; }
+  /* A few newest homes read as a tidy row of real-sized cards packed from
+     the left, not three 1fr columns stretched across the width with an
+     empty gap where the missing listings would sit. */
+  .lp-main .listing-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 340px)); justify-content: start; }
 }
 
 /* ---------------------------------------------------------------------
