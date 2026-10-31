@@ -16,7 +16,7 @@ import { usePromo } from '@/lib/promo-client';
 
 // Account creation, in Spencer's order: identity first, then location.
 // Step 0 (design screen 3): choose a role — tenant (free, own signup
-// page), landlord (1,000 HTG once, continues here) or administrator.
+// page) or landlord (1,000 HTG once, continues here).
 // Step 1: full name, username, password, phone, email.
 // Step 2: location — phone GPS (reverse-geocoded) or manual pick.
 export default function Signup(props) {
@@ -49,7 +49,6 @@ export default function Signup(props) {
 
   function chooseRole() {
     if (role === 'tenant') router.push(`/${params.locale}/tenant-signup`);
-    else if (role === 'admin') router.push(`/${params.locale}/admin-login`);
     else setStep(1);
   }
 
@@ -163,7 +162,6 @@ export default function Signup(props) {
                     ? <><PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> · {t.promoLandlordRole}</>
                     : `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}`,
                 },
-                { id: 'admin', icon: 'shield', title: t.roleAdmin, sub: '', extra: '' },
               ].map((r) => (
                 <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={`role-card${role === r.id ? ' selected' : ''}`} onClick={() => setRole(r.id)}>
                   <span className="role-icon" aria-hidden="true"><Icon name={r.icon} /></span>
