@@ -136,7 +136,7 @@ export default function ListHome(props) {
       <main className="container">
       <Link href={`/${params.locale}`}>{t.back}</Link>
       <h1 className="page-title">{t.landlordTitle}</h1>
-      {!(meLoaded && me?.activated) && (
+      {!(meLoaded && me?.activated) && me?.role !== 'seller' && (
         <>
           <ol className="muted">
             <li>{t.landlordStep1}</li>
@@ -170,6 +170,16 @@ export default function ListHome(props) {
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <Link className="btn" href={`/${params.locale}/listings`}>{t.browse}</Link>
               <Link className="btn btn-secondary" href={`/${params.locale}/signup?role=landlord`}>{t.createAccount}</Link>
+            </p>
+          </div>
+        </div>
+      )}
+      {meLoaded && me && me.role === 'seller' && (
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="card-body">
+            <p style={{ margin: '0 0 12px' }}>{t.shopTitle}: {t.shopSubline}</p>
+            <p style={{ margin: 0 }}>
+              <Link className="btn" href={`/${params.locale}/shop/post`}>{t.shopPostItem}</Link>
             </p>
           </div>
         </div>
