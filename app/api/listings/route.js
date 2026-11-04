@@ -1,5 +1,6 @@
 import { getListings, getListing, getListingsForOwner, getViewerListing, getAdminListings, getAdminListing, addListing, updateListing, withListingSlot } from '@/lib/listings-server';
 import { resolveCommune } from '@/lib/listings';
+import { isValidShopCategory } from '@/lib/shop';
 import { isAdminCookie } from '@/lib/admin-auth';
 import { getSessionAccount } from '@/lib/session-server';
 
@@ -71,18 +72,50 @@ async function geocodeListing(data) {
 
 export async function POST(request) {
   const data = await request.json().catch(() => ({}));
-  // Only an activated landlord account can post. Tenants explore; they
+  // Only an activated paid account can post. Tenants explore; they
   // never create listings — enforced here, not just in the form, so a
   // direct API call cannot bypass it. The owner is the session account;
   // an `owner` sent in the body is ignored.
+  //
+  // Kind is FORCED server-side from the account's role, and a
+  // client-supplied kind is rejected outright (a landlord must not be
+  // able to post a Shop item to dodge house rules, and a seller must
+  // not be able to post a house):
+  //   landlord -> kind 'home', no shop fields allowed
+  //   seller   -> kind 'furniture', exactly one valid section/category
+  // Sellers post furniture only, never houses — the task's "sellers
+  // can post furniture items (NOT houses)".
   const owner = await getSessionAccount(request);
-  if (!owner || owner.role !== 'landlord' || !owner.activated) {
-    return Response.json({ error: 'Only activated landlord accounts can post listings' }, { status: 403 });
+  if (!owner || !['landlord', 'seller'].includes(owner.role) || !owner.activated) {
+    return Response.json({ error: 'Only activated landlord or seller accounts can post listings' }, { status: 403 });
   }
   // Fraud suspension (0021) is separate from billing: an activated,
-  // paid-up landlord still cannot post while fraud-suspended.
+  // paid-up account still cannot post while fraud-suspended.
   if (owner.fraudSuspended) {
     return Response.json({ error: 'suspended' }, { status: 403 });
+  }
+  if ('kind' in data) {
+    return Response.json({ error: 'kind_forced' }, { status: 400 });
+  }
+  if (owner.role === 'seller') {
+    // Simplified furniture post: title, section, category, price,
+    // commune, description, photos. No bedrooms/bathrooms, no rent
+    // period — those are house fields and are never required here.
+    if (!isValidShopCategory(data.shopSection, data.shopCategory)) {
+      return Response.json({ error: 'invalid_shop_category' }, { status: 400 });
+    }
+    if (!(Number(data.price ?? data.priceHTG) > 0)) {
+      return Response.json({ error: 'invalid_price' }, { status: 400 });
+    }
+    data.kind = 'furniture';
+    data.shopSection = data.shopSection;
+    data.shopCategory = data.shopCategory;
+    data.purpose = 'sale';
+  } else {
+    if (data.shopSection || data.shopCategory) {
+      return Response.json({ error: 'shop_fields_for_sellers_only' }, { status: 400 });
+    }
+    data.kind = 'home';
   }
   data.owner = owner.username;
   if (typeof data.lat !== 'number') {
@@ -103,6 +136,9 @@ export async function POST(request) {
 // admin-only (see /api/admin/advertised); the landlord can only request it.
 export async function PATCH(request) {
   const data = await request.json().catch(() => ({}));
+  if ('kind' in data) {
+    return Response.json({ error: 'kind_forced' }, { status: 400 });
+  }
   const listing = await getListing(data.id);
   if (!listing || listing.status !== 'active') {
     return Response.json({ error: 'Listing not found' }, { status: 404 });
