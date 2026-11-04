@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { JOIN_FEE_HTG, QUARTER_FEE_HTG } from '@/lib/config';
+import { JOIN_FEE_HTG, QUARTER_FEE_HTG, SELLER_JOIN_FEE_HTG, SELLER_QUARTER_FEE_HTG } from '@/lib/config';
 import { createAccount } from '@/lib/account';
 import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
@@ -27,7 +27,9 @@ export default function Signup(props) {
   const [role, setRole] = useState('landlord');
   const [promoUntil, setPromoUntil] = useState(null);
   const promo = usePromo();
-  const promoOpen = Boolean(promo && promo.remaining > 0);
+  // Each paid role reads ITS OWN promo pool: a seller's free year
+  // comes from the 2000 seller spots, never from landlord spots.
+  const promoOpen = Boolean(promo && (role === 'seller' ? promo.sellerRemaining > 0 : promo.remaining > 0));
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -43,8 +45,10 @@ export default function Signup(props) {
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
-    // Deep links that already chose (e.g. "Post a home") skip the chooser.
-    if (new URLSearchParams(window.location.search).get('role') === 'landlord') setStep(1);
+    // Deep links that already chose (e.g. "Post a home", "Become a
+    // seller") skip the chooser.
+    const preRole = new URLSearchParams(window.location.search).get('role');
+    if (preRole === 'landlord' || preRole === 'seller') { setRole(preRole); setStep(1); }
   }, []);
 
   function chooseRole() {
@@ -118,6 +122,7 @@ export default function Signup(props) {
       phone: phone.trim(),
       email: email.trim(),
       location: { commune: commune.trim(), department, lat: coords?.lat ?? null, lng: coords?.lng ?? null },
+      role,
     });
     if (result.error === 'taken') {
       setError(t.usernameTaken);
@@ -158,9 +163,23 @@ export default function Signup(props) {
                   id: 'landlord', icon: 'home', title: t.roleLandlord, sub: t.roleLandlordSub,
                   // While promo spots remain, the normal fees show struck
                   // through: free to join, and the first year free.
-                  extra: promoOpen
+                  // Note: promoOpen here is the LANDLORD pool only when
+                  // this card is the chosen role — the seller card below
+                  // reads the seller pool the same way. The card extra
+                  // is rendered for the selected role's pool via the
+                  // per-role check below.
+                  extra: (role === 'landlord' ? promoOpen : Boolean(promo && promo.remaining > 0))
                     ? <><PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> · {t.promoLandlordRole}</>
                     : `${JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}`,
+                },
+                {
+                  id: 'seller', icon: 'sofa', title: t.roleSeller, sub: t.roleSellerSub,
+                  // Furniture sellers: same process as landlords, at
+                  // 50% of the landlord price (750 join / 500 quarter),
+                  // with their own 2000-spot free-year promo pool.
+                  extra: Boolean(promo && promo.sellerRemaining > 0)
+                    ? <><PromoPrice amount={SELLER_JOIN_FEE_HTG} free={t.free} /> · {t.promoSellerRole}</>
+                    : `${SELLER_JOIN_FEE_HTG.toLocaleString()} HTG ${t.oneTime} · ${SELLER_QUARTER_FEE_HTG.toLocaleString()} HTG / 3 ${t.months || 'mwa'}`,
                 },
               ].map((r) => (
                 <button key={r.id} type="button" role="radio" aria-checked={role === r.id} className={`role-card${role === r.id ? ' selected' : ''}`} onClick={() => setRole(r.id)}>
@@ -235,8 +254,10 @@ export default function Signup(props) {
           <div className="card">
             <div className="card-body" style={{ display: 'grid', gap: 14 }}>
               <h2 style={{ margin: 0 }}><Icon name="sparkles" /> {t.promoWelcomeTitle}</h2>
-              <p style={{ margin: 0 }}>{t.promoWelcomeBody.replace('{date}', promoUntil ? new Date(promoUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale) : '')}</p>
-              <Link className="btn" href={`/${params.locale}/list`}>{t.postHome}</Link>
+              <p style={{ margin: 0 }}>{(role === 'seller' ? t.promoWelcomeBodySeller : t.promoWelcomeBody).replace('{date}', promoUntil ? new Date(promoUntil).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale) : '')}</p>
+              {role === 'seller'
+                ? <Link className="btn" href={`/${params.locale}/shop/post`}>{t.shopPostItem}</Link>
+                : <Link className="btn" href={`/${params.locale}/list`}>{t.postHome}</Link>}
               <Link href={`/${params.locale}/account`}>{t.tabAccount} ›</Link>
             </div>
           </div>
@@ -248,7 +269,7 @@ export default function Signup(props) {
               <p>{t.accountCreated}</p>
               <p>{t.sendTransfer}</p>
               <p className="muted" style={{ margin: 0 }}>{t.fromYourNumber} {phone}</p>
-              <PaymentForm kind="join" amountHTG={JOIN_FEE_HTG} destination={destination} strings={t} onSubmitted={() => router.push(`/${params.locale}/account`)} />
+              <PaymentForm kind="join" amountHTG={role === 'seller' ? SELLER_JOIN_FEE_HTG : JOIN_FEE_HTG} destination={destination} strings={t} onSubmitted={() => router.push(`/${params.locale}/account`)} />
               <p className="muted" style={{ margin: 0 }}>{t.transferNote}</p>
               <Link href={`/${params.locale}/account`}>{t.payLater} ›</Link>
             </div>

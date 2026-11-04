@@ -31,9 +31,11 @@ export const dynamic = 'force-dynamic';
 // "price · place · rooms". Built from the PUBLIC shape, so a shared link
 // never reveals more than an anonymous visitor would see.
 function previewText(l, t, locale) {
-  const price = `${Number(l.price || 0).toLocaleString('en-US')} ${l.currency || 'HTG'}${l.purpose === 'rent' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}`;
+  const price = `${Number(l.price || 0).toLocaleString('en-US')} ${l.currency || 'HTG'}${l.purpose === 'rent' && l.kind !== 'furniture' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}`;
   const place = `${communeName(l.commune, locale)}, ${departmentName(l.department, locale)}`;
-  const rooms = l.type === 'land' ? t.land : `${l.bedrooms} ${t.bedrooms} · ${l.bathrooms} ${t.bathrooms}`;
+  const rooms = l.kind === 'furniture'
+    ? `${t[`shopSection${l.shopSection?.[0]?.toUpperCase()}${l.shopSection?.slice(1)}`] || l.shopSection} · ${t[`shopCat${l.shopCategory?.[0]?.toUpperCase()}${l.shopCategory?.slice(1)}`] || l.shopCategory}`
+    : l.type === 'land' ? t.land : `${l.bedrooms} ${t.bedrooms} · ${l.bathrooms} ${t.bathrooms}`;
   return { price, place, rooms };
 }
 
@@ -73,6 +75,13 @@ export default async function ListingDetail(props) {
   // deletion countdown is deliberately not shown here — only its owner
   // sees that, in their library.
   const taken = l.status === 'sold' || l.status === 'leased';
+  // Furniture (0026): a Shop item is not a house — no rooms row, no
+  // visits, no rent period. It shows its section/category instead, and
+  // the same contact button, which opens the existing chat flow with
+  // the seller.
+  const isFurniture = l.kind === 'furniture';
+  const sectionLabel = isFurniture ? (t[`shopSection${l.shopSection?.[0]?.toUpperCase()}${l.shopSection?.slice(1)}`] || l.shopSection) : null;
+  const categoryLabel = isFurniture ? (t[`shopCat${l.shopCategory?.[0]?.toUpperCase()}${l.shopCategory?.slice(1)}`] || l.shopCategory) : null;
   const d = l.details || {};
   return (
     <>
@@ -102,20 +111,24 @@ export default async function ListingDetail(props) {
           )}
           <p style={{ margin: '12px 0 0', fontSize: '1.6rem', fontWeight: 900, color: 'var(--ink)' }}>
             {l.price.toLocaleString()} {l.currency || 'HTG'}
-            {l.purpose === 'rent' && <span style={{ fontSize: '1rem', fontWeight: 600 }}> {rentPeriodLabel(l.rentPeriod, t)}</span>}
+            {l.purpose === 'rent' && !isFurniture && <span style={{ fontSize: '1rem', fontWeight: 600 }}> {rentPeriodLabel(l.rentPeriod, t)}</span>}
           </p>
-          <div className="icon-row" style={{ fontSize: '0.95rem', gap: 18, margin: '10px 0 0', color: 'var(--ink)' }}>
-            {l.type === 'land' ? (
-              <span><Icon name="area" /> {l.areaM2 ? `${l.areaM2.toLocaleString()} m²` : t.land}</span>
-            ) : (
-              <>
-                <span><Icon name="bed" /> {l.bedrooms} {t.bedrooms}</span>
-                <span><Icon name="bath" /> {l.bathrooms} {t.bathrooms}</span>
-              </>
-            )}
-            <span><Icon name="home" /> {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</span>
-            {(d.internet === 'included' || d.internet === 'available') && <span><Icon name="wifi" /> WiFi</span>}
-          </div>
+          {isFurniture ? (
+            <p style={{ margin: '10px 0 0', fontWeight: 700 }}>{sectionLabel} · {categoryLabel}</p>
+          ) : (
+            <div className="icon-row" style={{ fontSize: '0.95rem', gap: 18, margin: '10px 0 0', color: 'var(--ink)' }}>
+              {l.type === 'land' ? (
+                <span><Icon name="area" /> {l.areaM2 ? `${l.areaM2.toLocaleString()} m²` : t.land}</span>
+              ) : (
+                <>
+                  <span><Icon name="bed" /> {l.bedrooms} {t.bedrooms}</span>
+                  <span><Icon name="bath" /> {l.bathrooms} {t.bathrooms}</span>
+                </>
+              )}
+              <span><Icon name="home" /> {l.type === 'house' ? t.house : l.type === 'land' ? t.land : t.apartment}</span>
+              {(d.internet === 'included' || d.internet === 'available') && <span><Icon name="wifi" /> WiFi</span>}
+            </div>
+          )}
           {/* Public view count (same number the landlord sees in their
               library); hidden at zero rather than showing "0". */}
           {l.views > 0 && (
@@ -148,8 +161,10 @@ export default async function ListingDetail(props) {
             <p className="notice" style={{ margin: '22px 0 0' }}>
               {l.status === 'sold' ? t.soldNotice : t.leasedNotice}
             </p>
-          ) : (
+          ) : !isFurniture ? (
             <VisitScheduler listingId={l.id} owner={l.owner} strings={t} locale={params.locale} />
+          ) : (
+            <p className="muted" style={{ margin: '22px 0 0' }}>{t.shopBuyNote}</p>
           )}
           <ReportListingButton listingId={l.id} owner={l.owner} strings={t} />
         </section>

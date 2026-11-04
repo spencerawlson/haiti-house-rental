@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, REACTIVATION_FEE_HTG } from '@/lib/config';
+import { LOCALES, billingFeesFor } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
 import AvatarUpload from '@/components/AvatarUpload';
@@ -55,7 +55,13 @@ export default function Account(props) {
       fetch('/api/admin-chat/unread').then((r) => r.json()).then((d) => setAdminUnread(d.unread || 0)).catch(() => {});
       if (a.role !== 'tenant') {
         fetch('/api/payments').then((r) => r.json()).then((d) => setPayments(d.payments || [])).catch(() => {});
-        fetch(`/api/listings?owner=${encodeURIComponent(a.username)}`).then((r) => r.json()).then((d) => setMyHomes(d.listings || [])).catch(() => {});
+        // Sellers read their own library (all=1): the public listing
+        // feed is houses only, so a seller's furniture items would
+        // otherwise never count on their own dashboard.
+        const listingsUrl = a.role === 'seller'
+          ? `/api/listings?owner=${encodeURIComponent(a.username)}&all=1`
+          : `/api/listings?owner=${encodeURIComponent(a.username)}`;
+        fetch(listingsUrl).then((r) => r.json()).then((d) => setMyHomes(d.listings || [])).catch(() => {});
       }
     });
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
@@ -77,7 +83,11 @@ export default function Account(props) {
     setMe(null);
   }
 
+  // Paid accounts: landlords (houses) and sellers (Shop items). Both
+  // share the subscription lifecycle; only the price table differs
+  // (seller = 50% of landlord, server-decided in lib/config.js).
   const isLandlord = !!me && me.role !== 'tenant';
+  const isSeller = !!me && me.role === 'seller';
   const unread = threads.reduce((sum, th) => sum + th.unread, 0);
   const upcomingVisits = visits.filter((v) => ['proposed', 'confirmed'].includes(v.status)).length;
   const pendingPayments = payments.filter((p) => p.status === 'pending').length;
@@ -91,7 +101,7 @@ export default function Account(props) {
     : billing === 'pending' ? 'join'
     : billing === 'deactivated' ? 'reactivation'
     : 'quarter';
-  const dueAmount = { join: JOIN_FEE_HTG, quarter: QUARTER_FEE_HTG, reactivation: REACTIVATION_FEE_HTG }[dueKind];
+  const dueAmount = dueKind ? billingFeesFor(me.role)[dueKind] : undefined;
   const dueLabel = { join: t.payJoin, quarter: t.payQuarter, reactivation: t.payReactivation }[dueKind];
   const statusLabel = { pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[billing];
   const dateFmt = (ms) => new Date(ms).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale);
@@ -122,7 +132,7 @@ export default function Account(props) {
             <AvatarUpload account={me} onChange={setMe} t={t} />
             <div style={{ minWidth: 0 }}>
               <h2 style={{ margin: 0 }}>{me.name}</h2>
-              <p style={{ margin: '2px 0 0', color: 'var(--ink)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : t.roleLandlord}</p>
+              <p style={{ margin: '2px 0 0', color: 'var(--ink)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : me.role === 'seller' ? t.roleSeller : t.roleLandlord}</p>
               <p className="muted" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
                 @{me.username}{me.id ? ` · ${me.id}` : ''}
               </p>
@@ -180,18 +190,39 @@ export default function Account(props) {
 
         {isLandlord && (
           <>
-            <h2 style={{ margin: '8px 0 12px' }}>{t.landlordDashboard}</h2>
+            <h2 style={{ margin: '8px 0 12px' }}>{isSeller ? t.sellerDashboard : t.landlordDashboard}</h2>
             <div className="stat-tiles">
-              <Link href={`${base}/library`} className="stat-tile tone-blue"><span className="stat-icon"><Icon name="home" /></span><strong>{myHomes.length}</strong><span>{t.myListings}</span></Link>
+              <Link href={`${base}/library`} className="stat-tile tone-blue"><span className="stat-icon"><Icon name="home" /></span><strong>{myHomes.length}</strong><span>{isSeller ? t.shopMyItems : t.myListings}</span></Link>
               <Link href={`${base}/chats`} className="stat-tile tone-green"><span className="stat-icon"><Icon name="chat" /></span><strong>{unread}</strong><span>{t.dashNewMessages}</span></Link>
-              <Link href={`${base}/visits`} className="stat-tile tone-purple"><span className="stat-icon"><Icon name="calendar" /></span><strong>{upcomingVisits}</strong><span>{t.dashVisits}</span></Link>
+              {!isSeller && <Link href={`${base}/visits`} className="stat-tile tone-purple"><span className="stat-icon"><Icon name="calendar" /></span><strong>{upcomingVisits}</strong><span>{t.dashVisits}</span></Link>}
               <Link href={`${base}/payments`} className="stat-tile tone-amber"><span className="stat-icon"><Icon name="card" /></span><strong>{pendingPayments}</strong><span>{t.dashPendingPayments}</span></Link>
             </div>
             {me.activated && (
-              <p style={{ margin: '14px 0 0' }}><Link className="btn" href={`${base}/list`} style={{ width: '100%' }}>＋ {t.addNewHome}</Link></p>
+              <p style={{ margin: '14px 0 0' }}>
+                {isSeller
+                  ? <Link className="btn" href={`${base}/shop/post`} style={{ width: '100%' }}>＋ {t.shopPostItem}</Link>
+                  : <Link className="btn" href={`${base}/list`} style={{ width: '100%' }}>＋ {t.addNewHome}</Link>}
+              </p>
             )}
           </>
         )}
+
+        {/* Shop (Nov 2026): the catchy furniture entry, visible from
+            every account — tenants buying for a new home, landlords
+            and sellers alike. Buying in v1 is browse + contact the
+            seller; the Shop page says the no-payment-yet part plainly. */}
+        <section className="card" style={{ marginTop: 20, background: 'var(--primary-soft)' }}>
+          <div className="card-body" style={{ display: 'grid', gap: 10 }}>
+            <h2 style={{ margin: 0 }}>{t.shopTitle}</h2>
+            <p style={{ margin: 0 }}>{t.shopSubline}</p>
+            <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Link className="btn" href={`${base}/shop`}>{t.shopBrowse}</Link>
+              {isSeller
+                ? <Link className="btn btn-secondary" href={`${base}/shop/post`}>{t.shopPostItem}</Link>
+                : <Link className="btn btn-secondary" href={`${base}/signup?role=seller`}>{t.shopBecomeSeller}</Link>}
+            </p>
+          </div>
+        </section>
 
         <nav className="menu card" style={{ marginTop: 20 }}>
           {me && <MenuRow href={`${base}/chats`} icon="chat" label={t.myMessages} badge={unread} />}

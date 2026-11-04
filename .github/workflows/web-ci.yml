@@ -75,7 +75,11 @@ jobs:
           BILLING_GRACE_MS: 4000
           BILLING_DUE_REMINDER_MS: 3000
           # The suite signs up more accounts than one IP may in an hour.
-          SIGNUP_LIMIT_PER_HOUR: 1000
+          # 3000, not 1000: the promo-cap test alone burns ~1020 signups
+          # now that the landlord cap is 1000, plus every other file's
+          # signups — 1000 starved the suite and failed PR #107 with 429s.
+          # Test-only: production default stays 40.
+          SIGNUP_LIMIT_PER_HOUR: 3000
           # Pinned clock for the reminder window tests (see above).
           KAY_FAKE_NOW_MS: ${{ env.KAY_FAKE_NOW_MS }}
       - name: Regression tests
