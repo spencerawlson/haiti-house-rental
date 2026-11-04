@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LOCALES, billingFeesFor } from '@/lib/config';
+import { LOCALES, billingFeesFor, SHOW_SHOP } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
 import AvatarUpload from '@/components/AvatarUpload';
@@ -211,6 +211,7 @@ export default function Account(props) {
             every account — tenants buying for a new home, landlords
             and sellers alike. Buying in v1 is browse + contact the
             seller; the Shop page says the no-payment-yet part plainly. */}
+        {SHOW_SHOP && (
         <section className="card" style={{ marginTop: 20, background: 'var(--primary-soft)' }}>
           <div className="card-body" style={{ display: 'grid', gap: 10 }}>
             <h2 style={{ margin: 0 }}>{t.shopTitle}</h2>
@@ -223,6 +224,7 @@ export default function Account(props) {
             </p>
           </div>
         </section>
+        )}
 
         <nav className="menu card" style={{ marginTop: 20 }}>
           {me && <MenuRow href={`${base}/chats`} icon="chat" label={t.myMessages} badge={unread} />}

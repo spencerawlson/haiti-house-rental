@@ -9,7 +9,7 @@ import { getPromoCounts } from '@/lib/promo-server';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT } from '@/lib/config';
+import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT, SHOW_PROMO_BANNER, SHOW_SHOP } from '@/lib/config';
 import Icon from '@/components/Icon';
 import PromoPrice from '@/components/PromoPrice';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
@@ -179,7 +179,7 @@ export default async function Landing() {
       </section>
 
       <main className="container lp-main">
-        {promoOpen && (
+        {SHOW_PROMO_BANNER && promoOpen && (
           <section className="card promo-banner">
             <div className="card-body">
               <h3><Icon name="sparkles" /> {t.promoLandingTitle}</h3>
@@ -205,6 +205,7 @@ export default async function Landing() {
         {/* Shop banner (Nov 2026): "Mèble Kay Ou" — the catchy
             furniture entry. Real seller items only, via the Shop page;
             this banner itself invents no product, price or seller. */}
+        {SHOW_SHOP && (
         <section className="card" style={{ background: 'var(--primary-soft)' }}>
           <div className="card-body" style={{ display: 'grid', gap: 8 }}>
             <h2 style={{ margin: 0 }}>{t.shopTitle}</h2>
@@ -215,6 +216,7 @@ export default async function Landing() {
             </p>
           </div>
         </section>
+        )}
 
         {/* Real listings only. When there are barely any, say so rather
             than padding the page with invented homes. */}
