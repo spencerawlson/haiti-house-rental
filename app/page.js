@@ -202,6 +202,20 @@ export default async function Landing() {
           </section>
         )}
 
+        {/* Shop banner (Nov 2026): "Mèble Kay Ou" — the catchy
+            furniture entry. Real seller items only, via the Shop page;
+            this banner itself invents no product, price or seller. */}
+        <section className="card" style={{ background: 'var(--primary-soft)' }}>
+          <div className="card-body" style={{ display: 'grid', gap: 8 }}>
+            <h2 style={{ margin: 0 }}>{t.shopTitle}</h2>
+            <p className="muted" style={{ margin: 0 }}>{t.shopSubline}</p>
+            <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Link className="btn" href={`/${lang}/shop`}>{t.shopBrowse} →</Link>
+              <Link className="btn btn-secondary" href={`/${lang}/signup?role=seller`}>{t.shopBecomeSeller}</Link>
+            </p>
+          </div>
+        </section>
+
         {/* Real listings only. When there are barely any, say so rather
             than padding the page with invented homes. */}
         <div className="section-head">
