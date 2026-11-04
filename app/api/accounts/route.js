@@ -45,9 +45,10 @@ export async function GET(request) {
   });
 }
 
-// Public signup: tenant or landlord only. Partner accounts (free, active
-// at once) are admin-created via /api/admin/partner — a `partner` flag
-// sent here used to be honored, which skipped the activation fee.
+// Public signup: tenant, landlord or furniture seller. Partner
+// accounts (free, active at once) are admin-created via
+// /api/admin/partner — a `partner` flag sent here used to be honored,
+// which skipped the activation fee.
 export async function POST(request) {
   // Per-IP limits are generous: Haitian mobile carriers put many
   // subscribers behind one shared (CGNAT) address.
@@ -67,7 +68,7 @@ export async function POST(request) {
     phone: String(data.phone),
     email: data.email ? String(data.email) : '',
     location: data.location || null,
-    role: data.role === 'tenant' ? 'tenant' : 'landlord',
+    role: data.role === 'tenant' ? 'tenant' : data.role === 'seller' ? 'seller' : 'landlord',
     partner: false,
   });
   if (!account) return Response.json({ error: 'Username taken' }, { status: 409 });
