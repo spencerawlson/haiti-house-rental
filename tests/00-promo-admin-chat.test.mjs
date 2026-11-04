@@ -23,6 +23,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE, ADMIN_PASSWORD, client, signup, adminClient, uniq, sha } from './helpers.mjs';
+import { SHOW_PROMO_BANNER } from '../lib/config.js';
 
 const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const run = uniq();
@@ -114,17 +115,23 @@ test('landing page announces the promo; fees show struck through', { skip }, asy
   assert.ok(promo.remaining > 150, 'early in the run: plenty of spots left');
   const { status, html } = await landingHtml();
   assert.equal(status, 200);
-  assert.ok(html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'banner title renders');
-  assert.ok(html.includes('Plas limite: premye 1000 pwopriyetè yo'), 'early on it says spots are limited');
-  assert.ok(!/Sèlman \d+ plas ki rete/.test(html), 'no "998 of 1000" count while most spots are open');
-  assert.ok(html.includes('Apre premye ane a: 1,000 HTG chak 3 mwa.'), 'what happens after the year');
-  assert.ok(html.includes('/ht/signup?role=landlord'), 'banner goes straight to landlord signup');
-  assert.ok(html.includes('Mete kay ou gratis'), 'banner button says what it does');
-  // The landlord card no longer contradicts the banner: normal fees struck.
+  if (SHOW_PROMO_BANNER) {
+    assert.ok(html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'banner title renders');
+    assert.ok(html.includes('Plas limite: premye 1000 pwopriyetè yo'), 'early on it says spots are limited');
+    assert.ok(!/Sèlman \d+ plas ki rete/.test(html), 'no "998 of 1000" count while most spots are open');
+    assert.ok(html.includes('Apre premye ane a: 1,000 HTG chak 3 mwa.'), 'what happens after the year');
+    assert.ok(html.includes('/ht/signup?role=landlord'), 'banner goes straight to landlord signup');
+    assert.ok(html.includes('Mete kay ou gratis'), 'banner button says what it does');
+    // Search comes before the banner: most visitors are looking for a home.
+    assert.ok(html.indexOf('name="q"') < html.indexOf('promo-banner'), 'search above the banner');
+  } else {
+    // Banner hidden (Nov 2026) while the promo keeps running.
+    assert.ok(!html.includes('promo-banner'), 'promo banner hidden');
+    assert.ok(!html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'no banner title');
+  }
+  // The promo still runs: the landlord card shows the normal fees struck.
   assert.match(html, /<s class="price-was">1,500 HTG<\/s>/);
   assert.match(html, /<s class="price-was">1,000 HTG<\/s>/);
-  // Search comes before the banner: most visitors are looking for a home.
-  assert.ok(html.indexOf('name="q"') < html.indexOf('promo-banner'), 'search above the banner');
   // Public counts for the client pages: landlord spots and spots
   // left, plus the separate seller pool (Nov 2026) — counts only.
   const pub = await (await fetch(`${BASE}/api/promo`)).json();
@@ -215,10 +222,14 @@ test('the 1000 cap holds: the first untagged landlord ends the promo', { skip },
       const left = (await (await fetch(`${BASE}/api/promo`)).json()).remaining;
       if (left <= 100) {
         const { html } = await landingHtml();
-        const m = html.match(/Sèlman (\d+) plas ki rete sou 1000/);
-        assert.ok(m, 'scarce spots: the banner shows the count');
-        assert.ok(Number(m[1]) <= left && Number(m[1]) > 0, `shown ${m[1]} vs ${left}`);
-        assert.ok(html.includes('class="promo-meter"'), 'and a progress bar');
+        if (SHOW_PROMO_BANNER) {
+          const m = html.match(/Sèlman (\d+) plas ki rete sou 1000/);
+          assert.ok(m, 'scarce spots: the banner shows the count');
+          assert.ok(Number(m[1]) <= left && Number(m[1]) > 0, `shown ${m[1]} vs ${left}`);
+          assert.ok(html.includes('class="promo-meter"'), 'and a progress bar');
+        } else {
+          assert.ok(!html.includes('promo-meter'), 'banner hidden: no count or meter');
+        }
         countSeen = true;
       }
     }
