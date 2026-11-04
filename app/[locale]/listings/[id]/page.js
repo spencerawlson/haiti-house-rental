@@ -4,7 +4,6 @@ import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
 import { getSessionAccount } from '@/lib/session-server';
 import { isAdminCookie } from '@/lib/admin-auth';
-import { shopSectionLabel, shopCategoryLabel } from '@/lib/shop';
 import { getViewerListing, getAdminListing, getPublicListing } from '@/lib/listings-server';
 import ShareButtons from '@/components/ShareButtons';
 import { photoSrc } from '@/lib/photo-url';
@@ -35,7 +34,7 @@ function previewText(l, t, locale) {
   const price = `${Number(l.price || 0).toLocaleString('en-US')} ${l.currency || 'HTG'}${l.purpose === 'rent' && l.kind !== 'furniture' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}`;
   const place = `${communeName(l.commune, locale)}, ${departmentName(l.department, locale)}`;
   const rooms = l.kind === 'furniture'
-    ? `${shopSectionLabel(t, l.shopSection)} · ${shopCategoryLabel(t, l.shopCategory)}`
+    ? `${t[`shopSection${l.shopSection?.[0]?.toUpperCase()}${l.shopSection?.slice(1)}`] || l.shopSection} · ${t[`shopCat${l.shopCategory?.[0]?.toUpperCase()}${l.shopCategory?.slice(1)}`] || l.shopCategory}`
     : l.type === 'land' ? t.land : `${l.bedrooms} ${t.bedrooms} · ${l.bathrooms} ${t.bathrooms}`;
   return { price, place, rooms };
 }
@@ -81,8 +80,8 @@ export default async function ListingDetail(props) {
   // the same contact button, which opens the existing chat flow with
   // the seller.
   const isFurniture = l.kind === 'furniture';
-  const sectionLabel = isFurniture ? shopSectionLabel(t, l.shopSection) : null;
-  const categoryLabel = isFurniture ? shopCategoryLabel(t, l.shopCategory) : null;
+  const sectionLabel = isFurniture ? (t[`shopSection${l.shopSection?.[0]?.toUpperCase()}${l.shopSection?.slice(1)}`] || l.shopSection) : null;
+  const categoryLabel = isFurniture ? (t[`shopCat${l.shopCategory?.[0]?.toUpperCase()}${l.shopCategory?.slice(1)}`] || l.shopCategory) : null;
   const d = l.details || {};
   return (
     <>
@@ -91,7 +90,7 @@ export default async function ListingDetail(props) {
         <div className="detail-hero">
           <Link href={`${base}/listings`} className="hero-btn" style={{ left: 14 }} aria-label={t.back}>←</Link>
           <FavoriteButton listingId={l.id} />
-          <ListingPhotos photos={l.photos || []} placeholder={communeName(l.commune, params.locale)} hero galleryHref={`${base}/listings/${l.id}/photos`} />
+          <ListingPhotos photos={l.photos || []} videos={l.videos || []} placeholder={communeName(l.commune, params.locale)} hero galleryHref={`${base}/listings/${l.id}/photos`} />
         </div>
         <section className="detail-sheet">
           <p style={{ display: 'flex', gap: 8, margin: '0 0 8px', flexWrap: 'wrap' }}>
@@ -146,16 +145,6 @@ export default async function ListingDetail(props) {
             <>
               <h2 style={{ fontSize: '1.1rem', margin: '22px 0 6px' }}>{t.description}</h2>
               <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{l.description}</p>
-            </>
-          )}
-          {l.videos?.length > 0 && (
-            <>
-              <h2 style={{ fontSize: '1.1rem', margin: '22px 0 6px' }}>{t.videosLabel}</h2>
-              <div style={{ display: 'grid', gap: 12 }}>
-                {l.videos.map((src) => (
-                  <video key={src} src={src} controls preload="metadata" style={{ width: '100%', borderRadius: 12 }} />
-                ))}
-              </div>
             </>
           )}
           {taken ? (
