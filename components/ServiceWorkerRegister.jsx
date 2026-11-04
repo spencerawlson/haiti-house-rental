@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { getDict } from '@/lib/dictionaries';
 
 // Registers the service worker (Phase 14a) and, when a new version is
 // waiting, offers a reload rather than swapping it in under the user — a
@@ -8,6 +10,9 @@ import { useEffect, useState } from 'react';
 // app is unchanged in those browsers).
 export default function ServiceWorkerRegister() {
   const [waiting, setWaiting] = useState(null);
+  // Mounted in the root layout (outside [locale]), so the locale comes
+  // from the URL's first segment; getDict falls back to Kreyòl.
+  const t = getDict((usePathname() || '').split('/')[1]);
 
   useEffect(() => {
     if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
@@ -70,7 +75,7 @@ export default function ServiceWorkerRegister() {
         fontWeight: 700,
       }}
     >
-      <span>Yon nouvo vèsyon pare.</span>
+      <span>{t.swUpdateReady}</span>
       <button
         type="button"
         onClick={() => waiting.postMessage('SKIP_WAITING')}
@@ -84,7 +89,7 @@ export default function ServiceWorkerRegister() {
           cursor: 'pointer',
         }}
       >
-        Mete ajou
+        {t.swUpdate}
       </button>
     </div>
   );

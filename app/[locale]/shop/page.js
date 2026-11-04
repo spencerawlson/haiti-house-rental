@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { getFurnitureListings, getFurnitureSectionCounts } from '@/lib/listings-server';
-import { SHOP_SECTIONS } from '@/lib/shop';
+import { SHOP_SECTIONS, shopSectionLabel, shopCategoryLabel } from '@/lib/shop';
 import { communeName } from '@/lib/departments';
 import { photoSrc } from '@/lib/photo-url';
 import TabBar from '@/components/TabBar';
@@ -28,8 +28,8 @@ export default async function Shop(props) {
   const section = SHOP_SECTIONS.find((s) => s.id === searchParams.section) || null;
   const counts = await getFurnitureSectionCounts().catch(() => ({}));
   const items = section ? await getFurnitureListings(section.id).catch(() => []) : [];
-  const sectionLabel = (id) => t[`shopSection${id[0].toUpperCase()}${id.slice(1)}`] || id;
-  const categoryLabel = (cat) => t[`shopCat${cat[0].toUpperCase()}${cat.slice(1)}`] || cat;
+  const sectionLabel = (id) => shopSectionLabel(t, id);
+  const categoryLabel = (cat) => shopCategoryLabel(t, cat);
 
   return (
     <>

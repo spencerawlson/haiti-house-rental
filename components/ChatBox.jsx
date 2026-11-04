@@ -9,7 +9,7 @@ import VoiceRecorder from './VoiceRecorder';
 import VoiceMessage from './VoiceMessage';
 import Icon from '@/components/Icon';
 import { photoSrc } from '@/lib/photo-url';
-import { enqueue, pendingChat, subscribe, newClientId, flush } from '@/lib/outbox';
+import { enqueue, pendingChat, subscribe, newClientId, flush, remove as removeQueued } from '@/lib/outbox';
 
 // A private conversation between one tenant and the listing owner,
 // structured like WhatsApp / Messenger: a pinned header, a message area
@@ -366,7 +366,22 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
             server confirms them (same clientId arrives in `messages`). */}
         {signedIn && pending
           .filter((p) => !messages.some((m) => m.clientId && m.clientId === p.body.clientId))
-          .map((p) => (
+          .map((p) => (p.failed ? (
+            // The server refused it (or it waited too long): say so, and
+            // let them tap to dismiss it — it is never retried.
+            <button
+              key={p.id}
+              type="button"
+              className="wa-b wa-b-mine wa-b-first"
+              onClick={() => removeQueued(p.id)}
+              style={{ opacity: 0.75, border: '1px solid #b91c1c', textAlign: 'left', font: 'inherit', cursor: 'pointer' }}
+            >
+              {p.body.text}
+              <span className="wa-meta" style={{ color: '#b91c1c' }}>
+                <span aria-hidden="true">⚠ </span>{strings.chatNotSent}
+              </span>
+            </button>
+          ) : (
             <p key={p.id} className="wa-b wa-b-mine wa-b-first" style={{ opacity: 0.6 }}>
               {p.body.text}
               <span className="wa-meta">
@@ -375,7 +390,7 @@ export default function ChatBox({ listingId, tenant = null, listing = null, stri
                 <span className="sr-only">{strings.chatQueued}</span>
               </span>
             </p>
-          ))}
+          )))}
         {otherTyping && (
           <p className="wa-b wa-b-theirs wa-b-first" style={{ fontStyle: 'italic' }}>{strings.typingIndicator}</p>
         )}

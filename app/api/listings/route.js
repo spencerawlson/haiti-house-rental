@@ -38,6 +38,11 @@ export async function GET(request) {
   // The owner filter applies to everyone, admins included. It used to be
   // skipped for an admin cookie, so a landlord who was also signed in to
   // the Admin Board saw every home on the site counted as "my listings".
+  // Admin-only Shop moderation list (kind=furniture); everyone else, and
+  // the default admin feed, gets houses only.
+  if (admin && params.get('kind') === 'furniture') {
+    return Response.json({ listings: await getAdminListings('furniture') });
+  }
   const listings = admin ? await getAdminListings() : await getListings();
   return Response.json({ listings: owner ? listings.filter((l) => l.owner === owner) : listings });
 }
@@ -108,8 +113,6 @@ export async function POST(request) {
       return Response.json({ error: 'invalid_price' }, { status: 400 });
     }
     data.kind = 'furniture';
-    data.shopSection = data.shopSection;
-    data.shopCategory = data.shopCategory;
     data.purpose = 'sale';
   } else {
     if (data.shopSection || data.shopCategory) {
