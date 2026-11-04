@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { SHOP_SECTIONS, shopCategoriesFor } from '@/lib/shop';
+import { SHOP_SECTIONS, shopCategoriesFor, shopSectionLabel, shopCategoryLabel } from '@/lib/shop';
 import { getMyAccount } from '@/lib/account';
 import { compressImage } from '@/lib/image-compress';
 import TabBar from '@/components/TabBar';
@@ -43,8 +43,8 @@ export default function ShopPost(props) {
     if (!cats.includes(category)) setCategory(cats[0] || '');
   }, [section]);
 
-  const sectionLabel = (id) => t[`shopSection${id[0].toUpperCase()}${id.slice(1)}`] || id;
-  const categoryLabel = (cat) => t[`shopCat${cat[0].toUpperCase()}${cat.slice(1)}`] || cat;
+  const sectionLabel = (id) => shopSectionLabel(t, id);
+  const categoryLabel = (cat) => shopCategoryLabel(t, cat);
   const communes = DEPARTMENTS.find((d) => d.id === department)?.communes || [];
 
   async function uploadAll(files) {

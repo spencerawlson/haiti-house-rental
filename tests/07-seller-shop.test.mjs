@@ -116,6 +116,19 @@ test('furniture never appears in house listings; the Shop page filters by sectio
   assert.ok(allHtml.includes('Ou jwenn kay la. Kounye a, mèble l.'), 'Shop subline renders');
 });
 
+test('the admin sees Shop items to moderate; the admin house feed stays houses-only', { skip }, async () => {
+  const shop = await admin('/api/listings?kind=furniture');
+  assert.equal(shop.status, 200);
+  const item = shop.data.listings.find((l) => l.title === `Zòrye brode ${run}`);
+  assert.ok(item, 'admin Shop list includes the seller item');
+  assert.ok(shop.data.listings.every((l) => l.kind === 'furniture'), 'admin Shop list is furniture only');
+  const houses = await admin('/api/listings');
+  assert.ok(!houses.data.listings.some((l) => l.kind === 'furniture'), 'admin house feed (near-me, favorites…) has no furniture');
+  // kind=furniture is admin-only: anyone else still gets the house feed.
+  const anon = await (await fetch(`${BASE}/api/listings?kind=furniture`)).json();
+  assert.ok(!anon.listings.some((l) => l.kind === 'furniture'), 'non-admin never gets the admin Shop list');
+});
+
 test('seller quarter reminder amount is 500, not the landlord 1000', { skip }, async () => {
   // A promo seller is active, so no live reminder is due here; the
   // reminder path reads the same server table asserted above

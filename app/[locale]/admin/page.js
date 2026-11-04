@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { rentPeriodLabel } from '@/lib/listings';
 import { communeName } from '@/lib/departments';
+import { shopSectionLabel, shopCategoryLabel } from '@/lib/shop';
 import BackButton from '@/components/BackButton';
 import AdminUsers from '@/components/AdminUsers';
 import AdminTraffic from '@/components/AdminTraffic';
@@ -31,6 +32,9 @@ export default function Admin(props) {
   const t = getDict(params.locale);
   const [tab, setTab] = useState('overview');
   const [listings, setListings] = useState([]);
+  // Shop items (furniture), listed separately so the admin can moderate
+  // them — the house feed above never includes them.
+  const [shopItems, setShopItems] = useState([]);
   // Headline counts from the server. These used to be computed in the
   // browser by filtering the full account list, which only worked while
   // the whole list was being shipped to the browser.
@@ -116,6 +120,8 @@ export default function Admin(props) {
       const data = await res.json();
       setListings(data.listings);
     }
+    const shopRes = await fetch('/api/listings?kind=furniture');
+    if (shopRes.ok) setShopItems((await shopRes.json()).listings || []);
     const rres = await fetch('/api/admin/revenue');
     if (rres.ok) {
       const data = await rres.json();
@@ -412,7 +418,7 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         <a href="#live" className="stat-tile tone-blue"><span className="stat-icon"><Icon name="live" /></span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
       </div>
       <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
-        {[['promo', 'tag', t.promoSpotsTitle], ['admin-chats', 'chat', t.adminChatsTitle], ['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
+        {[['promo', 'tag', t.promoSpotsTitle], ['admin-chats', 'chat', t.adminChatsTitle], ['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['shop-items', 'sofa', t.adminShopTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
           <a key={id} className="chip" href={`#${id}`}><Icon name={icon} /> {label}{id === 'admin-chats' && adminUnreadTotal > 0 && (<> <span className="count-badge">{adminUnreadTotal}</span></>)}</a>
         ))}
       </nav>
@@ -756,6 +762,24 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
                 )}
                 <button className="btn btn-secondary" type="button" onClick={() => takeDown(l.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
               </div>
+            </div>
+          </section>
+        ))}
+      </div>
+      <h2 id="shop-items" className="admin-h2"><Icon name="sofa" /> {t.adminShopTitle}</h2>
+      {shopItems.length === 0 && <p className="muted">{t.adminShopEmpty}</p>}
+      <div className="grid">
+        {shopItems.map((l) => (
+          <section key={l.id} className="card">
+            <div className="card-body">
+              <h3 style={{ margin: '0 0 4px' }}>
+                <Link href={`/${params.locale}/listings/${l.id}`}>{l.title}</Link>
+              </h3>
+              <p className="muted" style={{ margin: '0 0 8px' }}>
+                {shopSectionLabel(t, l.shopSection)} · {shopCategoryLabel(t, l.shopCategory)} · {communeName(l.commune, params.locale)} · {l.price.toLocaleString()} {l.currency || 'HTG'}
+                {l.owner && <> · @{l.owner}</>}
+              </p>
+              <button className="btn btn-secondary" type="button" onClick={() => takeDown(l.id)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.takeDown}</button>
             </div>
           </section>
         ))}

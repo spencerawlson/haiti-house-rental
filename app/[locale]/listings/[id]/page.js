@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { getDict } from '@/lib/dictionaries';
 import { getSessionAccount } from '@/lib/session-server';
 import { isAdminCookie } from '@/lib/admin-auth';
+import { shopSectionLabel, shopCategoryLabel } from '@/lib/shop';
 import { getViewerListing, getAdminListing, getPublicListing } from '@/lib/listings-server';
 import ShareButtons from '@/components/ShareButtons';
 import { photoSrc } from '@/lib/photo-url';
@@ -34,7 +35,7 @@ function previewText(l, t, locale) {
   const price = `${Number(l.price || 0).toLocaleString('en-US')} ${l.currency || 'HTG'}${l.purpose === 'rent' && l.kind !== 'furniture' ? ` ${rentPeriodLabel(l.rentPeriod, t)}` : ''}`;
   const place = `${communeName(l.commune, locale)}, ${departmentName(l.department, locale)}`;
   const rooms = l.kind === 'furniture'
-    ? `${t[`shopSection${l.shopSection?.[0]?.toUpperCase()}${l.shopSection?.slice(1)}`] || l.shopSection} · ${t[`shopCat${l.shopCategory?.[0]?.toUpperCase()}${l.shopCategory?.slice(1)}`] || l.shopCategory}`
+    ? `${shopSectionLabel(t, l.shopSection)} · ${shopCategoryLabel(t, l.shopCategory)}`
     : l.type === 'land' ? t.land : `${l.bedrooms} ${t.bedrooms} · ${l.bathrooms} ${t.bathrooms}`;
   return { price, place, rooms };
 }
@@ -80,8 +81,8 @@ export default async function ListingDetail(props) {
   // the same contact button, which opens the existing chat flow with
   // the seller.
   const isFurniture = l.kind === 'furniture';
-  const sectionLabel = isFurniture ? (t[`shopSection${l.shopSection?.[0]?.toUpperCase()}${l.shopSection?.slice(1)}`] || l.shopSection) : null;
-  const categoryLabel = isFurniture ? (t[`shopCat${l.shopCategory?.[0]?.toUpperCase()}${l.shopCategory?.slice(1)}`] || l.shopCategory) : null;
+  const sectionLabel = isFurniture ? shopSectionLabel(t, l.shopSection) : null;
+  const categoryLabel = isFurniture ? shopCategoryLabel(t, l.shopCategory) : null;
   const d = l.details || {};
   return (
     <>
