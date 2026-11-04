@@ -7,8 +7,9 @@ import { IMAGE_EXTS, VIDEO_EXTS, matchesMagic, uploadExt, saveUpload } from '@/l
 // (self-hosted, like FedServ). On serverless hosting the disk is ephemeral,
 // so production must swap this for object storage (S3/R2/Spaces).
 // Limits: images 10 MB, videos 100 MB, 60 files an hour per account.
-// Only activated landlord accounts upload (the only ones who post), and
-// only the formats /uploads/[file] serves. No moderation yet.
+// Only activated paid accounts upload (landlords posting houses and
+// sellers posting Shop items — the only ones who post), and only the
+// formats /uploads/[file] serves. No moderation yet.
 //
 // Profile photos take a different door — /api/accounts/avatar — because
 // every signed-in user has one, including tenants, who never post a
@@ -19,8 +20,8 @@ const MAX_VIDEO = 100 * 1024 * 1024;
 
 export async function POST(request) {
   const me = await getSessionAccount(request);
-  if (!me || me.role !== 'landlord' || !me.activated) {
-    return Response.json({ error: 'Only activated landlord accounts can upload' }, { status: 403 });
+  if (!me || !['landlord', 'seller'].includes(me.role) || !me.activated) {
+    return Response.json({ error: 'Only activated landlord or seller accounts can upload' }, { status: 403 });
   }
   if (!rateLimit(`upload:${me.username}`, 60, 60 * 60 * 1000)) return tooMany();
   const form = await request.formData().catch(() => null);
