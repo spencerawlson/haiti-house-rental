@@ -422,6 +422,11 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
           ? t.promoSpots.replace('{remaining}', String(promo.remaining)).replace('{spots}', String(promo.spots)).replace('{tagged}', String(promo.tagged))
           : '—'}
       </p>
+      <p className="muted" style={{ marginTop: 0 }}>
+        {promo && promo.sellerSpots != null
+          ? t.sellerPromoSpots.replace('{remaining}', String(promo.sellerRemaining)).replace('{spots}', String(promo.sellerSpots)).replace('{tagged}', String(promo.sellerTagged))
+          : '—'}
+      </p>
       <h2 id="admin-chats" className="admin-h2"><Icon name="chat" /> {t.adminChatsTitle}</h2>
       {adminThreads.length === 0 && <p className="muted">{t.adminChatEmpty}</p>}
       {adminThreads.length > 0 && (
