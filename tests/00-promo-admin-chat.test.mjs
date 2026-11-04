@@ -1,20 +1,20 @@
-// Promo (400 free landlord spots, retroactive) + admin chat + AI assist
+// Promo (1000 free landlord spots, retroactive) + admin chat + AI assist
 // availability (admin chats only, key-optional).
 //
 // ORDERING: this file MUST run first in the suite (the 00- prefix puts
 // it first in the tests/*.test.mjs glob, and the suite runs files
-// sequentially with --test-concurrency=1). It consumes the 400 promo
+// sequentially with --test-concurrency=1). It consumes the 1000 promo
 // spots — the cap test at the end tags the last one — so every other
 // file runs with the promo full and exercises normal billing: a fresh
 // landlord there is pending and pays to activate, exactly as before
 // the promo existed. Run the full suite, not one file alone: a single
 // file against a fresh DB sees live promo tagging, by design.
 //
-// Design (owner-decided Oct 26): the first 400 landlord accounts —
+// Design (owner-decided Oct 26, cap raised to 1000 Nov 2026): the first 1000 landlord accounts —
 // existing ones first, earliest created — are tagged promo and post
 // free for one year (activated at once, paid_until IS the promo end),
 // then normal billing applies. The Admin Board shows the countdown:
-// 400 minus tagged. Admin chat is the listing-chat model with admin
+// 1000 minus tagged. Admin chat is the listing-chat model with admin
 // as a participant, not listing-bound: users start from "Contact
 // admin", the admin starts from the chat symbol on an account row.
 // The AI button only exists in admin chats, and only when the server
@@ -102,9 +102,9 @@ test('admin-created partner landlord is never promo-tagged', { skip }, async () 
 test('promo countdown route: counts only, full-admin only', { skip }, async () => {
   const r = await admin('/api/admin/promo');
   assert.equal(r.status, 200, JSON.stringify(r.data));
-  assert.equal(r.data.spots, 400);
+  assert.equal(r.data.spots, 1000);
   assert.ok(r.data.tagged >= 1, 'at least this file\'s landlord is tagged');
-  assert.equal(r.data.remaining, 400 - r.data.tagged);
+  assert.equal(r.data.remaining, 1000 - r.data.tagged);
   assert.equal((await stats('/api/admin/promo')).status, 401, 'stats scope refused');
   assert.equal((await client()('/api/admin/promo')).status, 401, 'anonymous refused');
 });
@@ -115,8 +115,8 @@ test('landing page announces the promo; fees show struck through', { skip }, asy
   const { status, html } = await landingHtml();
   assert.equal(status, 200);
   assert.ok(html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'banner title renders');
-  assert.ok(html.includes('Plas limite: premye 400 pwopriyetè yo'), 'early on it says spots are limited');
-  assert.ok(!/Sèlman \d+ plas ki rete/.test(html), 'no "398 of 400" count while most spots are open');
+  assert.ok(html.includes('Plas limite: premye 1000 pwopriyetè yo'), 'early on it says spots are limited');
+  assert.ok(!/Sèlman \d+ plas ki rete/.test(html), 'no "998 of 1000" count while most spots are open');
   assert.ok(html.includes('Apre premye ane a: 1,000 HTG chak 3 mwa.'), 'what happens after the year');
   assert.ok(html.includes('/ht/signup?role=landlord'), 'banner goes straight to landlord signup');
   assert.ok(html.includes('Mete kay ou gratis'), 'banner button says what it does');
@@ -125,10 +125,12 @@ test('landing page announces the promo; fees show struck through', { skip }, asy
   assert.match(html, /<s class="price-was">1,000 HTG<\/s>/);
   // Search comes before the banner: most visitors are looking for a home.
   assert.ok(html.indexOf('name="q"') < html.indexOf('promo-banner'), 'search above the banner');
-  // Public counts for the client pages: spots and spots left only.
+  // Public counts for the client pages: landlord spots and spots
+  // left, plus the separate seller pool (Nov 2026) — counts only.
   const pub = await (await fetch(`${BASE}/api/promo`)).json();
-  assert.deepEqual(Object.keys(pub).sort(), ['remaining', 'spots']);
-  assert.equal(pub.spots, 400);
+  assert.deepEqual(Object.keys(pub).sort(), ['remaining', 'sellerRemaining', 'sellerSpots', 'sellerTagged', 'spots']);
+  assert.equal(pub.spots, 1000);
+  assert.equal(pub.sellerSpots, 2000);
 });
 
 test('promo landlord survives the billing sweep: the year counts as paid up', { skip }, async () => {
@@ -200,20 +202,20 @@ test('AI improve without a key reports unavailable; stats refused', { skip }, as
   assert.equal((await stats('/api/admin/admin-chat/improve')).status, 401, 'stats scope refused');
 });
 
-test('the 400 cap holds: the first untagged landlord ends the promo', { skip }, async () => {
+test('the 1000 cap holds: the first untagged landlord ends the promo', { skip }, async () => {
   // Other files sign up landlords concurrently, so the loop runs until
-  // it SEES an untagged landlord rather than counting to 400 itself.
+  // it SEES an untagged landlord rather than counting to 1000 itself.
   // The signup response carries the account, so one request per try.
   let untagged = null;
   let countSeen = false;
-  for (let i = 0; i < 420; i++) {
+  for (let i = 0; i < 1020; i++) {
     // Once spots are scarce (<= 150 left), the banner shows the count
     // and a progress bar. Checked once, around 100 left.
     if (!countSeen) {
       const left = (await (await fetch(`${BASE}/api/promo`)).json()).remaining;
       if (left <= 100) {
         const { html } = await landingHtml();
-        const m = html.match(/Sèlman (\d+) plas ki rete sou 400/);
+        const m = html.match(/Sèlman (\d+) plas ki rete sou 1000/);
         assert.ok(m, 'scarce spots: the banner shows the count');
         assert.ok(Number(m[1]) <= left && Number(m[1]) > 0, `shown ${m[1]} vs ${left}`);
         assert.ok(html.includes('class="promo-meter"'), 'and a progress bar');
@@ -232,9 +234,9 @@ test('the 400 cap holds: the first untagged landlord ends the promo', { skip }, 
   assert.ok(untagged, 'a landlord past the cap comes back untagged');
   assert.ok(countSeen, 'the count was shown while spots were scarce');
   const r = await admin('/api/admin/promo');
-  assert.equal(r.data.tagged, 400, 'exactly 400 tagged, no overshoot');
+  assert.equal(r.data.tagged, 1000, 'exactly 1000 tagged, no overshoot');
   assert.equal(r.data.remaining, 0);
-  assert.equal(r.data.spots, 400);
+  assert.equal(r.data.spots, 1000);
 });
 
 test('landing page hides the promo announcement once full', { skip }, async () => {

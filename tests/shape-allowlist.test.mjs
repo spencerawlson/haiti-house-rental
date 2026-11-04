@@ -42,6 +42,10 @@ const PUBLIC_LISTING = [
   'videos', 'purpose', 'advertised', 'advertisedSince', 'advertisedUntil',
   'advertisedRequested', 'status', 'approxLat', 'approxLng', 'owner',
   'rentPeriod', 'details', 'verified', 'seed', 'createdAt',
+  // Shop (0026): every listing carries its kind and, for furniture,
+  // its section/category. Houses carry kind='home' and null shop
+  // fields — the keys are present, the values are empty.
+  'kind', 'shopSection', 'shopCategory',
 ];
 // Owner shape: the public shape plus the exact address/coordinates, the
 // sold countdown, and the ad campaign state.
