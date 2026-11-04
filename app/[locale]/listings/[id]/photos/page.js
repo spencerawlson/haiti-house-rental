@@ -21,6 +21,9 @@ export default async function ListingGallery(props) {
   const tags = l.details?.photoTags || {};
   const tab = TAGS.includes(searchParams.tag) ? searchParams.tag : '';
   const shown = tab ? l.photos.filter((p) => tags[p] === tab) : l.photos;
+  // Videos are not tagged, so a room tab never hides them: they always
+  // follow the photos, last, in the same sequence as the viewer.
+  const videos = l.videos || [];
   const base = `/${params.locale}/listings/${l.id}`;
   const tabs = [{ id: '', label: t.all }, ...TAGS.filter((g) => l.photos.some((p) => tags[p] === g)).map((g) => ({ id: g, label: t[`photoTag_${g}`] }))];
   return (
@@ -28,7 +31,7 @@ export default async function ListingGallery(props) {
       <main className="container">
         <header className="topbar" style={{ marginBottom: 8 }}>
           <Link href={base} className="icon-btn" aria-label={t.back}>←</Link>
-          <h1 style={{ margin: 0, fontSize: '1.2rem' }}>{t.photosTitle} ({l.photos.length})</h1>
+          <h1 style={{ margin: 0, fontSize: '1.2rem' }}>{t.photosTitle} ({l.photos.length + videos.length})</h1>
           <span style={{ width: 42 }} />
         </header>
         {tabs.length > 1 && (
@@ -38,10 +41,10 @@ export default async function ListingGallery(props) {
             ))}
           </nav>
         )}
-        {shown.length === 0 ? (
+        {shown.length === 0 && videos.length === 0 ? (
           <p className="muted">{t.noPhotos}</p>
         ) : (
-          <ListingPhotos photos={shown} placeholder="" grid />
+          <ListingPhotos photos={shown} videos={videos} placeholder="" grid />
         )}
       </main>
       <TabBar locale={params.locale} />
