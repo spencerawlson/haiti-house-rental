@@ -22,7 +22,7 @@ export default function BackButton({ locale }) {
       onClick={goBack}
       style={{
         background: 'none', border: 'none', cursor: 'pointer',
-        color: 'var(--primary)', fontWeight: 700, fontSize: '1rem',
+        color: 'var(--link)', fontWeight: 700, fontSize: '1rem',
         padding: '4px 0', marginBottom: 8,
       }}
     >

@@ -84,7 +84,7 @@ export default function ServiceWorkerRegister() {
           borderRadius: 999,
           padding: '8px 18px',
           fontWeight: 800,
-          background: '#f87171',
+          background: '#b91c1c',
           color: '#fff',
           cursor: 'pointer',
         }}
