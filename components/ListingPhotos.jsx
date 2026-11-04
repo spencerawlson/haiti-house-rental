@@ -13,7 +13,15 @@ import { photoSrc } from '@/lib/photo-url';
 // counter; tapping it opens the lightbox, which pages through them all.
 // `grid` (design screen 8): every photo as a 2-column grid; tapping one
 // opens the lightbox. `galleryHref`: the hero counter links to the gallery.
-export default function ListingPhotos({ photos, placeholder, hero = false, grid = false, galleryHref = null }) {
+// Media order (Nov 2026): photos first, in their order, then videos,
+// ALWAYS last — even if a video was uploaded before the photos. The
+// standalone Videos section on the detail page was removed in favour of
+// this single sequence, so videos never sit above the visit calendar.
+export default function ListingPhotos({ photos, videos = [], placeholder, hero = false, grid = false, galleryHref = null }) {
+  const media = [
+    ...(photos || []).map((src) => ({ type: 'photo', src })),
+    ...(videos || []).map((src) => ({ type: 'video', src })),
+  ];
   const [openIndex, setOpenIndex] = useState(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -37,7 +45,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
   }
 
   function step(dir) {
-    setOpenIndex((i) => (i + dir + photos.length) % photos.length);
+    setOpenIndex((i) => (i + dir + media.length) % media.length);
     applyScale(1);
     setPan({ x: 0, y: 0 });
   }
@@ -54,8 +62,8 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
     };
     const onKey = (e) => {
       if (e.key === 'Escape') setOpenIndex(null);
-      if (e.key === 'ArrowLeft' && photos.length > 1) step(-1);
-      if (e.key === 'ArrowRight' && photos.length > 1) step(1);
+      if (e.key === 'ArrowLeft' && media.length > 1) step(-1);
+      if (e.key === 'ArrowRight' && media.length > 1) step(1);
     };
     stage.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKey);
@@ -106,6 +114,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
 
   // The zoomable full-screen viewer, shared by every display mode.
   function lightbox() {
+    const current = openIndex !== null ? media[openIndex] : null;
     return (
       openIndex !== null && (
         <div
@@ -123,7 +132,7 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
           >
             ✕
           </button>
-          {photos.length > 1 && (
+          {media.length > 1 && (
             <>
               <button
                 type="button"
@@ -143,43 +152,54 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
               </button>
             </>
           )}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            style={{ touchAction: 'none', maxWidth: '100%', maxHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <img
-              src={photos[openIndex]}
-              alt=""
-              draggable={false}
-              style={{
-                maxWidth: '100vw',
-                maxHeight: '100vh',
-                objectFit: 'contain',
-                transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
-                userSelect: 'none',
-                cursor: scale > 1 ? 'grab' : 'zoom-in',
-              }}
-            />
-          </div>
+          {current?.type === 'video' ? (
+            <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '100%', maxHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <video src={current.src} controls autoPlay preload="metadata" style={{ maxWidth: '100vw', maxHeight: '100vh', objectFit: 'contain' }} />
+            </div>
+          ) : (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
+              style={{ touchAction: 'none', maxWidth: '100%', maxHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <img
+                src={current?.src}
+                alt=""
+                draggable={false}
+                style={{
+                  maxWidth: '100vw',
+                  maxHeight: '100vh',
+                  objectFit: 'contain',
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})`,
+                  userSelect: 'none',
+                  cursor: scale > 1 ? 'grab' : 'zoom-in',
+                }}
+              />
+            </div>
+          )}
           <div
             onClick={(e) => e.stopPropagation()}
             style={{ position: 'absolute', bottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 8, alignItems: 'center', zIndex: 2 }}
           >
-            <button type="button" onClick={() => applyScale(scaleRef.current / 1.4)} aria-label="Zoom out" style={{ width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}>−</button>
-            <span style={{ color: '#fff', fontWeight: 700, minWidth: 56, textAlign: 'center' }}>{Math.round(scale * 100)}%</span>
-            <button type="button" onClick={() => applyScale(scaleRef.current * 1.4)} aria-label="Zoom in" style={{ width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}>+</button>
-            <button type="button" onClick={() => applyScale(1)} aria-label="Reset zoom" style={{ height: 44, padding: '0 16px', borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Reset</button>
+            <span style={{ color: '#fff', fontWeight: 700, minWidth: 56, textAlign: 'center' }}>{openIndex + 1} / {media.length}</span>
+            {current?.type !== 'video' && (
+              <>
+                <button type="button" onClick={() => applyScale(scaleRef.current / 1.4)} aria-label="Zoom out" style={{ width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}>−</button>
+                <span style={{ color: '#fff', fontWeight: 700, minWidth: 56, textAlign: 'center' }}>{Math.round(scale * 100)}%</span>
+                <button type="button" onClick={() => applyScale(scaleRef.current * 1.4)} aria-label="Zoom in" style={{ width: 44, height: 44, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontSize: 22, cursor: 'pointer' }}>+</button>
+                <button type="button" onClick={() => applyScale(1)} aria-label="Reset zoom" style={{ height: 44, padding: '0 16px', borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Reset</button>
+              </>
+            )}
           </div>
         </div>
       )
     );
   }
 
-  if (!photos || photos.length === 0) {
+  if (media.length === 0) {
     return (
       <div className="house-art" style={hero ? { height: 240, borderRadius: 0 } : { borderRadius: 16, marginTop: 16, height: 200 }}>{placeholder}</div>
     );
@@ -189,10 +209,17 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
     return (
       <>
         <div className="photo-grid">
-          {photos.map((src, i) => (
-            <button key={src} type="button" onClick={() => open(i)} aria-label={`${i + 1} / ${photos.length}`}>
-              <img src={photoSrc(src, 480)} alt="" loading="lazy" decoding="async" />
-            </button>
+          {media.map((item, i) => (
+            item.type === 'video' ? (
+              <button key={item.src} type="button" onClick={() => open(i)} aria-label={`Video ${i + 1} / ${media.length}`} style={{ position: 'relative', padding: 0, overflow: 'hidden' }}>
+                <video src={item.src} preload="metadata" muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 32, background: 'rgba(0,0,0,0.25)' }}>▶</span>
+              </button>
+            ) : (
+              <button key={item.src} type="button" onClick={() => open(i)} aria-label={`${i + 1} / ${media.length}`}>
+                <img src={photoSrc(item.src, 480)} alt="" loading="lazy" decoding="async" />
+              </button>
+            )
           ))}
         </div>
         {lightbox()}
@@ -200,30 +227,49 @@ export default function ListingPhotos({ photos, placeholder, hero = false, grid 
     );
   }
 
+  const first = media[0];
   return (
     <>
-      <img
-        src={photoSrc(photos[0], hero ? 1200 : 800)}
-        alt=""
-        onClick={() => open(0)}
-        style={hero
-          ? { width: '100%', height: 'min(62vw, 380px)', minHeight: 240, objectFit: 'cover', display: 'block', cursor: 'zoom-in' }
-          : { width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block', cursor: 'zoom-in' }}
-      />
-      {hero && photos.length > 1 && galleryHref && (
+      {first.type === 'video' ? (
+        <video
+          src={first.src}
+          controls
+          preload="metadata"
+          style={hero
+            ? { width: '100%', height: 'min(62vw, 380px)', minHeight: 240, objectFit: 'cover', display: 'block' }
+            : { width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block' }}
+        />
+      ) : (
+        <img
+          src={photoSrc(first.src, hero ? 1200 : 800)}
+          alt=""
+          onClick={() => open(0)}
+          style={hero
+            ? { width: '100%', height: 'min(62vw, 380px)', minHeight: 240, objectFit: 'cover', display: 'block', cursor: 'zoom-in' }
+            : { width: '100%', height: 260, objectFit: 'cover', borderRadius: 16, marginTop: 16, display: 'block', cursor: 'zoom-in' }}
+        />
+      )}
+      {hero && media.length > 1 && galleryHref && (
         <a href={galleryHref} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-          <Icon name="camera" /> 1/{photos.length}
+          <Icon name="camera" /> 1/{media.length}
         </a>
       )}
-      {hero && photos.length > 1 && !galleryHref && (
+      {hero && media.length > 1 && !galleryHref && (
         <button type="button" onClick={() => open(0)} style={{ position: 'absolute', right: 14, bottom: 34, zIndex: 2, border: 'none', borderRadius: 999, padding: '4px 10px', background: 'rgba(15,23,42,0.7)', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-          <Icon name="camera" /> 1/{photos.length}
+          <Icon name="camera" /> 1/{media.length}
         </button>
       )}
-      {!hero && photos.length > 1 && (
+      {!hero && media.length > 1 && (
         <div className="gallery">
-          {photos.slice(1).map((src, i) => (
-            <img key={src} src={photoSrc(src, 480)} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
+          {media.slice(1).map((item, i) => (
+            item.type === 'video' ? (
+              <button key={item.src} type="button" onClick={() => open(i + 1)} aria-label="Video" style={{ position: 'relative', padding: 0, border: 'none', background: 'none', overflow: 'hidden', cursor: 'pointer' }}>
+                <video src={item.src} preload="metadata" muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#fff', fontSize: 28, background: 'rgba(0,0,0,0.25)' }}>▶</span>
+              </button>
+            ) : (
+              <img key={item.src} src={photoSrc(item.src, 480)} alt="" onClick={() => open(i + 1)} style={{ cursor: 'zoom-in' }} />
+            )
           ))}
         </div>
       )}
