@@ -29,7 +29,7 @@
  * visit and the page shows a small "update ready" prompt rather than
  * swapping the worker in under the user.
  */
-const VERSION = 'v2';
+const VERSION = 'v3';
 const SHELL = `kay-shell-${VERSION}`;
 const STATIC = `kay-static-${VERSION}`;
 const PHOTOS = `kay-photos-${VERSION}`;
@@ -38,7 +38,7 @@ const PAGES = `kay-pages-${VERSION}`;
 const KEEP = new Set([SHELL, STATIC, PHOTOS, FEED, PAGES]);
 
 const OFFLINE_URL = '/offline.html';
-const PRECACHE = [OFFLINE_URL, '/logo.png', '/icons/icon-192.webp'];
+const PRECACHE = [OFFLINE_URL, '/logo-256.webp', '/icons/icon-192.webp'];
 
 const PHOTO_MAX = 60; // resized photos kept offline; oldest evicted past this
 const PAGE_MAX = 30; // recently visited pages kept for offline viewing

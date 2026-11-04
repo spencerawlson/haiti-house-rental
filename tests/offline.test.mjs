@@ -32,3 +32,32 @@ test('the web manifest is complete enough to install', async () => {
   assert.ok(Array.isArray(m.icons) && m.icons.length > 0, 'has icons');
   assert.ok(m.icons.some((i) => /512/.test(i.sizes || '')), 'has a 512px icon');
 });
+
+// Every icon the manifest and the worker name must exist: one missing
+// precache entry (icon-192, Oct 29 – Nov 4 2026) made cache.addAll reject,
+// so the service worker never installed and the app was not installable.
+test('manifest icons and every service-worker precache entry are served', async () => {
+  const m = JSON.parse(await (await fetch(`${BASE}/manifest.webmanifest`)).text());
+  const sw = await (await fetch(`${BASE}/sw.js`)).text();
+  const precache = JSON.parse(
+    sw.match(/const PRECACHE = (\[[^\]]*\])/)[1].replace(/'/g, '"').replace('OFFLINE_URL', '"/offline.html"'),
+  );
+  for (const src of [...m.icons.map((i) => i.src), ...precache]) {
+    const res = await fetch(`${BASE}${src}`);
+    assert.equal(res.status, 200, `${src} must be served`);
+  }
+});
+
+test('robots.txt and sitemap.xml are real files, not the home page', async () => {
+  const robots = await fetch(`${BASE}/robots.txt`);
+  assert.match(robots.headers.get('content-type') || '', /text\/plain/);
+  const rt = await robots.text();
+  assert.match(rt, /Disallow: \/api\//);
+  assert.match(rt, /Sitemap: /);
+  const sm = await fetch(`${BASE}/sitemap.xml`);
+  assert.match(sm.headers.get('content-type') || '', /xml/);
+  const xml = await sm.text();
+  assert.match(xml, /<urlset/);
+  assert.match(xml, /\/ht\/listings<\/loc>/);
+  assert.doesNotMatch(xml, /\/shop/, 'the hidden Shop is not advertised');
+});
