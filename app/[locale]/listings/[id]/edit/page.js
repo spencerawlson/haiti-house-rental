@@ -150,10 +150,16 @@ export default function EditListing(props) {
           ...(coords ? { lat: coords.lat, lng: coords.lng } : {}),
         }),
       });
-      if (!res.ok) throw new Error('Save failed');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const e = new Error('Save failed');
+        if (err.error === 'price_cap') e.priceCap = true;
+        throw e;
+      }
       router.push(`/${params.locale}/listings/${params.id}`);
     } catch (e) {
       if (e?.info) setStatus(uploadErrorMessage(t, e.info));
+      else if (e?.priceCap) setStatus(t.priceCap);
       else setStatus(t.editError);
     }
   }
@@ -230,6 +236,7 @@ export default function EditListing(props) {
               </div>
               <div className="field"><label>{t.priceLabel}</label>
                 <input className="input" type="number" value={f.price} onChange={(e) => set('price', e.target.value)} required />
+                {f.purpose === 'rent' && <span className="muted">{t.priceCapHint}</span>}
               </div>
               {f.purpose === 'rent' && (
                 <p style={{ margin: 0 }}>{t.rentPeriod}<br />
