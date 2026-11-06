@@ -110,6 +110,10 @@ export default function ListHome(props) {
           setStatus(t.listingLimitReached.replace('{limit}', err.limit));
           return;
         }
+        if (err.error === 'price_cap') {
+          setStatus(t.priceCap);
+          return;
+        }
         if (err.error === 'Only activated landlord accounts can post listings') {
           setStatus(t.postNotActivated);
           return;
@@ -262,6 +266,7 @@ export default function ListHome(props) {
         </div>
         <div className="field"><label>{t.priceLabel}</label>
           <input className="input" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+          {purpose === 'rent' && <span className="muted">{t.priceCapHint}</span>}
         </div>
         {purpose === 'rent' && (
           <p style={{ margin: 0 }}>{t.rentPeriod}<br />
