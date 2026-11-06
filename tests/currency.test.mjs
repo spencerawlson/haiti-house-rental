@@ -37,7 +37,7 @@ before(async () => {
 });
 
 test('a USD listing keeps its currency end to end', { skip }, async () => {
-  const l = await postListing({ title: `USD Home ${run}`, price: 500, currency: 'USD' });
+  const l = await postListing({ title: `USD Home ${run}`, price: 500, currency: 'USD', rentPeriod: 'annual' });
   assert.equal(l.currency, 'USD');
   assert.equal(l.price, 500);
   const again = await asL(`/api/listings?id=${l.id}`);
@@ -46,7 +46,7 @@ test('a USD listing keeps its currency end to end', { skip }, async () => {
 });
 
 test('no currency means HTG, and a bogus currency falls back to HTG', { skip }, async () => {
-  const plain = await postListing({ title: `Plain ${run}`, price: 75000 });
+  const plain = await postListing({ title: `Plain ${run}`, price: 15000 });
   assert.equal(plain.currency, 'HTG');
   const bogus = await postListing({ title: `Bogus ${run}`, price: 100, currency: 'EUR' });
   assert.equal(bogus.currency, 'HTG');
@@ -73,9 +73,9 @@ test('editing changes the currency, and a bogus edit leaves it alone', { skip },
 test('the pre-rename priceHTG field is still accepted', { skip }, async () => {
   const r = await asL('/api/listings', {
     method: 'POST',
-    body: { title: `Legacy ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 60000, purpose: 'rent', lat: 18.5, lng: -72.3 },
+    body: { title: `Legacy ${run}`, commune: 'Delmas', department: 'ouest', priceHTG: 15000, purpose: 'rent', lat: 18.5, lng: -72.3 },
   });
   assert.equal(r.status, 200);
-  assert.equal(r.data.listing.price, 60000);
+  assert.equal(r.data.listing.price, 15000);
   assert.equal(r.data.listing.currency, 'HTG');
 });

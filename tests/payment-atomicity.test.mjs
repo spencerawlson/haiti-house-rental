@@ -85,7 +85,7 @@ test('a confirmed advertising payment carries its ad budgets', { skip }, async (
   await confirm(p.id);
   const made = await as.A('/api/listings', {
     method: 'POST',
-    body: { title: `Atom Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
+    body: { title: `Atom Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 15000, purpose: 'rent' },
   });
   assert.equal(made.status, 200, 'listing posted');
   const listingId = made.data.listing.id;

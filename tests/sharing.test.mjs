@@ -24,7 +24,7 @@ before(async () => {
   const up = await landlord('/api/upload', { method: 'POST', form });
   assert.equal(up.status, 200, JSON.stringify(up.data));
   photo = up.data.url;
-  const l = await landlord('/api/listings', { method: 'POST', body: { title: `Share ${run}`, description: `Bel kay ak lakou ${run}.`, commune: 'Delmas', department: 'ouest', price: 50000, priceHTG: 50000, currency: 'HTG', purpose: 'rent', bedrooms: 2, bathrooms: 1, lat: 18.54, lng: -72.3, photos: [photo] } });
+  const l = await landlord('/api/listings', { method: 'POST', body: { title: `Share ${run}`, description: `Bel kay ak lakou ${run}.`, commune: 'Delmas', department: 'ouest', price: 15000, priceHTG: 15000, currency: 'HTG', purpose: 'rent', bedrooms: 2, bathrooms: 1, lat: 18.54, lng: -72.3, photos: [photo] } });
   assert.equal(l.status, 200, JSON.stringify(l.data));
   listingId = l.data.listing.id;
 });
@@ -51,7 +51,7 @@ test('resized photos: much smaller WebP for cards, JPEG for previews, original u
 test('a shared listing link carries a preview: photo, title, price, place', { skip }, async () => {
   const html = await (await fetch(`${BASE}/ht/listings/${listingId}`)).text();
   const meta = (p) => (html.match(new RegExp(`<meta[^>]+(?:property|name)="${p}"[^>]+content="([^"]*)"`)) || [])[1];
-  assert.match(meta('og:title') || '', new RegExp(`Share ${run} · 50,000 HTG`));
+  assert.match(meta('og:title') || '', new RegExp(`Share ${run} · 15,000 HTG`));
   // Place names come out in the page's language: Kreyol 'Dèlma, Lwès'.
   assert.match(meta('og:description') || '', /Dèlma, Lwès · 2 chanm · 1 twalèt/);
   const image = meta('og:image') || '';

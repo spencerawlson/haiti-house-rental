@@ -80,7 +80,7 @@ before(async () => {
   // The landlord posts one home; the tenant writes in its thread.
   const posted = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Flag home ${run}`, commune: 'Delmas', department: 'ouest', price: 50000, purpose: 'rent', lat: 18.5, lng: -72.3 },
+    body: { title: `Flag home ${run}`, commune: 'Delmas', department: 'ouest', price: 15000, purpose: 'rent', lat: 18.5, lng: -72.3 },
   });
   assert.equal(posted.status, 200, JSON.stringify(posted.data));
   listingId = posted.data.listing.id;
@@ -164,7 +164,7 @@ test('reactivating a landlord restores homes and posting, billing still untouche
   assert.ok((pub.data.listings || []).some((l) => l.id === listingId), 'home back in public search');
   const posted = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Apre reaktive ${run}`, commune: 'Delmas', department: 'ouest', price: 60000, purpose: 'rent' },
+    body: { title: `Apre reaktive ${run}`, commune: 'Delmas', department: 'ouest', price: 15000, purpose: 'rent' },
   });
   assert.equal(posted.status, 200, JSON.stringify(posted.data));
   const after = (await as.L('/api/accounts/me')).data.account;

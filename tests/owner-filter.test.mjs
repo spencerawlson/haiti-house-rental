@@ -19,7 +19,7 @@ before(async () => {
     const c = client();
     const signin = await c('/api/accounts/signin', { method: 'POST', body: { username: u, passwordHash: sha('pw') } });
     assert.equal(signin.status, 200);
-    const l = await c('/api/listings', { method: 'POST', body: { title: `Owner test ${i} ${run}`, description: 'Kay pou tès.', commune: 'Delmas', department: 'ouest', price: 40000, priceHTG: 40000, currency: 'HTG', purpose: 'rent', bedrooms: 1, bathrooms: 1, lat: 18.54, lng: -72.3 } });
+    const l = await c('/api/listings', { method: 'POST', body: { title: `Owner test ${i} ${run}`, description: 'Kay pou tès.', commune: 'Delmas', department: 'ouest', price: 15000, priceHTG: 15000, currency: 'HTG', purpose: 'rent', bedrooms: 1, bathrooms: 1, lat: 18.54, lng: -72.3 } });
     assert.equal(l.status, 200, JSON.stringify(l.data));
   }
 });

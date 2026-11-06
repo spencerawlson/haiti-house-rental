@@ -38,7 +38,7 @@ before(async () => {
 });
 
 test('an address is stored and returned, and an explicit pin wins', { skip }, async () => {
-  const l = await postListing({ title: `Addr ${run}`, price: 50000, address: 'Rue Louverture 12, Delmas', lat: 18.54, lng: -72.3 });
+  const l = await postListing({ title: `Addr ${run}`, price: 15000, address: 'Rue Louverture 12, Delmas', lat: 18.54, lng: -72.3 });
   assert.equal(l.address, 'Rue Louverture 12, Delmas');
   assert.equal(l.lat, 18.54);
   assert.equal(l.lng, -72.3);
@@ -47,16 +47,16 @@ test('an address is stored and returned, and an explicit pin wins', { skip }, as
 });
 
 test('no address means an empty address, and posting without a pin still works', { skip }, async () => {
-  const plain = await postListing({ title: `NoAddr ${run}`, price: 40000, lat: 18.5, lng: -72.3 });
+  const plain = await postListing({ title: `NoAddr ${run}`, price: 12000, lat: 18.5, lng: -72.3 });
   assert.equal(plain.address, '');
   // No coordinates at all: the server geocodes (address, then commune)
   // and must still create the listing even if geocoding fails outright.
-  const ungeocoded = await postListing({ title: `NoPin ${run}`, price: 30000, address: 'Somewhere that does not geocode, Delmas' });
+  const ungeocoded = await postListing({ title: `NoPin ${run}`, price: 10000, address: 'Somewhere that does not geocode, Delmas' });
   assert.equal(ungeocoded.address, 'Somewhere that does not geocode, Delmas');
 });
 
 test('editing changes the address, capped at 500 chars', { skip }, async () => {
-  const l = await postListing({ title: `EditAddr ${run}`, price: 45000, address: 'Old address', lat: 18.5, lng: -72.3 });
+  const l = await postListing({ title: `EditAddr ${run}`, price: 15000, address: 'Old address', lat: 18.5, lng: -72.3 });
   const r = await asL('/api/listings', {
     method: 'PATCH',
     body: { id: l.id, title: l.title, commune: 'Delmas', address: 'New address 45' },

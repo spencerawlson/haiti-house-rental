@@ -75,7 +75,7 @@ test('the scheduled job refuses anyone without the secret', { skip: cronSkip }, 
 test('a confirmed visit reminds both sides, exactly once', { skip: cronSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Remind ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
+    body: { title: `Remind ${run}`, commune: 'Delmas', department: 'ouest', price: 15000, purpose: 'rent' },
   });
   const listingId = made.data.listing.id;
   // Tomorrow at noon: under the fake clock (today 11:00 Haiti) this sits
@@ -121,7 +121,7 @@ test('a confirmed visit reminds both sides, exactly once', { skip: cronSkip }, a
 test('rescheduling clears the record so the new date reminds again', { skip: cronSkip }, async () => {
   const made = await as.L('/api/listings', {
     method: 'POST',
-    body: { title: `Reschedule ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
+    body: { title: `Reschedule ${run}`, commune: 'Delmas', department: 'ouest', price: 15000, purpose: 'rent' },
   });
   const listingId = made.data.listing.id;
   const v = await as.T('/api/visits', { method: 'POST', body: { listingId, date: haitiDate(1), time: '12:30' } });
