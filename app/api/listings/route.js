@@ -126,7 +126,15 @@ export async function POST(request) {
     if (coords) Object.assign(data, coords);
   }
   // The account's listing limit (0015), checked atomically with the insert.
-  const slot = await withListingSlot(owner.username, (db) => addListing(data, db));
+  // A rent price over the cap (USD $5,000/yr, HTG 100,000/6mo) is refused
+  // with the price_cap code so the form can say why, instead of a 500.
+  let slot;
+  try {
+    slot = await withListingSlot(owner.username, (db) => addListing(data, db));
+  } catch (e) {
+    if (e?.code === 'price_cap') return Response.json({ error: 'price_cap' }, { status: 400 });
+    throw e;
+  }
   if (slot.error) return Response.json({ error: slot.error, limit: slot.limit, used: slot.used }, { status: 403 });
   const listing = slot.value;
   if (!listing) return Response.json({ error: 'Title and commune are required' }, { status: 400 });
@@ -161,7 +169,13 @@ export async function PATCH(request) {
     const coords = await geocodeListing(data);
     if (coords) Object.assign(data, coords);
   }
-  const updated = await updateListing(data.id, data);
+  let updated;
+  try {
+    updated = await updateListing(data.id, data);
+  } catch (e) {
+    if (e?.code === 'price_cap') return Response.json({ error: 'price_cap' }, { status: 400 });
+    throw e;
+  }
   if (!updated) return Response.json({ error: 'Update failed' }, { status: 400 });
   return Response.json({ listing: updated });
 }
