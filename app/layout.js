@@ -51,6 +51,14 @@ export const viewport = { viewportFit: 'cover', themeColor: '#bae6fd' };
 export default function RootLayout({ children }) {
   return (
     <html lang="ht">
+      <head>
+        {/* Ventoryn Analytics — first-party and cookieless (no cookies, no
+            storage, no personal data), so it needs no consent prompt. No CSP
+            is set yet (see SECURITY.md); when the nonce-based CSP lands, allow
+            https://ventoryn.app in script-src and connect-src and give this
+            tag the nonce. */}
+        <script defer data-site="8e4efb3617282d82871983cd" src="https://ventoryn.app/v.js" />
+      </head>
       <body className={nunito.className}>
         {/* No-flash theme script: applies the stored theme (or the system
             preference when nothing is stored) before first paint. */}
