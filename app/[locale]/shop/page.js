@@ -15,7 +15,9 @@ export const dynamic = 'force-dynamic';
 // feed: without a ?section=, this page shows sections and nothing
 // else. Every item shown here is a real seller item — no seed, no
 // fake products, no fake prices — so an empty section says so plainly
-// and points at seller signup instead of inventing stock.
+// instead of inventing stock. Only the founder's partner seller
+// account posts items (via the account dashboard); the Shop page
+// itself invites nobody to sell.
 //
 // Buying in v1 is browse + contact the seller in the existing chat
 // flow (the item detail page's contact button). There is NO on-site
@@ -104,9 +106,6 @@ export default async function Shop(props) {
           <section className="card" style={{ marginTop: 24 }}>
             <div className="card-body" style={{ display: 'grid', gap: 10 }}>
               <p style={{ margin: 0 }}>{t.shopEmpty}</p>
-              <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link className="btn btn-secondary" href={`${base}/shop/post`}>{t.shopPostItem}</Link>
-              </p>
             </div>
           </section>
         )}

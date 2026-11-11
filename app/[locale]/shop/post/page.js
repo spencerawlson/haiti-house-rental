@@ -95,11 +95,6 @@ export default function ShopPost(props) {
             </p>
           </div></div>
         )}
-        {loaded && me && (me.role !== 'seller' || !me.partner) && (
-          <div className="card"><div className="card-body">
-            <p style={{ margin: 0 }}>{t.shopBecomeSeller}</p>
-          </div></div>
-        )}
         {loaded && me && me.role === 'seller' && !me.activated && (
           <div className="card"><div className="card-body">
             <p style={{ margin: 0 }}><Icon name="hourglass" /> {t.waitingActivation}</p>
