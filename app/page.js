@@ -16,6 +16,7 @@ import LandingLangSwitch from '@/components/LandingLangSwitch';
 import LandingNavMenu from '@/components/LandingNavMenu';
 import ListingCard from '@/components/ListingCard';
 import Splash from '@/components/Splash';
+import { safeJsonLd } from '@/lib/jsonld';
 
 // Landing page: the entry before the full app (after the first-visit
 // splash, components/Splash.jsx).
@@ -51,6 +52,16 @@ const HERO_IMAGE = '/images/landing-mountain.jpg';
 // an actual search rather than a free-text guess.
 const QUICK_COMMUNES = ['Port-au-Prince', 'Pétion-Ville', 'Delmas', 'Cap-Haïtien', 'Jacmel', 'Les Cayes'];
 
+const BASE = (process.env.PUBLIC_BASE_URL || 'https://kayayiti.app').replace(/\/$/, '');
+
+// The root page is the landing, not a locale home, so it has no locale
+// of its own: its canonical is the ht homepage, same as the ht locale
+// home carries. Without this the root is a second, uncanonicalised copy
+// of the homepage.
+export async function generateMetadata() {
+  return { alternates: { canonical: '/ht' } };
+}
+
 // HTG bands. "Any price" first, so the default asks nothing of a visitor
 // who does not yet know what things cost.
 const PRICE_BANDS = [10000, 25000, 50000, 100000];
@@ -58,9 +69,37 @@ const PRICE_BANDS = [10000, 25000, 50000, 100000];
 export default async function Landing() {
   const jar = await cookies();
   const saved = jar.get('kay_locale')?.value;
+  // Structured data for the root landing: the same WebSite + Organization
+  // @graph the ht locale home carries (fixed ht — the root has no locale
+  // of its own), rendered on both branches so the first-visit splash
+  // page carries it too. No sameAs — Kay Ayiti has no verified social
+  // profile URL, and none is invented here.
+  const tHt = getDict('ht');
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${BASE}/ht#website`,
+        url: `${BASE}/ht`,
+        name: tHt.siteName,
+        description: tHt.landingSub,
+        inLanguage: 'ht',
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${BASE}/#organization`,
+        name: tHt.siteName,
+        description: tHt.landingSub,
+        url: `${BASE}/ht`,
+        inLanguage: 'ht',
+      },
+    ],
+  };
+  const jsonLd = <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(graph) }} />;
   // First visit (no language saved yet): the screen-1 splash with the
   // language choice, then onboarding. Every later visit lands here.
-  if (!LOCALES.includes(saved)) return <Splash />;
+  if (!LOCALES.includes(saved)) return (<>{jsonLd}<Splash /></>);
   const lang = LOCALES.includes(saved) ? saved : 'ht';
   const t = getDict(lang);
   // Offering "Konekte" to somebody who is already signed in sent them to
@@ -93,7 +132,9 @@ export default async function Landing() {
   ];
 
   return (
-    <div className="lp">
+    <>
+      {jsonLd}
+      <div className="lp">
       <header className="lp-nav">
         <Link href="/" className="lp-logo">
           <img src={logo.src} alt="Kay Ayiti" className="logo-img" />
@@ -246,5 +287,6 @@ export default async function Landing() {
         </footer>
       </main>
     </div>
+    </>
   );
 }

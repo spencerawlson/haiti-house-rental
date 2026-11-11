@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminScope } from './lib/admin-auth.js';
-import { cloudflareScheme } from './lib/cloudflare.js';
+import { cloudflareScheme, canonicalHost } from './lib/cloudflare.js';
 
 // 1. CSRF guard (Phase 1b): a state-changing /api request whose Origin
 //    is another site is refused. Session cookies are SameSite=Lax (admin:
@@ -63,8 +63,16 @@ export async function middleware(request) {
   // toggle is later turned on.
   const scheme = cloudflareScheme(request.headers.get('cf-visitor'));
   if (scheme === 'http') {
+    // The redirect host is the canonical public host, never the request
+    // URL's host: the origin binds 0.0.0.0:3000, so nextUrl carries that
+    // internal address and a redirect built from it is dead. Setting
+    // .host alone does NOT clear an explicit port (URL keeps :3000), so
+    // the port is cleared too — https://kayayiti.app:3000 would be just
+    // as dead as the 0.0.0.0 form.
     const url = request.nextUrl.clone();
     url.protocol = 'https:';
+    url.host = canonicalHost(request.headers);
+    url.port = '';
     return NextResponse.redirect(url, 308);
   }
   if (pathname.startsWith('/api/') && !SAFE.has(request.method) && !sameSite(request)) {
