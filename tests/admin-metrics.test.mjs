@@ -60,12 +60,7 @@ test('the presence ping keeps last seen moving', { skip }, async () => {
 });
 
 test('visit appointments are counted for both sides, live and not', { skip }, async () => {
-  // Activate the landlord so it can post.
-  const pay = await as.L('/api/payments', {
-    method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000010' },
-  });
-  await admin('/api/admin/payments', { method: 'POST', body: { id: pay.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
+  // Free forever: the landlord is active at signup, so it can post.
   const made = await as.L('/api/listings', {
     method: 'POST',
     body: { title: `Metrics ${run}`, commune: 'Delmas', department: 'ouest', price: 1000, purpose: 'rent' },

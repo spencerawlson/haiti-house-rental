@@ -24,9 +24,8 @@ before(async () => {
   if (skip) return;
   assert.equal((await signup(asL, L)).status, 200);
   admin = await adminClient();
-  const p = await asL('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: '30000044' } });
-  assert.equal(p.status, 200);
-  await confirmPayment(p.data.payment.id);
+  // Free forever: the landlord is active at signup, so they can post
+  // with no activation payment.
   assert.equal((await asL('/api/accounts/me')).data.account.activated, true);
   const listing = await asL('/api/listings', { method: 'POST', body: { title: `AdShape ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
   assert.equal(listing.status, 200);
@@ -58,4 +57,44 @@ test('the owner Library and the admin ad-stats endpoint still show the campaign'
   const stats = (await admin('/api/admin/ad-stats')).data.stats.find((s) => s.id === id);
   assert.ok(stats, 'campaign present in admin ad-stats');
   assert.ok(stats.viewsBudget > 0 && stats.clicksBudget > 0);
+});
+
+// Picture-ad campaigns (0028) carry no counts publicly either: the
+// public feed shape is id/title/imageUrl/linkUrl only, and the
+// advertiser's own campaign shape carries counts only — never budgets.
+test('campaign shapes carry no counts publicly and no budgets to the owner', { skip }, async () => {
+  const adv = client();
+  assert.equal((await signup(adv, { name: 'Ad Shape Advertiser', username: `adshapeadv_${run}`, password: 'pw-a', role: 'advertiser' })).status, 200);
+  const camp = await adv('/api/advertisers/campaigns', {
+    method: 'POST',
+    body: { title: `Shape Camp ${run}`, imageUrl: 'https://example.com/shape.png', linkUrl: 'https://example.com/shape' },
+  });
+  assert.equal(camp.status, 200, JSON.stringify(camp.data));
+  const cid = camp.data.campaign.id;
+  const p = await adv('/api/payments', { method: 'POST', body: { kind: 'advertising', campaignId: cid, amountHTG: 100, provider: 'moncash', senderPhone: '30000044' } });
+  assert.equal(p.status, 200, JSON.stringify(p.data));
+  await confirmPayment(p.data.payment.id);
+
+  // Public feed: exactly four keys, no counts, no budgets.
+  const feed = (await anon('/api/ads/active')).data.campaigns || [];
+  const found = feed.find((c) => c.id === cid);
+  assert.ok(found, 'active campaign in the public feed');
+  assert.deepEqual(Object.keys(found).sort(), ['id', 'imageUrl', 'linkUrl', 'title'], 'public feed shape is four keys only');
+  // And a campaign never leaks into a listing shape.
+  const listings = (await anon('/api/listings')).data.listings || [];
+  assert.ok(!listings.some((l) => l.id === cid), 'campaigns are not listings');
+
+  // The owner's own campaign shape: counts only, never budgets.
+  const mine = (await adv('/api/advertisers/campaigns')).data.campaigns.find((c) => c.id === cid);
+  assert.ok(mine, 'campaign present for its owner');
+  assert.ok('viewsUsed' in mine && 'clicksUsed' in mine, 'owner sees the counts');
+  for (const k of ['viewsBudget', 'clicksBudget', 'adViewsBudget', 'adClicksBudget']) {
+    assert.ok(!(k in mine), `owner shape must not carry ${k}`);
+  }
+  // Counting through the c: prefix moves the owner's counts, and only those.
+  await anon('/api/ads/impression', { method: 'POST', body: { listingId: `c:${cid}` } });
+  await anon('/api/ads/click', { method: 'POST', body: { listingId: `c:${cid}` } });
+  const after = (await adv('/api/advertisers/campaigns')).data.campaigns.find((c) => c.id === cid);
+  assert.equal(after.viewsUsed, 1, 'one view counted');
+  assert.equal(after.clicksUsed, 1, 'one click counted');
 });

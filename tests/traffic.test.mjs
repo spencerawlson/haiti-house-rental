@@ -139,18 +139,22 @@ test('weekly buckets start on Monday, monthly on the first', { skip }, async () 
   assert.ok(daily.rows.some((r) => r.period === haitiDate(0)), 'today has a daily bucket');
 });
 
-test('a confirmed joining fee shows up as a new subscriber and as revenue', { skip }, async () => {
+test('a confirmed advertising payment shows up as revenue (advertising only)', { skip }, async () => {
   const today = haitiDate(0);
   const before_ = await report(`?grain=daily&from=${today}&to=${today}`);
-  const b = before_.rows[0] || { subs_new: 0, revenue_join: 0, revenue_htg: 0 };
+  const b = before_.rows[0] || { subs_new: 0, revenue_advertising: 0, revenue_join: 0, revenue_htg: 0 };
 
   const landlord = client();
   await signup(landlord, { name: 'Joiner', username: `join_${run}`, password: 'pw', role: 'landlord' });
+  // Free forever: active at signup — there is no joining fee any more,
+  // so the revenue event is a confirmed advertising payment instead.
+  const made = await landlord('/api/listings', { method: 'POST', body: { title: `Traffic Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  assert.equal(made.status, 200, 'listing posted');
   const sub = await landlord('/api/payments', {
     method: 'POST',
-    body: { kind: 'join', provider: 'moncash', senderPhone: '30000040' },
+    body: { kind: 'advertising', listingId: made.data.listing.id, amountHTG: 100, provider: 'moncash', senderPhone: '30000040' },
   });
-  assert.equal(sub.status, 200, 'joining fee submitted');
+  assert.equal(sub.status, 200, 'advertising submitted');
   const amount = sub.data.payment.amountHTG;
   const conf = await admin('/api/admin/payments', { method: 'POST', body: { id: sub.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
   assert.equal(conf.status, 200, 'admin confirmed it');
@@ -159,10 +163,11 @@ test('a confirmed joining fee shows up as a new subscriber and as revenue', { sk
   const a = after.rows[0];
   assert.ok(a, 'today has a row once a payment is confirmed');
   // Derived live from the payment ledger, so this needed no backfill and
-  // no counter to keep in step.
-  assert.ok(Number(a.subs_new) >= Number(b.subs_new) + 1, 'a new subscriber was counted');
-  assert.ok(Number(a.revenue_join) >= Number(b.revenue_join) + amount, 'the joining fee reached revenue_join');
+  // no counter to keep in step. Advertising is not a new subscriber —
+  // only a joining fee ever was — so subs_new does not move here.
+  assert.ok(Number(a.revenue_advertising) >= Number(b.revenue_advertising) + amount, 'the ad payment reached revenue_advertising');
   assert.ok(Number(a.revenue_htg) >= Number(b.revenue_htg) + amount, 'and the revenue total');
+  assert.equal(Number(a.revenue_join), Number(b.revenue_join), 'no joining-fee revenue any more');
 });
 
 test('the CSV carries the same numbers as the report', { skip }, async () => {

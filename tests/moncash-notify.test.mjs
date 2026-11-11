@@ -23,12 +23,15 @@ before(async () => {
   if (skip) return;
   assert.equal((await signup(as.L, L)).status, 200);
   admin = await adminClient();
-  // Fresh landlords are promo-tagged while spots remain, so their due
-  // kind is 'quarter', not 'join' — try join first, fall back to quarter.
-  let sub = await as.L('/api/payments', { method: 'POST', body: { kind: 'join', provider: 'moncash', senderPhone: '+509 3000 0000' } });
-  if (sub.data?.error === 'wrong_kind') {
-    sub = await as.L('/api/payments', { method: 'POST', body: { kind: 'quarter', provider: 'moncash', senderPhone: '+509 3000 0000' } });
-  }
+  // Free forever: the landlord is active at signup, so there is no
+  // join/quarter payment to notify about. The pending payment under
+  // test is an advertising payment on a listing they post.
+  const made = await as.L('/api/listings', {
+    method: 'POST',
+    body: { title: `Mona Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 50000, purpose: 'rent', lat: 18.5, lng: -72.3 },
+  });
+  assert.equal(made.status, 200, JSON.stringify(made.data));
+  const sub = await as.L('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: made.data.listing.id, amountHTG: 100, provider: 'moncash', senderPhone: '+509 3000 0000' } });
   assert.equal(sub.status, 200, JSON.stringify(sub.data));
   const mine = await as.L('/api/payments');
   const pay = mine.data.payments.find((p) => p.status === 'pending' && p.provider === 'moncash');

@@ -1,29 +1,24 @@
-// Promo (1000 free landlord spots, retroactive) + admin chat + AI assist
-// availability (admin chats only, key-optional).
+// Free forever (Nov 2026) + admin chat + AI assist availability
+// (admin chats only, key-optional).
 //
-// ORDERING: this file MUST run first in the suite (the 00- prefix puts
-// it first in the tests/*.test.mjs glob, and the suite runs files
-// sequentially with --test-concurrency=1). It consumes the 1000 promo
-// spots — the cap test at the end tags the last one — so every other
-// file runs with the promo full and exercises normal billing: a fresh
-// landlord there is pending and pays to activate, exactly as before
-// the promo existed. Run the full suite, not one file alone: a single
-// file against a fresh DB sees live promo tagging, by design.
+// The promo is GONE: no 1000-spot cap, no tagging, no free year —
+// every account is free forever from signup, so this file no longer
+// consumes any spots and no longer gates the rest of the suite. The
+// promo countdown route still exists and returns counts (all zero
+// tagged). Admin chat is the listing-chat model with admin as a
+// participant, not listing-bound: users start from "Contact admin",
+// the admin starts from the chat symbol on an account row. The AI
+// button only exists in admin chats, and only when the server has a
+// key — with no key the route says available:false and the button
+// stays hidden.
 //
-// Design (owner-decided Oct 26, cap raised to 1000 Nov 2026): the first 1000 landlord accounts —
-// existing ones first, earliest created — are tagged promo and post
-// free for one year (activated at once, paid_until IS the promo end),
-// then normal billing applies. The Admin Board shows the countdown:
-// 1000 minus tagged. Admin chat is the listing-chat model with admin
-// as a participant, not listing-bound: users start from "Contact
-// admin", the admin starts from the chat symbol on an account row.
-// The AI button only exists in admin chats, and only when the server
-// has a key — with no key the route says available:false and the
-// button stays hidden.
+// ORDERING: this file still runs first in the suite (the 00- prefix
+// puts it first in the tests/*.test.mjs glob, and the suite runs files
+// sequentially with --test-concurrency=1). Run the full suite, not one
+// file alone.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE, ADMIN_PASSWORD, client, signup, adminClient, uniq, sha } from './helpers.mjs';
-import { SHOW_PROMO_BANNER } from '../lib/config.js';
 
 const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const run = uniq();
@@ -73,15 +68,13 @@ before(async () => {
   stats = client(logged.cookie);
 });
 
-test('landlord signup is promo-tagged while spots remain: active at once, free year', { skip }, async () => {
+test('landlord signup is never promo-tagged: active at once, free forever', { skip }, async () => {
   const me = (await as.L('/api/accounts/me')).data.account;
-  assert.equal(me.promoTagged, true, 'landlord takes a promo spot');
-  assert.equal(me.activated, true, 'promo activates immediately, no payment wait');
+  assert.equal(me.promoTagged, false, 'no promo tagging any more');
+  assert.equal(me.promoUntil, null);
+  assert.equal(me.activated, true, 'free forever activates immediately, no payment wait');
   assert.equal(me.billingStatus, 'active');
-  const year = 365 * 86400000;
-  assert.ok(me.promoUntil > Date.now() + year - 5 * 60 * 1000, 'promo runs about a year');
-  assert.ok(me.promoUntil < Date.now() + year + 5 * 60 * 1000, 'promo runs about a year');
-  assert.equal(me.paidUntil, me.promoUntil, 'paid_until IS the promo end');
+  assert.equal(me.paidUntil, null, 'no expiry');
 });
 
 test('tenant signup is never promo-tagged', { skip }, async () => {
@@ -100,54 +93,60 @@ test('admin-created partner landlord is never promo-tagged', { skip }, async () 
   assert.equal(r.data.account.promoTagged, false, 'partners are already free and take no spot');
 });
 
-test('promo countdown route: counts only, full-admin only', { skip }, async () => {
+test('promo countdown route still exists and returns counts: none tagged', { skip }, async () => {
   const r = await admin('/api/admin/promo');
   assert.equal(r.status, 200, JSON.stringify(r.data));
   assert.equal(r.data.spots, 1000);
-  assert.ok(r.data.tagged >= 1, 'at least this file\'s landlord is tagged');
-  assert.equal(r.data.remaining, 1000 - r.data.tagged);
+  assert.equal(r.data.tagged, 0, 'nobody is tagged any more');
+  assert.equal(r.data.remaining, 1000);
+  assert.equal(r.data.sellerSpots, 2000);
+  assert.equal(r.data.sellerTagged, 0);
+  assert.equal(r.data.sellerRemaining, 2000);
   assert.equal((await stats('/api/admin/promo')).status, 401, 'stats scope refused');
   assert.equal((await client()('/api/admin/promo')).status, 401, 'anonymous refused');
 });
 
-test('landing page announces the promo; fees show struck through', { skip }, async () => {
-  const promo = (await admin('/api/admin/promo')).data;
-  assert.ok(promo.remaining > 150, 'early in the run: plenty of spots left');
+test('landing page says free forever; no struck-through fees, no promo', { skip }, async () => {
   const { status, html } = await landingHtml();
   assert.equal(status, 200);
-  if (SHOW_PROMO_BANNER) {
-    assert.ok(html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'banner title renders');
-    assert.ok(html.includes('Plas limite: premye 1000 pwopriyetè yo'), 'early on it says spots are limited');
-    assert.ok(!/Sèlman \d+ plas ki rete/.test(html), 'no "998 of 1000" count while most spots are open');
-    assert.ok(html.includes('Apre premye ane a: 1,000 HTG chak 3 mwa.'), 'what happens after the year');
-    assert.ok(html.includes('/ht/signup?role=landlord'), 'banner goes straight to landlord signup');
-    assert.ok(html.includes('Mete kay ou gratis'), 'banner button says what it does');
-    // Search comes before the banner: most visitors are looking for a home.
-    assert.ok(html.indexOf('name="q"') < html.indexOf('promo-banner'), 'search above the banner');
-  } else {
-    // Banner hidden (Nov 2026) while the promo keeps running.
-    assert.ok(!html.includes('promo-banner'), 'promo banner hidden');
-    assert.ok(!html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'no banner title');
-  }
-  // The promo still runs: the landlord card shows the normal fees struck.
-  assert.match(html, /<s class="price-was">1,500 HTG<\/s>/);
-  assert.match(html, /<s class="price-was">1,000 HTG<\/s>/);
-  // Public counts for the client pages: landlord spots and spots
-  // left, plus the separate seller pool (Nov 2026) — counts only.
+  assert.ok(html.includes('Kay Ayiti gratis nèt pou tout moun, pou tout tan.'), 'free-forever copy renders');
+  assert.ok(!html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'no promo announcement');
+  assert.ok(!html.includes('promo-banner'), 'no promo banner');
+  assert.ok(!html.includes('price-was'), 'no struck-through fees');
+  assert.ok(!html.includes('1,500 HTG'), 'no joining fee anywhere on the landing page');
+  // Public counts for the client pages: counts only.
   const pub = await (await fetch(`${BASE}/api/promo`)).json();
   assert.deepEqual(Object.keys(pub).sort(), ['remaining', 'sellerRemaining', 'sellerSpots', 'sellerTagged', 'spots']);
   assert.equal(pub.spots, 1000);
+  assert.equal(pub.remaining, 1000, 'nothing tagged, so all spots remain');
   assert.equal(pub.sellerSpots, 2000);
+  assert.equal(pub.sellerTagged, 0);
 });
 
-test('promo landlord survives the billing sweep: the year counts as paid up', { skip }, async () => {
+test('a free-forever landlord survives the billing sweep: still active', { skip }, async () => {
   const cron = await fetch(`${BASE}/api/cron`, { method: 'POST', headers: { 'x-cron-key': process.env.CRON_SECRET || '' } });
   // The sweep runs on the shared cron endpoint; whatever it returned,
-  // a promo landlord with a year left must still be active afterwards.
+  // a free-forever landlord with no expiry must still be active afterwards.
   const me = (await as.L('/api/accounts/me')).data.account;
   assert.equal(me.activated, true);
   assert.equal(me.billingStatus, 'active');
+  assert.equal(me.paidUntil, null);
   assert.ok(cron.status === 200 || cron.status === 401, `cron answered ${cron.status}`);
+});
+
+test('no cap: landlord signups stay untagged and active, however many', { skip }, async () => {
+  for (let i = 0; i < 5; i++) {
+    const u = { name: 'NoCap', username: `nocap_${run}_${i}`, password: 'pw-cap', role: 'landlord' };
+    const c = client();
+    const r = await signup(c, u);
+    assert.equal(r.status, 200, `signup ${i}: ${JSON.stringify(r.data)}`);
+    assert.equal(r.data.account.promoTagged, false, 'no tagging on any signup');
+    assert.equal(r.data.account.activated, true, 'active at once');
+    assert.equal(r.data.account.billingStatus, 'active');
+  }
+  const r = await admin('/api/admin/promo');
+  assert.equal(r.data.tagged, 0, 'still nobody tagged after more signups');
+  assert.equal(r.data.remaining, 1000);
 });
 
 test('admin chat: user writes, admin lists and replies, user reads both', { skip }, async () => {
@@ -207,56 +206,4 @@ test('AI improve without a key reports unavailable; stats refused', { skip }, as
   assert.equal(post.status, 200, JSON.stringify(post.data));
   assert.equal(post.data.available, false);
   assert.equal((await stats('/api/admin/admin-chat/improve')).status, 401, 'stats scope refused');
-});
-
-test('the 1000 cap holds: the first untagged landlord ends the promo', { skip }, async () => {
-  // Other files sign up landlords concurrently, so the loop runs until
-  // it SEES an untagged landlord rather than counting to 1000 itself.
-  // The signup response carries the account, so one request per try.
-  let untagged = null;
-  let countSeen = false;
-  for (let i = 0; i < 1020; i++) {
-    // Once spots are scarce (<= 150 left), the banner shows the count
-    // and a progress bar. Checked once, around 100 left.
-    if (!countSeen) {
-      const left = (await (await fetch(`${BASE}/api/promo`)).json()).remaining;
-      if (left <= 100) {
-        const { html } = await landingHtml();
-        if (SHOW_PROMO_BANNER) {
-          const m = html.match(/Sèlman (\d+) plas ki rete sou 1000/);
-          assert.ok(m, 'scarce spots: the banner shows the count');
-          assert.ok(Number(m[1]) <= left && Number(m[1]) > 0, `shown ${m[1]} vs ${left}`);
-          assert.ok(html.includes('class="promo-meter"'), 'and a progress bar');
-        } else {
-          assert.ok(!html.includes('promo-meter'), 'banner hidden: no count or meter');
-        }
-        countSeen = true;
-      }
-    }
-    const u = { name: 'Cap', username: `cap_${run}_${i}`, password: 'pw-cap', role: 'landlord' };
-    const c = client();
-    const r = await signup(c, u);
-    assert.equal(r.status, 200, `signup ${i}: ${JSON.stringify(r.data)}`);
-    if (!r.data.account.promoTagged) {
-      untagged = u.username;
-      break;
-    }
-  }
-  assert.ok(untagged, 'a landlord past the cap comes back untagged');
-  assert.ok(countSeen, 'the count was shown while spots were scarce');
-  const r = await admin('/api/admin/promo');
-  assert.equal(r.data.tagged, 1000, 'exactly 1000 tagged, no overshoot');
-  assert.equal(r.data.remaining, 0);
-  assert.equal(r.data.spots, 1000);
-});
-
-test('landing page hides the promo announcement once full', { skip }, async () => {
-  // Runs after the cap test in this file, so the promo is genuinely
-  // full here — and tags never come off, so no later signup reopens it.
-  const { status, html } = await landingHtml();
-  assert.equal(status, 200);
-  assert.ok(!html.includes('Pwomosyon: Pibliye gratis pou yon ane!'), 'no banner at 0 spots');
-  // Full promo: normal prices again, nothing struck through.
-  assert.ok(!html.includes('price-was'), 'normal fees once the promo is full');
-  assert.match(html, /1,500(<!-- -->)? HTG/, 'the joining fee shows normally');
 });

@@ -45,8 +45,10 @@ export async function GET(request) {
   });
 }
 
-// Public signup: tenant, landlord or furniture seller. Partner
-// accounts (free, active at once) are admin-created via
+// Public signup: tenant, landlord or advertiser — all free forever
+// (Nov 2026). Furniture seller signup is closed: Spencer is the sole
+// seller, and his seller account is admin-created via /api/admin/partner.
+// Partner accounts (free, active at once) are admin-created via
 // /api/admin/partner — a `partner` flag sent here used to be honored,
 // which skipped the activation fee.
 export async function POST(request) {
@@ -61,6 +63,11 @@ export async function POST(request) {
   if (!/^[A-Za-z0-9._-]{3,64}$/.test(username)) {
     return Response.json({ error: 'Invalid username' }, { status: 400 });
   }
+  // Seller signup is closed (Nov 2026, free-forever pivot): Spencer is
+  // the sole furniture seller; his account is admin-created.
+  if (data.role === 'seller') {
+    return Response.json({ error: 'seller_signup_closed' }, { status: 400 });
+  }
   const account = await createServerAccount({
     name: String(data.name),
     username,
@@ -68,7 +75,7 @@ export async function POST(request) {
     phone: String(data.phone),
     email: data.email ? String(data.email) : '',
     location: data.location || null,
-    role: data.role === 'tenant' ? 'tenant' : data.role === 'seller' ? 'seller' : 'landlord',
+    role: data.role === 'tenant' ? 'tenant' : data.role === 'advertiser' ? 'advertiser' : 'landlord',
     partner: false,
   });
   if (!account) return Response.json({ error: 'Username taken' }, { status: 409 });

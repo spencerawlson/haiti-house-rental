@@ -3,6 +3,7 @@ import Link from 'next/link';
 import logo from '@/public/logo.png';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
+import { listActiveCampaigns } from '@/lib/advertisers-server';
 import { DEPARTMENTS, departmentName } from '@/lib/departments';
 import TabBar from '@/components/TabBar';
 import ListingCard from '@/components/ListingCard';
@@ -27,6 +28,11 @@ export default async function LocaleHome(props) {
   const base = `/${params.locale}`;
   const LISTINGS = await getListings();
   const advertised = LISTINGS.filter((l) => l.advertised);
+  // Picture-ad campaigns (0028) share the carousel with advertised
+  // homes: same placement, same honest label, same counting. A campaign
+  // card carries data-ad-card="c:<id>" and the counting routes accept
+  // the c: prefix; the carousel itself needs no change.
+  const campaigns = await listActiveCampaigns();
   const chips = [
     { href: `${base}/listings?purpose=rent`, label: t.forRent },
     { href: `${base}/listings?purpose=sale`, label: t.forSale },
@@ -54,6 +60,7 @@ export default async function LocaleHome(props) {
           {chips.map((c) => <Link key={c.href} className="chip" href={c.href}>{c.icon && <Icon name={c.icon} />} {c.label}</Link>)}
         </nav>
 
+        <p className="muted">{t.freeForever}</p>
         <div className="section-head"><h2>{t.department}</h2></div>
         <nav className="dept-row" aria-label={t.department}>
           {DEPARTMENTS.map((d, i) => (
@@ -69,12 +76,20 @@ export default async function LocaleHome(props) {
           <ListingMap listings={mapPins(LISTINGS)} locale={params.locale} t={t} height={360} />
         </div>
 
-        {advertised.length > 0 && (
+        {(advertised.length > 0 || campaigns.length > 0) && (
           <>
             <div className="section-head"><h2><Icon name="megaphone" /> {t.advertisedSection}</h2></div>
             <AdvertisedCarousel>
               {advertised.map((l) => (
                 <ListingCard key={l.id} listing={l} locale={params.locale} t={t} adCardId={l.id} />
+              ))}
+              {campaigns.map((c) => (
+                <article key={`c:${c.id}`} className="lcard" data-ad-card={`c:${c.id}`}>
+                  <a href={c.linkUrl} target="_blank" rel="noopener noreferrer">
+                    <img className="lcard-photo" src={c.imageUrl} alt="" loading="lazy" decoding="async" />
+                    <div className="lcard-body"><strong>{c.title}</strong></div>
+                  </a>
+                </article>
               ))}
             </AdvertisedCarousel>
           </>

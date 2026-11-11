@@ -40,9 +40,7 @@ before(async () => {
   assert.equal((await signup(asT, T)).status, 200);
   assert.equal((await signup(asU, U)).status, 200);
   admin = await adminClient();
-  const p = await asL('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: '30000044' } });
-  assert.equal(p.status, 200);
-  await confirmPayment(p.data.payment.id);
+  // Free forever: active at signup, no activation payment.
   assert.equal((await asL('/api/accounts/me')).data.account.activated, true);
   const listing = await asL('/api/listings', { method: 'POST', body: { title: `Precision ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', address: ADDRESS, lat: EXACT.lat, lng: EXACT.lng } });
   assert.equal(listing.status, 200, JSON.stringify(listing.data));

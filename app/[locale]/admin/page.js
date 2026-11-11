@@ -418,21 +418,10 @@ ${p.amountHTG.toLocaleString()} HTG · @${p.username}`)) return;
         <a href="#live" className="stat-tile tone-blue"><span className="stat-icon"><Icon name="live" /></span><strong>{presence.users.length}</strong><span>{t.liveUsers}</span></a>
       </div>
       <nav className="chip-row admin-nav" aria-label={t.adminTitle}>
-        {[['promo', 'tag', t.promoSpotsTitle], ['admin-chats', 'chat', t.adminChatsTitle], ['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['shop-items', 'sofa', t.adminShopTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
+        {[['admin-chats', 'chat', t.adminChatsTitle], ['traffic', 'chart', t.trafficTitle], ['payments', 'card', t.paymentsTitle], ['reports', 'flag', t.reportsTitle], ['listings', 'home', t.advertisedTitle || t.adminTitle], ['shop-items', 'sofa', t.adminShopTitle], ['revenue', 'money', t.revenueTitle], ['settings', 'settings', t.paymentNumbers], ['live', 'live', t.liveNow]].map(([id, icon, label]) => (
           <a key={id} className="chip" href={`#${id}`}><Icon name={icon} /> {label}{id === 'admin-chats' && adminUnreadTotal > 0 && (<> <span className="count-badge">{adminUnreadTotal}</span></>)}</a>
         ))}
       </nav>
-      <h2 id="promo" className="admin-h2"><Icon name="tag" /> {t.promoSpotsTitle}</h2>
-      <p className="muted" style={{ marginTop: 0 }}>
-        {promo
-          ? t.promoSpots.replace('{remaining}', String(promo.remaining)).replace('{spots}', String(promo.spots)).replace('{tagged}', String(promo.tagged))
-          : '—'}
-      </p>
-      <p className="muted" style={{ marginTop: 0 }}>
-        {promo && promo.sellerSpots != null
-          ? t.sellerPromoSpots.replace('{remaining}', String(promo.sellerRemaining)).replace('{spots}', String(promo.sellerSpots)).replace('{tagged}', String(promo.sellerTagged))
-          : '—'}
-      </p>
       <h2 id="admin-chats" className="admin-h2"><Icon name="chat" /> {t.adminChatsTitle}</h2>
       {adminThreads.length === 0 && <p className="muted">{t.adminChatEmpty}</p>}
       {adminThreads.length > 0 && (

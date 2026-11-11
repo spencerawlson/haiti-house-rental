@@ -36,6 +36,15 @@ test('activation: sender phone submitted, amount fixed by the server, admin conf
   const bad = await as.L('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: 'ABC123' } });
   assert.equal(bad.status, 400);
   assert.equal(bad.data.error, 'invalid_phone');
+  // Free forever: L is already active at signup, so there is nothing
+  // left to activate — the legacy activation payment is refused
+  // (already_active; asserted in billing.test.mjs). The activation
+  // flow itself still works for an account the admin has put back to
+  // pending (the pre-pivot state): that is the only way an activation
+  // payment can still be submitted.
+  const pending = await admin('/api/admin/billing', { method: 'POST', body: { username: L.username, status: 'pending' } });
+  assert.equal(pending.status, 200);
+  assert.equal((await as.L('/api/accounts/me')).data.account.activated, false);
   // Typed with spaces, as people write it. Stored in E.164 so the admin
   // is not comparing formatting against a statement.
   const p = await as.L('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: ' 3000 0001 ', amountHTG: 1 } });
@@ -62,6 +71,11 @@ test('the same phone may pay again; one pending payment per account is the guard
   // one-time token: the same person pays from it every quarter, and a
   // household may well pay for two accounts from one phone. Rejecting a
   // repeat would have broken every renewal.
+  //
+  // Free forever: L2 is already active at signup, so the admin puts
+  // it back to pending first — the only state an activation payment
+  // can still be submitted from.
+  assert.equal((await admin('/api/admin/billing', { method: 'POST', body: { username: L2.username, status: 'pending' } })).status, 200);
   const r = await as.L2('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: PHONE } });
   assert.equal(r.status, 200, 'a phone already used by another account is accepted');
   assert.equal(r.data.payment.senderPhone, E164);

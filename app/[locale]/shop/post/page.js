@@ -92,14 +92,12 @@ export default function ShopPost(props) {
             <p style={{ margin: '0 0 12px' }}>{t.signInToPost}</p>
             <p style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: 0 }}>
               <Link className="btn" href={`${base}/signin`}>{t.signIn}</Link>
-              <Link className="btn btn-secondary" href={`${base}/signup?role=seller`}>{t.createAccount}</Link>
             </p>
           </div></div>
         )}
-        {loaded && me && me.role !== 'seller' && (
+        {loaded && me && (me.role !== 'seller' || !me.partner) && (
           <div className="card"><div className="card-body">
-            <p style={{ margin: '0 0 12px' }}>{t.shopBecomeSeller}</p>
-            <p style={{ margin: 0 }}><Link className="btn" href={`${base}/signup?role=seller`}>{t.createAccount}</Link></p>
+            <p style={{ margin: 0 }}>{t.shopBecomeSeller}</p>
           </div></div>
         )}
         {loaded && me && me.role === 'seller' && !me.activated && (
@@ -108,7 +106,7 @@ export default function ShopPost(props) {
             <p style={{ margin: '12px 0 0' }}><Link className="btn" href={`${base}/account`}>{t.account}</Link></p>
           </div></div>
         )}
-        {loaded && me && me.role === 'seller' && me.activated && (
+        {loaded && me && me.role === 'seller' && me.partner && me.activated && (
           <form onSubmit={submit} className="card" style={{ marginTop: 20 }}>
             <div className="card-body" style={{ display: 'grid', gap: 14 }}>
               <div className="field"><label>{t.titleLabel}</label>

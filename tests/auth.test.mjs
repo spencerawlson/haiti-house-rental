@@ -5,7 +5,7 @@
 //
 // Every test here is an attack that worked before Phase 1: acting as
 // another user by naming them in a request body, reading other people's
-// chats/visits/phones, skipping the activation fee, guessing passwords.
+// chats/visits/phones, self-granting partner status, guessing passwords.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE, ADMIN_PASSWORD, sha, client, haitiDate } from './helpers.mjs';
@@ -37,7 +37,10 @@ test('signup cannot self-grant a free partner account', async () => {
   const c = client();
   const r = await c('/api/accounts', { method: 'POST', body: { name: 'Sneaky', username: `sneak_${run}`, passwordHash: sha('x'), phone: '1', role: 'landlord', partner: true, activated: true } });
   assert.equal(r.status, 200);
-  assert.equal(r.data.account.activated, false);
+  // Free forever: every signup is activated at once, so there is no
+  // activation left to self-grant — but partner status still cannot
+  // be self-granted: only the admin partner route creates partners.
+  assert.equal(r.data.account.activated, true);
   assert.equal(r.data.account.partner, false);
 });
 

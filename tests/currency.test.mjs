@@ -27,12 +27,7 @@ before(async () => {
   if (skip) return;
   assert.equal((await signup(asL, L)).status, 200);
   admin = await adminClient();
-  const p = await asL('/api/payments', {
-    method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000021' },
-  });
-  assert.equal(p.status, 200);
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
+  // Free forever: active at signup, no activation payment.
   assert.equal((await asL('/api/accounts/me')).data.account.activated, true);
 });
 

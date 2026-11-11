@@ -140,14 +140,9 @@ export default function ListHome(props) {
         <>
           <ol className="muted">
             <li>{t.landlordStep1}</li>
-            <li>{t.landlordStep2}</li>
-            <li>{t.landlordStep3}</li>
+            <li>{t.freeForever}</li>
           </ol>
-          {promoOpen ? (
-            <p>{t.activationFee}: <PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> ({t.oneTime}) · {t.quarterFeeLabel}: <PromoPrice amount={QUARTER_FEE_HTG} free={t.promoFirstYear} /></p>
-          ) : (
-            <p>{t.activationFee}: <strong>{JOIN_FEE_HTG.toLocaleString()} HTG</strong> ({t.oneTime}) · <strong>{QUARTER_FEE_HTG.toLocaleString()} HTG</strong> {t.quarterFeeLabel}</p>
-          )}
+          <p>{t.freeForever}</p>
         </>
       )}
       <p className="muted">{t.advertisedFee}: <strong>{t.adFeeRange}</strong></p>

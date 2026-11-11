@@ -3,9 +3,8 @@ import TabBar from '@/components/TabBar';
 import { getDict } from '@/lib/dictionaries';
 
 // How Kay Ayiti works, both sides, in plain language: what a person
-// looking for a home does, what a landlord does and pays, and what stays
-// private. The promo line never carries a number of its own — it points at
-// the home page, where the live remaining count is shown while spots last.
+// looking for a home does, what a landlord does, and what stays
+// private. Kay Ayiti is free for everyone, forever.
 const TEXT = {
   ht: {
     tenantTitle: 'Si w ap chèche kay',
@@ -18,10 +17,10 @@ const TEXT = {
     landlordTitle: 'Si ou gen kay pou mete',
     landlordSteps: [
       ['Kreye kont epi mete kay ou', 'Mete kay ou ak foto ak pri — an HTG oswa USD, pou lwe oswa pou vann.'],
-      ['Peye epi aktive', 'Peye 1 500 HTG pou rantre, apre sa 1 000 HTG chak 3 mwa pou rete nan lis la, pa transfè MonCash oswa NatCash. Administratè a konfime peman an epi aktive kont ou.'],
+      ['Gratis pou tout moun', 'Kay Ayiti gratis nèt pou tout moun, pou tout tan.'],
       ['An vedèt, si ou vle', 'Si ou vle plis vizibilite, mete kay ou an vedèt pou yon montan ou chwazi ant 100 ak 1 000 HTG.'],
     ],
-    promo: 'Pwomosyon: kounye a, pwopriyetè k ap rantre ka mete kay gratis pandan yon ane — paj akèy la montre konbyen plas ki rete toutotan genyen.',
+    promo: 'Kay Ayiti gratis nèt pou tout moun, pou tout tan.',
     safetyTitle: 'Sekirite',
     safety: [
       'Adrès egzak kay la pa janm piblik: se komin nan ak yon pwen apwoksimatif sèlman ki parèt. Adrès egzak la parèt sèlman apre pwopriyetè a reponn ou nan chat la.',
@@ -43,10 +42,10 @@ const TEXT = {
     landlordTitle: 'Si vous avez une maison à publier',
     landlordSteps: [
       ['Créez un compte et publiez', 'Publiez votre maison avec photos et prix — en HTG ou en USD, à louer ou à vendre.'],
-      ['Payez, puis activation', 'Payez 1 500 HTG pour adhérer, puis 1 000 HTG tous les 3 mois pour rester dans la liste, par transfert MonCash ou NatCash. L’administrateur confirme le paiement et active votre compte.'],
+      ['Gratuit pour tous', 'Kay Ayiti est entièrement gratuit pour tous, pour toujours.'],
       ['En vedette, si vous voulez', 'Pour plus de visibilité, mettez votre maison en vedette pour un montant de votre choix entre 100 et 1 000 HTG.'],
     ],
-    promo: 'Promotion : en ce moment, les propriétaires qui s’inscrivent peuvent publier gratuitement pendant un an — la page d’accueil indique combien de places restent tant qu’il y en a.',
+    promo: 'Kay Ayiti est entièrement gratuit pour tous, pour toujours.',
     safetyTitle: 'Sécurité',
     safety: [
       'L’adresse exacte d’une maison n’est jamais publique : seule la commune et un point approximatif apparaissent. L’adresse exacte n’apparaît qu’une fois que le propriétaire vous a répondu dans la discussion.',
@@ -68,10 +67,10 @@ const TEXT = {
     landlordTitle: 'If you have a home to list',
     landlordSteps: [
       ['Create an account and post', 'Post your home with photos and a price — in HTG or USD, for rent or for sale.'],
-      ['Pay, then activation', 'Pay 1,500 HTG to join, then 1,000 HTG every 3 months to stay listed, by MonCash or NatCash transfer. The admin confirms the payment and activates your account.'],
+      ['Free for everyone', 'Kay Ayiti is completely free for everyone, forever.'],
       ['Featured, if you want', 'For extra visibility, feature your home for an amount you choose between 100 and 1,000 HTG.'],
     ],
-    promo: 'Promotion: right now, landlords signing up can list free for a year — the home page shows how many spots are left while any remain.',
+    promo: 'Kay Ayiti is completely free for everyone, forever.',
     safetyTitle: 'Safety',
     safety: [
       'A home’s exact address is never public: only the commune and an approximate pin show. The exact address appears only after the owner replies to you in chat.',
@@ -112,9 +111,7 @@ export default async function HowItWorks(props) {
             </li>
           ))}
         </ol>
-        <p>
-          <Link href="/">{t.promo}</Link>
-        </p>
+        <p>{t.promo}</p>
 
         <h2>{t.safetyTitle}</h2>
         <ul>

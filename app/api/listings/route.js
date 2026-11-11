@@ -94,6 +94,12 @@ export async function POST(request) {
   if (!owner || !['landlord', 'seller'].includes(owner.role) || !owner.activated) {
     return Response.json({ error: 'Only activated landlord or seller accounts can post listings' }, { status: 403 });
   }
+  // Spencer-only Shop (Nov 2026, free-forever pivot): only a partner
+  // (admin-created) seller may post furniture. A public seller account
+  // — if one predates the pivot — cannot post.
+  if (owner.role === 'seller' && !owner.partner) {
+    return Response.json({ error: 'seller_not_allowed' }, { status: 403 });
+  }
   // Fraud suspension (0021) is separate from billing: an activated,
   // paid-up account still cannot post while fraud-suspended.
   if (owner.fraudSuspended) {

@@ -53,11 +53,7 @@ before(async () => {
   assert.equal((await signup(as.L, L)).status, 200);
   assert.equal((await signup(as.T, T)).status, 200);
   admin = await adminClient();
-  const p = await as.L('/api/payments', {
-    method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000012' },
-  });
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
+  // Free forever: the landlord is active at signup, no activation payment.
 });
 
 test('the scheduled job refuses anyone without the secret', { skip: cronSkip }, async () => {

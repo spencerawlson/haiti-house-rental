@@ -69,13 +69,7 @@ before(async () => {
   const logged = await loginRaw({ username: statsName, password: 'partner-pass-123' });
   assert.equal(logged.status, 200);
   stats = client(logged.cookie);
-  // Activate the landlord the billing way (payment + admin confirm).
-  const p = await as.L('/api/payments', {
-    method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000021' },
-  });
-  assert.equal(p.status, 200);
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `F${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
+  // Free forever: the landlord is active at signup, no activation payment.
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
   // The landlord posts one home; the tenant writes in its thread.
   const posted = await as.L('/api/listings', {
@@ -121,8 +115,8 @@ test('flags table aggregates open reports per account: name, id, message, count 
 });
 
 test('suspending a landlord hides homes, blocks posting and chat, keeps sign-in — and revokes old sessions', { skip }, async () => {
-  // Billing state before: the 'activation' payment flow sets activated
-  // but leaves billing_status 'pending' — record it, don't assume it.
+  // Billing state before: free forever, so the landlord is active
+  // with no expiry — record it, don't assume it.
   billingBefore = (await as.L('/api/accounts/me')).data.account;
   const susp = await admin('/api/admin/flags', { method: 'POST', body: { username: L.username, action: 'suspend', reason: 'Rapò fwod' } });
   assert.equal(susp.status, 200, JSON.stringify(susp.data));

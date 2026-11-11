@@ -75,7 +75,6 @@ export default async function Shop(props) {
               <section className="card">
                 <div className="card-body" style={{ display: 'grid', gap: 10 }}>
                   <p style={{ margin: 0 }}>{t.shopNoItems}</p>
-                  <p style={{ margin: 0 }}><Link className="btn" href={`${base}/signup?role=seller`}>{t.shopBecomeSeller}</Link></p>
                 </div>
               </section>
             ) : (
@@ -106,7 +105,6 @@ export default async function Shop(props) {
             <div className="card-body" style={{ display: 'grid', gap: 10 }}>
               <p style={{ margin: 0 }}>{t.shopEmpty}</p>
               <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <Link className="btn" href={`${base}/signup?role=seller`}>{t.shopBecomeSeller}</Link>
                 <Link className="btn btn-secondary" href={`${base}/shop/post`}>{t.shopPostItem}</Link>
               </p>
             </div>

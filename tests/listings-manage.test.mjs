@@ -36,13 +36,7 @@ before(async () => {
   assert.equal((await signup(as.L, L)).status, 200);
   assert.equal((await signup(as.T, T)).status, 200);
   admin = await adminClient();
-  // The landlord must be activated before it can post.
-  const p = await as.L('/api/payments', {
-    method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000020' },
-  });
-  assert.equal(p.status, 200);
-  await admin('/api/admin/payments', { method: 'POST', body: { id: p.data.payment.id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
+  // Free forever: the landlord is active at signup and can post.
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
 });
 

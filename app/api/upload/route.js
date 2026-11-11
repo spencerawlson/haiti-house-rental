@@ -20,7 +20,7 @@ const MAX_VIDEO = 100 * 1024 * 1024;
 
 export async function POST(request) {
   const me = await getSessionAccount(request);
-  if (!me || !['landlord', 'seller'].includes(me.role) || !me.activated) {
+  if (!me || !['landlord', 'seller', 'advertiser'].includes(me.role) || !me.activated) {
     return Response.json({ error: 'Only activated landlord or seller accounts can upload' }, { status: 403 });
   }
   if (!rateLimit(`upload:${me.username}`, 60, 60 * 60 * 1000)) return tooMany();
