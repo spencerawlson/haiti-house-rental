@@ -4,6 +4,10 @@
 // unapplied. The fault test uses a test-only hook on reviewPayment
 // (__testFailAfterFlip) that no HTTP route forwards, so it cannot be
 // triggered from outside the test process.
+//
+// Free forever (Nov 2026): there are no join/quarter billing payments
+// any more — the atomicity cases run on advertising payments (listing
+// ads and picture-ad campaigns), the only payments left.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { ADMIN_PASSWORD, client, signup, adminClient, uniq } from './helpers.mjs';
@@ -23,6 +27,13 @@ async function newLandlord(tag) {
   return u;
 }
 
+async function newAdvertiser(tag) {
+  const u = { name: `Atom Adv ${tag}`, username: `atoma${tag}_${run}`, password: 'pw-a', role: 'advertiser' };
+  as[tag] = client();
+  assert.equal((await signup(as[tag], u)).status, 200, `signed up ${tag}`);
+  return u;
+}
+
 async function submit(tag, body) {
   const r = await as[tag]('/api/payments', { method: 'POST', body });
   assert.equal(r.status, 200, `submitted ${JSON.stringify(body)}`);
@@ -35,11 +46,19 @@ async function confirm(id) {
   return c.data.payment;
 }
 
-const me = async (tag) => (await as[tag]('/api/accounts/me')).data.account;
 const pendingPayment = async (id) => {
   const list = await admin('/api/admin/payments?status=pending');
   return (list.data.payments || []).find((p) => p.id === id);
 };
+
+async function postListing(tag, title) {
+  const made = await as[tag]('/api/listings', {
+    method: 'POST',
+    body: { title, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
+  });
+  assert.equal(made.status, 200, 'listing posted');
+  return made.data.listing.id;
+}
 
 before(async () => {
   if (skip) return;
@@ -48,8 +67,10 @@ before(async () => {
 
 test('a failure mid-confirm leaves the payment pending, never confirmed-but-unapplied', { skip }, async () => {
   const u = await newLandlord('F');
-  const p = await submit('F', { kind: 'join', provider: 'moncash', senderPhone: '30000021' });
-  assert.equal((await me('F')).billingStatus, 'pending', 'not active before confirm');
+  const listingId = await postListing('F', `Atom Ad ${run}`);
+  const p = await submit('F', { kind: 'advertising', listingId, amountHTG: 500, provider: 'moncash', senderPhone: '30000021' });
+  const libBefore = (await as.F(`/api/listings?owner=${encodeURIComponent(u.username)}&all=1`)).data.listings.find((l) => l.id === listingId);
+  assert.equal(libBefore.advertised, false, 'not advertised before confirm');
 
   // The fault fires after the status flip but before any side effect.
   // Before the A1 fix this call succeeds (the hook is ignored) and the
@@ -61,36 +82,21 @@ test('a failure mid-confirm leaves the payment pending, never confirmed-but-unap
   );
 
   assert.ok(await pendingPayment(p.id), 'still pending after the failed confirm');
-  assert.equal((await me('F')).billingStatus, 'pending', 'no billing effect applied');
+  const libAfter = (await as.F(`/api/listings?owner=${encodeURIComponent(u.username)}&all=1`)).data.listings.find((l) => l.id === listingId);
+  assert.equal(libAfter.advertised, false, 'no ad effect applied');
 
   // The state is recoverable: the same payment confirms normally now.
   await confirm(p.id);
-  assert.equal((await me('F')).billingStatus, 'active', 'active after re-confirm');
+  const libDone = (await as.F(`/api/listings?owner=${encodeURIComponent(u.username)}&all=1`)).data.listings.find((l) => l.id === listingId);
+  assert.equal(libDone.advertised, true, 'advertised after re-confirm');
+  assert.equal(libDone.adBalanceHTG, 500, 'budgets applied after re-confirm');
 });
 
-test('a confirmed join payment carries its billing and revenue effect', { skip }, async () => {
-  const u = await newLandlord('J');
-  const p = await submit('J', { kind: 'join', provider: 'moncash', senderPhone: '30000022' });
-  await confirm(p.id);
-  assert.equal((await me('J')).billingStatus, 'active', 'billing applied');
-  const rev = await admin('/api/admin/revenue');
-  const row = (rev.data.entries || []).find((e) => e.username === u.username && e.kind === 'join');
-  assert.ok(row, 'revenue roster carries the join payment');
-  assert.equal(row.amountHTG, 1500, 'at the real amount');
-});
-
-test('a confirmed advertising payment carries its ad budgets', { skip }, async () => {
+test('a confirmed advertising payment carries its ad budgets and revenue effect', { skip }, async () => {
   const u = await newLandlord('A');
-  const p = await submit('A', { kind: 'join', provider: 'moncash', senderPhone: '30000023' });
+  const listingId = await postListing('A', `Atom Ad ${run}`);
+  const p = await submit('A', { kind: 'advertising', listingId, amountHTG: 500, provider: 'moncash', senderPhone: '30000023' });
   await confirm(p.id);
-  const made = await as.A('/api/listings', {
-    method: 'POST',
-    body: { title: `Atom Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 30000, purpose: 'rent' },
-  });
-  assert.equal(made.status, 200, 'listing posted');
-  const listingId = made.data.listing.id;
-  const ad = await submit('A', { kind: 'advertising', provider: 'moncash', senderPhone: '30000023', listingId, amountHTG: 500 });
-  await confirm(ad.id);
   const mine = (await as.A(`/api/listings?owner=${encodeURIComponent(u.username)}&all=1`)).data.listings || [];
   const lib = mine.find((l) => l.id === listingId);
   assert.ok(lib.advertised, 'campaign shows in the Library');
@@ -99,4 +105,30 @@ test('a confirmed advertising payment carries its ad budgets', { skip }, async (
   const row = (stats.data.stats || []).find((s) => s.id === listingId);
   assert.ok(row, 'admin ad-stats carries the campaign');
   assert.ok(row.viewsBudget > 0 && row.clicksBudget > 0, 'budgets set from the admin rate');
+  const rev = await admin('/api/admin/revenue');
+  const revRow = (rev.data.entries || []).find((e) => e.username === u.username && e.kind === 'advertising' && e.amountHTG === 500);
+  assert.ok(revRow, 'revenue roster carries the advertising payment');
+});
+
+test('a confirmed campaign payment carries its campaign budgets', { skip }, async () => {
+  const u = await newAdvertiser('C');
+  const camp = await as.C('/api/advertisers/campaigns', {
+    method: 'POST',
+    body: { title: `Atom Camp ${run}`, imageUrl: 'https://example.com/atom.png', linkUrl: 'https://example.com/atom' },
+  });
+  assert.equal(camp.status, 200, JSON.stringify(camp.data));
+  const campaignId = camp.data.campaign.id;
+  assert.equal(camp.data.campaign.status, 'pending', 'pending before payment');
+  const p = await submit('C', { kind: 'advertising', campaignId, amountHTG: 200, provider: 'moncash', senderPhone: '30000024' });
+  await confirm(p.id);
+  const mine = (await as.C('/api/advertisers/campaigns')).data.campaigns || [];
+  const row = mine.find((c) => c.id === campaignId);
+  assert.ok(row, 'campaign still listed for its owner');
+  assert.equal(row.status, 'active', 'confirmation activates the campaign');
+  assert.equal(row.paused, false);
+  const feed = (await client()('/api/ads/active')).data.campaigns || [];
+  assert.ok(feed.some((c) => c.id === campaignId), 'active campaign reaches the public feed');
+  const rev = await admin('/api/admin/revenue');
+  const revRow = (rev.data.entries || []).find((e) => e.username === u.username && e.kind === 'advertising' && e.amountHTG === 200);
+  assert.ok(revRow, 'revenue roster carries the campaign payment');
 });

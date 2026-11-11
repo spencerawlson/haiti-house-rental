@@ -19,14 +19,9 @@ before(async () => {
   assert.equal((await signup(as.L, L)).status, 200);
   assert.equal((await signup(as.T, T)).status, 200);
   admin = await adminClient();
-  // The landlord must be activated before it can post.
-  const p = await as.L('/api/payments', {
-    method: 'POST',
-    body: { kind: 'activation', provider: 'moncash', senderPhone: '30000020' },
-  });
-  assert.equal(p.status, 200);
-  paymentId = p.data.payment.id;
-  await admin('/api/admin/payments', { method: 'POST', body: { id: paymentId, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
+  // Free forever: the landlord is active at signup, no activation
+  // payment. The ledger row this file checks for after deletion is a
+  // confirmed advertising payment on the listing below instead.
   assert.equal((await as.L('/api/accounts/me')).data.account.activated, true);
   const r = await as.L('/api/listings', {
     method: 'POST',
@@ -34,6 +29,13 @@ before(async () => {
   });
   assert.equal(r.status, 200, 'created listing');
   listingId = r.data.listing.id;
+  const p = await as.L('/api/payments', {
+    method: 'POST',
+    body: { kind: 'advertising', listingId, amountHTG: 100, provider: 'moncash', senderPhone: '30000020' },
+  });
+  assert.equal(p.status, 200);
+  paymentId = p.data.payment.id;
+  await admin('/api/admin/payments', { method: 'POST', body: { id: paymentId, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });
 });
 
 test('unauthenticated deletion is rejected', { skip }, async () => {

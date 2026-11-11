@@ -1,72 +1,104 @@
-// Seller accounts + the structured Shop (Nov 2026).
+// Seller accounts + the structured Shop (Nov 2026, free-forever pivot).
 //
-// Rules under test: sellers pay 50% of landlord prices (750 join /
-// 500 quarter / 750 reactivation, server-decided); the first 2000
-// sellers get a free year from a SEPARATE pool — a seller tag must
-// not consume a landlord spot, and vice versa; sellers post
+// Rules under test: public seller signup is CLOSED — POST /api/accounts
+// with role 'seller' returns 400 {error:'seller_signup_closed'}.
+// Spencer is the sole seller: his seller account is created by the
+// admin partner route (role 'seller', partner=true) and can post
+// furniture. A non-partner seller — one that predates the pivot —
+// cannot post: 403 {error:'seller_not_allowed'}. Sellers post
 // furniture items (kind='furniture') with exactly one section and
 // one category, and those items never appear in house search,
 // listings, or the map feed; the Shop page shows sections first and
 // filters to one section; empty sections say so plainly; no
 // furniture purchase payment exists in v1 (browse + contact seller).
-//
-// Ordering: runs after 00, so the landlord promo is FULL here — a
-// landlord signed up in this file is pending and pays normally,
-// which is exactly what the seller-pool isolation test needs: the
-// seller pool is still open (00 only tagged landlords), so a seller
-// here is promo-tagged and activated at once.
+// The Shop is visible (SHOW_SHOP=true). Nobody pays anything any
+// more: landlords and the founder seller are active at signup /
+// creation, with paid_until NULL.
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { BASE, ADMIN_PASSWORD, client, signup, adminClient, uniq } from './helpers.mjs';
-import { billingFeesFor } from '../lib/config.js';
+import { BASE, ADMIN_PASSWORD, client, signup, adminClient, uniq, sha } from './helpers.mjs';
+import { createServerAccount } from '../lib/accounts-server.js';
 
 const skip = !ADMIN_PASSWORD && 'needs ADMIN_PASSWORD';
 const run = uniq();
-const S = { name: 'Sara Seller', username: `sara_${run}`, password: 'pw-s', role: 'seller' };
 const L = { name: 'Leo Landlord', username: `leo_${run}`, password: 'pw-l', role: 'landlord' };
+// The founder's seller account, created by the admin partner route.
+const S = { name: 'Sara Seller', username: `sara_${run}`, password: 'pw-s', role: 'seller' };
 const as = { S: client(), L: client() };
 let admin;
 
-before(async () => { admin = await adminClient(); });
-
-async function promoCounts() {
-  const r = await admin('/api/admin/promo');
-  assert.equal(r.status, 200);
-  return r.data;
+async function signInRaw(username, password) {
+  const res = await fetch(`${BASE}/api/accounts/signin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, passwordHash: sha(password) }),
+  });
+  const cookie = (res.headers.getSetCookie?.() || []).map((c) => c.split(';')[0]).join('; ');
+  return { status: res.status, cookie, data: await res.json().catch(() => null) };
 }
 
-test('seller signup costs half the landlord price, from the seller pool only', { skip }, async () => {
-  // The server price table itself: seller = exactly 50% of landlord.
-  // The payments route and the reminder path both read this table
-  // (billingFeesForAccount / billingFeesFor(role)), never the client.
-  assert.deepEqual(billingFeesFor('seller'), { join: 750, quarter: 500, reactivation: 750 });
-  assert.deepEqual(billingFeesFor('landlord'), { join: 1500, quarter: 1000, reactivation: 1500 });
-  const beforeCounts = await promoCounts();
-  const sellerRes = await signup(as.S, S);
-  assert.equal(sellerRes.status, 200, 'seller signup succeeds');
-  const sellerMe = (await as.S('/api/accounts/me')).data.account;
-  assert.equal(sellerMe.role, 'seller');
-  assert.equal(sellerMe.promoTagged, true, 'seller promo still open, so tagged');
-  assert.equal(sellerMe.activated, true, 'promo seller activated at once');
-  const after = await promoCounts();
-  assert.equal(after.sellerTagged, beforeCounts.sellerTagged + 1, 'one seller spot consumed');
-  assert.equal(after.sellerRemaining, beforeCounts.sellerRemaining - 1);
-  assert.equal(after.tagged, beforeCounts.tagged, 'landlord pool untouched by a seller tag');
-  // And the landlord join fee is still 1500, server-decided (no
-  // amount is sent in the payment request below).
+before(async () => {
+  if (skip) return;
+  admin = await adminClient();
+});
+
+test('public seller signup is closed; the founder seller comes from the admin partner route', { skip }, async () => {
+  const closed = await signup(client(), { name: 'Sara Seller', username: S.username, password: S.password, role: 'seller' });
+  assert.equal(closed.status, 400, 'seller signup refused');
+  assert.equal(closed.data.error, 'seller_signup_closed');
+
+  const founder = await admin('/api/admin/partner', {
+    method: 'POST',
+    body: { name: S.name, username: S.username, phone: '+509 3000 0002', passwordHash: sha(S.password), role: 'seller' },
+  });
+  assert.equal(founder.status, 200, JSON.stringify(founder.data));
+  assert.equal(founder.data.account.role, 'seller');
+  assert.equal(founder.data.account.partner, true, 'the founder seller is a partner account');
+  assert.equal(founder.data.account.activated, true, 'active at creation, no payment');
+  assert.equal(founder.data.account.billingStatus, 'active');
+  assert.equal(founder.data.account.paidUntil, null);
+  assert.equal(founder.data.account.promoTagged, false);
+
+  // The partner route does not sign in: sign in for a session.
+  const logged = await signInRaw(S.username, S.password);
+  assert.equal(logged.status, 200, JSON.stringify(logged.data));
+  as.S = client(logged.cookie);
+
+  // And a landlord signs up free and active at once, no payment.
   const landlordRes = await signup(as.L, L);
   assert.equal(landlordRes.status, 200);
   const landlordMe = (await as.L('/api/accounts/me')).data.account;
-  assert.equal(landlordMe.promoTagged, false, 'landlord promo full after 00, so untagged');
-  // Activate the landlord so the shop-fields rejection below is
-  // reached (an unactivated landlord gets 403 first, correctly).
-  assert.equal((await admin('/api/admin/activate', { method: 'POST', body: { username: L.username, activated: true } })).status, 200);
-  const landlordPay = await as.L('/api/payments', { method: 'POST', body: { kind: 'join', provider: 'moncash', senderPhone: '30000044' } });
-  assert.equal(landlordPay.status, 200);
-  assert.equal(landlordPay.data.payment.amountHTG, 1500, 'landlord join fee unchanged');
+  assert.equal(landlordMe.role, 'landlord');
+  assert.equal(landlordMe.activated, true);
+  assert.equal(landlordMe.billingStatus, 'active');
+  assert.equal(landlordMe.paidUntil, null);
+  assert.equal(landlordMe.promoTagged, false);
 });
 
-test('seller posts a furniture item; kind is forced server-side and a bad category is rejected', { skip }, async () => {
+test('a non-partner seller cannot post furniture; the founder seller can', { skip }, async () => {
+  // A public seller predating the pivot: created directly, partner=false.
+  // (Public signup is closed, so the HTTP routes cannot make one.)
+  const legacy = await createServerAccount({
+    name: 'Legacy Seller', username: `legacy_${run}`, passwordHash: sha('pw-legacy'),
+    phone: '+509 3000 0003', role: 'seller', partner: false,
+  });
+  assert.ok(legacy, 'legacy seller created');
+  assert.equal(legacy.partner, false);
+  const logged = await signInRaw(`legacy_${run}`, 'pw-legacy');
+  assert.equal(logged.status, 200, JSON.stringify(logged.data));
+  const legacyClient = client(logged.cookie);
+  const blocked = await legacyClient('/api/listings', {
+    method: 'POST',
+    body: {
+      title: `Zòrye ansyen ${run}`, description: 'Zòrye fèt alamen', department: 'ouest', commune: 'Pétion-Ville',
+      price: 2500, currency: 'HTG', photos: [], videos: [], purpose: 'sale',
+      shopSection: 'textiles', shopCategory: 'pillows',
+    },
+  });
+  assert.equal(blocked.status, 403, 'non-partner seller refused');
+  assert.equal(blocked.data.error, 'seller_not_allowed');
+
+  // The founder seller posts fine.
   const ok = await as.S('/api/listings', {
     method: 'POST',
     body: {
@@ -75,10 +107,13 @@ test('seller posts a furniture item; kind is forced server-side and a bad catego
       shopSection: 'textiles', shopCategory: 'pillows',
     },
   });
-  assert.equal(ok.status, 200, 'seller furniture post succeeds');
+  assert.equal(ok.status, 200, 'founder seller furniture post succeeds');
   assert.equal(ok.data.listing.kind, 'furniture');
   assert.equal(ok.data.listing.shopSection, 'textiles');
   assert.equal(ok.data.listing.shopCategory, 'pillows');
+});
+
+test('seller posts a furniture item; kind is forced server-side and a bad category is rejected', { skip }, async () => {
   // A client-supplied kind is rejected, not trusted.
   const forced = await as.S('/api/listings', {
     method: 'POST',
@@ -110,10 +145,16 @@ test('furniture never appears in house listings; the Shop page filters by sectio
   assert.ok(shopHtml.includes(`Zòrye brode ${run}`), 'textiles section shows the posted item');
   const furnitureHtml = await (await fetch(`${BASE}/ht/shop?section=furniture`, { headers: { Cookie: 'kay_locale=ht' } })).text();
   assert.ok(!furnitureHtml.includes(`Zòrye brode ${run}`), 'furniture section does not show a textiles item');
-  assert.ok(furnitureHtml.includes('Poko gen atik nan seksyon sa a'), 'empty section says so plainly');
+  assert.ok(furnitureHtml.includes('Pa gen atik nan seksyon sa a pou kounye a'), 'empty section says so plainly');
   const allHtml = await (await fetch(`${BASE}/ht/shop`, { headers: { Cookie: 'kay_locale=ht' } })).text();
   assert.ok(!allHtml.includes(`Zòrye brode ${run}`), 'no uncategorised random feed: sections first, items only inside a section');
   assert.ok(allHtml.includes('Ou jwenn kay la. Kounye a, mèble l.'), 'Shop subline renders');
+});
+
+test('the Shop is visible from the landing page', { skip }, async () => {
+  const landing = await (await fetch(`${BASE}/`, { headers: { Cookie: 'kay_locale=ht' } })).text();
+  assert.ok(landing.includes('Mèble Kay Ou'), 'landing shows the Shop banner');
+  assert.ok(landing.includes('/ht/shop'), 'landing links into the Shop');
 });
 
 test('the admin sees Shop items to moderate; the admin house feed stays houses-only', { skip }, async () => {
@@ -129,12 +170,9 @@ test('the admin sees Shop items to moderate; the admin house feed stays houses-o
   assert.ok(!anon.listings.some((l) => l.kind === 'furniture'), 'non-admin never gets the admin Shop list');
 });
 
-test('seller quarter reminder amount is 500, not the landlord 1000', { skip }, async () => {
-  // A promo seller is active, so no live reminder is due here; the
-  // reminder path reads the same server table asserted above
-  // (billing-server due reminders use billingFeesFor(r.role).quarter),
-  // so a seller reminder says 500 HTG, never the landlord 1000.
-  assert.equal(billingFeesFor('seller').quarter, 500);
+test('the founder seller is active and free, never billed', { skip }, async () => {
   const me = (await as.S('/api/accounts/me')).data.account;
-  assert.equal(me.billingStatus, 'active', 'promo seller is active, not pending');
+  assert.equal(me.billingStatus, 'active', 'founder seller is active, not pending');
+  assert.equal(me.paidUntil, null, 'never expires');
+  assert.equal(me.promoTagged, false, 'no promo tagging');
 });

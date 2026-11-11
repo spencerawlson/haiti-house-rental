@@ -41,10 +41,8 @@ before(async () => {
   assert.equal((await signup(asL, L)).status, 200);
   assert.equal((await signup(asL2, L2)).status, 200);
   admin = await adminClient();
-  // Activate the landlord (activation payment) so they can post.
-  const p = await asL('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: '30000044' } });
-  assert.equal(p.status, 200);
-  await confirmPayment(p.data.payment.id);
+  // Free forever: landlords are active at signup, so they can post
+  // with no activation payment.
   assert.equal((await asL('/api/accounts/me')).data.account.activated, true);
 });
 
@@ -125,4 +123,53 @@ test('exhausting either budget stops the ad on its own', { skip }, async () => {
   } finally {
     await admin('/api/admin/settings', { method: 'POST', body: { adViewsPer100: 1000, adClicksPer100: 200 } });
   }
+});
+
+// Picture-ad campaigns (0028) count the same way, through the carousel's
+// c: prefix: the home page renders data-ad-card="c:<id>", and the
+// counting routes accept that prefixed id (or a plain campaignId).
+// Views are once per card per browser session on the CLIENT side
+// (AdvertisedCarousel keeps a sessionStorage seen-set); the server
+// counts every report it receives, clicks count every tap, and the
+// responses never return counts — budgets stay hidden from everyone
+// but the admin.
+test('campaign counting via the c: prefix: views and clicks land, counts never returned', { skip }, async () => {
+  const adv = client();
+  assert.equal((await signup(adv, { name: 'Ad Budget Advertiser', username: `adbudadv_${run}`, password: 'pw-a', role: 'advertiser' })).status, 200);
+  const camp = await adv('/api/advertisers/campaigns', {
+    method: 'POST',
+    body: { title: `Budget Camp ${run}`, imageUrl: 'https://example.com/budget.png', linkUrl: 'https://example.com/budget' },
+  });
+  assert.equal(camp.status, 200, JSON.stringify(camp.data));
+  const id = camp.data.campaign.id;
+  const p = await adv('/api/payments', { method: 'POST', body: { kind: 'advertising', campaignId: id, amountHTG: 100, provider: 'moncash', senderPhone: '30000044' } });
+  assert.equal(p.status, 200, JSON.stringify(p.data));
+  await confirmPayment(p.data.payment.id);
+
+  const stats = async () => (await adv('/api/advertisers/stats')).data.stats;
+  assert.deepEqual(await stats(), { campaigns: 1, viewsUsed: 0, clicksUsed: 0 }, 'nothing spent yet');
+
+  // The carousel's prefixed form, exactly as data-ad-card="c:<id>" reports.
+  const imp = await anon('/api/ads/impression', { method: 'POST', body: { listingId: `c:${id}` } });
+  assert.deepEqual(Object.keys(imp.data).sort(), ['counted'], 'the response carries only {counted}');
+  assert.equal(imp.data.counted, true);
+  // And the plain campaignId form counts the same way.
+  assert.equal((await anon('/api/ads/impression', { method: 'POST', body: { campaignId: id } })).data.counted, true);
+  assert.equal((await stats()).viewsUsed, 2, 'both views landed');
+  // Clicks count every tap.
+  for (let i = 0; i < 3; i++) {
+    const click = await anon('/api/ads/click', { method: 'POST', body: { listingId: `c:${id}` } });
+    assert.deepEqual(Object.keys(click.data).sort(), ['counted'], 'clicks return no counts either');
+    assert.equal(click.data.counted, true, `tap ${i + 1} counts`);
+  }
+  assert.equal((await stats()).clicksUsed, 3, 'every tap counted');
+
+  // Pausing freezes the campaign: nothing counts while paused.
+  assert.equal((await adv('/api/ads/pause', { method: 'POST', body: { campaignId: id, paused: true } })).status, 200);
+  assert.equal((await anon('/api/ads/impression', { method: 'POST', body: { listingId: `c:${id}` } })).data.counted, false);
+  assert.equal((await anon('/api/ads/click', { method: 'POST', body: { campaignId: id } })).data.counted, false);
+  assert.deepEqual(await stats(), { campaigns: 1, viewsUsed: 2, clicksUsed: 3 }, 'paused: nothing more spent');
+  assert.equal((await adv('/api/ads/pause', { method: 'POST', body: { campaignId: id, paused: false } })).status, 200);
+  assert.equal((await anon('/api/ads/impression', { method: 'POST', body: { listingId: `c:${id}` } })).data.counted, true, 'resumed: counting again');
+  assert.equal((await stats()).viewsUsed, 3);
 });

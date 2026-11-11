@@ -3,11 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LOCALES, billingFeesFor, SHOW_SHOP } from '@/lib/config';
+import { LOCALES, SHOW_SHOP } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
 import AvatarUpload from '@/components/AvatarUpload';
-import PaymentForm from '@/components/PaymentForm';
 import TabBar from '@/components/TabBar';
 import ThemeToggle from '@/components/ThemeToggle';
 import Icon from '@/components/Icon';
@@ -83,32 +82,18 @@ export default function Account(props) {
     setMe(null);
   }
 
-  // Paid accounts: landlords (houses) and sellers (Shop items). Both
-  // share the subscription lifecycle; only the price table differs
-  // (seller = 50% of landlord, server-decided in lib/config.js).
-  const isLandlord = !!me && me.role !== 'tenant';
-  const isSeller = !!me && me.role === 'seller';
+  // Dashboards by role (free-forever pivot, Nov 2026): landlords get
+  // the homes dashboard, the founder seller gets the Shop dashboard,
+  // advertisers get the ads dashboard. A plain seller (no partner flag)
+  // has no dashboard — public seller signup is closed.
+  const isLandlord = !!me && me.role === 'landlord';
+  const isSeller = !!me && me.role === 'seller' && me.partner;
+  const isAdvertiser = !!me && me.role === 'advertiser';
   const unread = threads.reduce((sum, th) => sum + th.unread, 0);
   const upcomingVisits = visits.filter((v) => ['proposed', 'confirmed'].includes(v.status)).length;
   const pendingPayments = payments.filter((p) => p.status === 'pending').length;
-  // One subscription payment can be in flight at a time.
-  const BILLING_KINDS = ['join', 'quarter', 'reactivation', 'activation'];
-  const activationPending = payments.some((p) => BILLING_KINDS.includes(p.kind) && p.status === 'pending');
-  // What the server says is owed. Mirrors dueKindFor() on the server,
-  // which is the authority — this only decides what to show.
-  const billing = me?.billingStatus || 'pending';
-  const dueKind = !isLandlord || me?.partner ? null
-    : billing === 'pending' ? 'join'
-    : billing === 'deactivated' ? 'reactivation'
-    : 'quarter';
-  const dueAmount = dueKind ? billingFeesFor(me.role)[dueKind] : undefined;
-  const dueLabel = { join: t.payJoin, quarter: t.payQuarter, reactivation: t.payReactivation }[dueKind];
-  const statusLabel = { pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[billing];
-  const dateFmt = (ms) => new Date(ms).toLocaleDateString(params.locale === 'ht' ? 'fr' : params.locale);
-  // Promo (0022): a tagged landlord with a future promo end pays
-  // nothing — no join fee, no quarterly fee — so the payment form
-  // stays hidden and the promo line shows instead.
-  const promoActive = !!me && !!me.promoTagged && !!me.promoUntil && me.promoUntil > Date.now();
+  // No amount is ever due: Kay Ayiti is free for everyone, forever.
+  const dueKind = null;
 
   return (
     <>
@@ -132,7 +117,7 @@ export default function Account(props) {
             <AvatarUpload account={me} onChange={setMe} t={t} />
             <div style={{ minWidth: 0 }}>
               <h2 style={{ margin: 0 }}>{me.name}</h2>
-              <p style={{ margin: '2px 0 0', color: 'var(--ink)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : me.role === 'seller' ? t.roleSeller : t.roleLandlord}</p>
+              <p style={{ margin: '2px 0 0', color: 'var(--ink)', fontWeight: 700 }}>{me.role === 'tenant' ? t.roleTenant : me.role === 'seller' ? t.roleSeller : me.role === 'advertiser' ? t.roleAdvertiser : t.roleLandlord}</p>
               <p className="muted" style={{ margin: '2px 0 0', fontSize: '0.88rem' }}>
                 @{me.username}{me.id ? ` · ${me.id}` : ''}
               </p>
@@ -152,38 +137,10 @@ export default function Account(props) {
           </section>
         )}
 
-        {isLandlord && !me.partner && (
+        {(isLandlord || isAdvertiser) && !me.partner && (
           <section className="card" style={{ marginBottom: 20 }}>
             <div className="card-body" style={{ display: 'grid', gap: 10 }}>
-              <p style={{ margin: 0 }}>
-                <strong>{statusLabel}</strong>
-                {billing === 'active' && me.paidUntil && (
-                  <span className="muted"> · {t.paidUntilLabel} {dateFmt(me.paidUntil)}</span>
-                )}
-              </p>
-              {billing === 'suspended' && <p className="notice" style={{ margin: 0 }}>{t.suspendedNotice}</p>}
-              {billing === 'deactivated' && <p className="notice" style={{ margin: 0 }}>{t.deactivatedNotice}</p>}
-              {promoActive && (
-                <p style={{ margin: 0 }}><strong>{t.promoFreeUntil.replace('{date}', dateFmt(me.promoUntil))}</strong></p>
-              )}
-              {!promoActive && activationPending && (
-                <p style={{ margin: 0 }}><Icon name="hourglass" /> {t.waitingActivation}</p>
-              )}
-              {!promoActive && !activationPending && dueKind && (billing !== 'active' || me.paidUntil) ? (
-                <>
-                  <p style={{ margin: 0 }}>{t.sendTransfer}</p>
-                  <p className="muted" style={{ margin: 0 }}>
-                    {dueLabel}: <strong>{dueAmount.toLocaleString()} HTG</strong>
-                  </p>
-                  <PaymentForm
-                    kind={dueKind}
-                    amountHTG={dueAmount}
-                    destination={destination}
-                    strings={t}
-                    onSubmitted={(p) => setPayments((prev) => [p, ...prev])}
-                  />
-                </>
-              ) : null}
+              <p style={{ margin: 0 }}>{t.freeForever}</p>
             </div>
           </section>
         )}
@@ -218,9 +175,7 @@ export default function Account(props) {
             <p style={{ margin: 0 }}>{t.shopSubline}</p>
             <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link className="btn" href={`${base}/shop`}>{t.shopBrowse}</Link>
-              {isSeller
-                ? <Link className="btn btn-secondary" href={`${base}/shop/post`}>{t.shopPostItem}</Link>
-                : <Link className="btn btn-secondary" href={`${base}/signup?role=seller`}>{t.shopBecomeSeller}</Link>}
+              {isSeller && <Link className="btn btn-secondary" href={`${base}/shop/post`}>{t.shopPostItem}</Link>}
             </p>
           </div>
         </section>
@@ -236,6 +191,7 @@ export default function Account(props) {
           <MenuRow href={`${base}/near-me`} icon="pin" label={t.nearMe} />
           {isLandlord && <MenuRow href={`${base}/library`} icon="home" label={t.library} />}
           {isLandlord && <MenuRow href={`${base}/payments`} icon="card" label={t.myPayments} badge={0} />}
+          {isAdvertiser && <MenuRow href={`${base}/advertiser`} icon="megaphone" label={t.advertiserTitle} />}
           {loaded && !me && <MenuRow href={`${base}/list`} icon="＋" label={t.postHome} />}
         </nav>
 

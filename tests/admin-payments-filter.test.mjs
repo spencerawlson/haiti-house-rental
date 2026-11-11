@@ -23,8 +23,12 @@ before(async () => {
 test('a confirmed payment is listable by status and deletable from the board', { skip }, async () => {
   const landlord = client();
   await signup(landlord, { name: 'Filter', username: `filter_${run}`, password: 'pw', role: 'landlord' });
-  const sub = await landlord('/api/payments', { method: 'POST', body: { kind: 'activation', provider: 'moncash', senderPhone: '30000099' } });
-  assert.equal(sub.status, 200, 'activation submitted');
+  // Free forever: no activation payment exists any more — the confirmed
+  // payment under test is an advertising payment on a listing.
+  const made = await landlord('/api/listings', { method: 'POST', body: { title: `Filter Ad ${run}`, commune: 'Delmas', department: 'ouest', price: 1, purpose: 'rent', lat: 18.5, lng: -72.3 } });
+  assert.equal(made.status, 200, 'listing posted');
+  const sub = await landlord('/api/payments', { method: 'POST', body: { kind: 'advertising', listingId: made.data.listing.id, amountHTG: 100, provider: 'moncash', senderPhone: '30000099' } });
+  assert.equal(sub.status, 200, 'advertising submitted');
   const id = sub.data.payment.id;
 
   const c = await admin('/api/admin/payments', { method: 'POST', body: { id, decision: 'confirmed', receiverTxn: `T${Date.now()}${Math.random().toString(36).slice(2, 8)}` } });

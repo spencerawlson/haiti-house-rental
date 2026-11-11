@@ -25,15 +25,17 @@ import Splash from '@/components/Splash';
 // - No "verified listings" or "trusted owners" banner. `verified` is a
 //   per-listing admin check with no renter-facing definition, no expiry,
 //   and it survives the owner editing the home afterwards. There is no
-//   landlord-level verification at all — "activated" means a MonCash
-//   transfer matched a phone number, not that anyone checked who the
-//   person is. A trust badge on the busiest page of a rental site is a
-//   promise somebody acts on, so it waits until there is a check behind
-//   it. The value strip says only what the site actually does today.
+//   landlord-level verification at all — "activated" is automatic at
+//   signup since the Nov 2026 free-forever pivot; it means the account
+//   exists, not that anyone checked who the person is. A trust badge on
+//   the busiest page of a rental site is a promise somebody acts on, so
+//   it waits until there is a check behind it. The value strip says only
+//   what the site actually does today.
 //
-// - No "Local Stores" nav item and no merchant call to action. Merchant
-//   advertising does not exist yet (zero code), so the first thing a
-//   prospective advertiser would click is a dead link.
+// - No "Local Stores" nav item. Advertisers get one footer link to the
+//   Advertise page (/{locale}/advertise), which explains the 100–1,000
+//   HTG picture-ad model; their ads appear in the app-home carousel,
+//   never mixed into landing search results.
 //
 // - Nothing is described as "handpicked". The homes below are the NEWEST
 //   real listings, in the order the server returns them. Paid placement
@@ -131,6 +133,7 @@ export default async function Landing() {
         <div className="lp-hero-inner">
           <h1>{t.landingHero}</h1>
           <p>{t.landingSub}</p>
+          <p className="muted">{t.freeForever}</p>
 
           <form className="lp-search" action={`/${lang}/listings`} method="get" role="search">
             <div className="lp-purpose">
@@ -179,29 +182,6 @@ export default async function Landing() {
       </section>
 
       <main className="container lp-main">
-        {SHOW_PROMO_BANNER && promoOpen && (
-          <section className="card promo-banner">
-            <div className="card-body">
-              <h3><Icon name="sparkles" /> {t.promoLandingTitle}</h3>
-              <p>{fill(t.promoLandingLimited)}</p>
-              {showCount && (
-                <>
-                  <p><strong>{fill(t.promoLandingCount)}</strong></p>
-                  <div className="promo-meter" role="progressbar" aria-valuemin={0} aria-valuemax={promo.spots} aria-valuenow={promo.spots - promo.remaining}>
-                    <span style={{ width: `${Math.round(((promo.spots - promo.remaining) / promo.spots) * 100)}%` }} />
-                  </div>
-                </>
-              )}
-              <p className="promo-after">{fill(t.promoAfterYear)}</p>
-              {/* Signed in: go straight to posting — existing landlords
-                  were tagged retroactively, so signup would ask them to
-                  create an account they already have. Guests keep the
-                  signup funnel, which is where promo tagging happens. */}
-              <Link className="btn promo-cta" href={me ? `/${lang}/list` : `/${lang}/signup?role=landlord`}>{t.promoCta}</Link>
-            </div>
-          </section>
-        )}
-
         {/* Shop banner (Nov 2026): "Mèble Kay Ou" — the catchy
             furniture entry. Real seller items only, via the Shop page;
             this banner itself invents no product, price or seller. */}
@@ -212,7 +192,6 @@ export default async function Landing() {
             <p className="muted" style={{ margin: 0 }}>{t.shopSubline}</p>
             <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Link className="btn" href={`/${lang}/shop`}>{t.shopBrowse} →</Link>
-              <Link className="btn btn-secondary" href={`/${lang}/signup?role=seller`}>{t.shopBecomeSeller}</Link>
             </p>
           </div>
         </section>
@@ -254,15 +233,7 @@ export default async function Landing() {
           <div className="card">
             <div className="card-body">
               <h3>{t.landlordTitle}</h3>
-              <p className="muted">
-                {promoOpen ? (
-                  <>
-                    {t.activationOnce} <PromoPrice amount={JOIN_FEE_HTG} free={t.free} /> · {t.quarterFeeLabel}: <PromoPrice amount={QUARTER_FEE_HTG} free={t.promoFirstYear} />
-                  </>
-                ) : (
-                  <>{t.activationOnce} {JOIN_FEE_HTG.toLocaleString()} HTG · {t.quarterFeeLabel}: {QUARTER_FEE_HTG.toLocaleString()} HTG · {t.payNote}</>
-                )}
-              </p>
+              <p className="muted">{t.freeForever}</p>
               <Link className="btn" href={`/${lang}/list`}>{t.postHome} →</Link>
             </div>
           </div>
@@ -271,6 +242,7 @@ export default async function Landing() {
 
         <footer className="lp-footer">
           <Link href={`/${lang}/privacy`}>{t.privacy}</Link>
+          <Link href={`/${lang}/advertise`}>{t.advertiseTitle}</Link>
         </footer>
       </main>
     </div>
