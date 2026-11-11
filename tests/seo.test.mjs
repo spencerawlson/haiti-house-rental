@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BASE } from './helpers.mjs';
-import { cloudflareScheme } from '../lib/cloudflare.js';
+import { cloudflareScheme, canonicalHost } from '../lib/cloudflare.js';
 import { safeJsonLd } from '../lib/jsonld.js';
 
 test('cloudflareScheme reads the CF-Visitor header', () => {
@@ -16,6 +16,21 @@ test('cloudflareScheme reads the CF-Visitor header', () => {
   assert.equal(cloudflareScheme('not json'), null);
   assert.equal(cloudflareScheme('{"scheme":"ftp"}'), null);
   assert.equal(cloudflareScheme('{"scheme":123}'), null);
+});
+
+test('canonicalHost never emits an internal bind address', () => {
+  const headers = (v) => ({ get: (name) => (name === 'x-forwarded-host' ? v : null) });
+  // The forwarded host is trusted only when it IS the canonical host.
+  assert.equal(canonicalHost(headers('kayayiti.app')), 'kayayiti.app');
+  assert.equal(canonicalHost(headers('KayAyiti.App')), 'kayayiti.app');
+  // Anything else — absent, localhost, the origin bind address, a
+  // spoofed host — falls back to the hardcoded canonical host.
+  assert.equal(canonicalHost(headers(null)), 'kayayiti.app');
+  assert.equal(canonicalHost(headers('')), 'kayayiti.app');
+  assert.equal(canonicalHost(headers('localhost:3000')), 'kayayiti.app');
+  assert.equal(canonicalHost(headers('0.0.0.0:3000')), 'kayayiti.app');
+  assert.equal(canonicalHost(headers('127.0.0.1:3000')), 'kayayiti.app');
+  assert.equal(canonicalHost(headers('evil.example.com')), 'kayayiti.app');
 });
 
 test('safeJsonLd escapes < so a value cannot close the script tag', () => {
@@ -78,8 +93,47 @@ test('a plain-http visitor (CF-Visitor) is redirected to https', async () => {
   });
   assert.equal(res.status, 308);
   const loc = res.headers.get('location') || '';
-  assert.ok(loc.startsWith('https://'), `location is https: ${loc}`);
-  assert.ok(loc.endsWith('/ht'), `location keeps the path: ${loc}`);
+  // Regression (PR #117 shipped it): the Location host must be the
+  // public host. The origin binds 0.0.0.0:3000, so a redirect built from
+  // the request URL lands the browser on a dead https://0.0.0.0:3000.
+  assert.equal(loc, 'https://kayayiti.app/ht');
+});
+
+for (const forwarded of ['kayayiti.app', '0.0.0.0:3000', 'localhost:3000', 'evil.example.com']) {
+  test(`redirect host stays kayayiti.app with x-forwarded-host: ${forwarded}`, async () => {
+    const res = await fetch(`${BASE}/ht`, {
+      headers: { 'cf-visitor': '{"scheme":"http"}', 'x-forwarded-host': forwarded },
+      redirect: 'manual',
+    });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.get('location'), 'https://kayayiti.app/ht');
+  });
+}
+
+test('the root page carries the ht homepage JSON-LD + canonical', async () => {
+  const res = await fetch(`${BASE}/`, { redirect: 'manual' });
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  const graph = jsonLd(html);
+  const nodes = graph['@graph'] || [];
+  const types = nodes.map((n) => n['@type']);
+  assert.ok(types.includes('WebSite'), 'WebSite node present');
+  assert.ok(types.includes('Organization'), 'Organization node present');
+  const org = nodes.find((n) => n['@type'] === 'Organization');
+  assert.equal(org.inLanguage, 'ht');
+  assert.equal(org.name, 'Kay Ayiti');
+  assert.ok(!nodes.some((n) => 'sameAs' in n), 'no social profile is claimed');
+  assert.ok(
+    html.includes('<link rel="canonical" href="https://kayayiti.app/ht"'),
+    'root canonical points at the ht homepage',
+  );
+});
+
+test('the root landing (saved ht locale) shows the free-forever message', async () => {
+  const res = await fetch(`${BASE}/`, { headers: { Cookie: 'kay_locale=ht' } });
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.ok(html.includes('Kay Ayiti gratis nèt pou tout moun, pou tout tan.'));
 });
 
 test('an https visitor is not redirected', async () => {
