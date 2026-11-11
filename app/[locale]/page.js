@@ -12,8 +12,18 @@ import AdvertisedCarousel from '@/components/AdvertisedCarousel';
 import NotificationBell from '@/components/NotificationBell';
 import Icon from '@/components/Icon';
 import { mapPins } from '@/lib/listings';
+import { safeJsonLd } from '@/lib/jsonld';
 
 export const dynamic = 'force-dynamic';
+
+const BASE = (process.env.PUBLIC_BASE_URL || 'https://kayayiti.app').replace(/\/$/, '');
+
+// Canonical for the locale home, resolved against metadataBase in the
+// root layout (same relative form as the listing pages use).
+export async function generateMetadata(props) {
+  const params = await props.params;
+  return { alternates: { canonical: `/${params.locale}` } };
+}
 
 // In-app home (design: docs/design/app-showcase.png, screen 4): logo +
 // messages bell, search pill, quick chips, departments as photo circles,
@@ -42,8 +52,35 @@ export default async function LocaleHome(props) {
     { href: `${base}/near-me`, label: t.nearMe, icon: 'pin' },
     { href: `${base}/admin-chat`, label: t.contactAdmin, icon: 'chat' },
   ];
+  // Structured data for the locale home: WebSite + Organization, in the
+  // visitor's language, from the dictionary strings that already describe
+  // the site. No sameAs — Kay Ayiti has no verified social profile URL
+  // (no Page; only a Facebook group, whose URL is not on file), and none
+  // is invented here.
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        '@id': `${BASE}/${params.locale}#website`,
+        url: `${BASE}/${params.locale}`,
+        name: t.siteName,
+        description: t.landingSub,
+        inLanguage: params.locale,
+      },
+      {
+        '@type': 'Organization',
+        '@id': `${BASE}/#organization`,
+        name: t.siteName,
+        description: t.landingSub,
+        url: `${BASE}/${params.locale}`,
+        inLanguage: params.locale,
+      },
+    ],
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(graph) }} />
       <main className="container">
         <header className="topbar">
           <Link href={base} className="logo">
