@@ -36,8 +36,8 @@ export default function Signup(props) {
 
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
-    // Deep links that already chose (e.g. "Post a home", "Become a
-    // seller") skip the chooser.
+    // Deep links that already chose a role (e.g. "Post a home")
+    // skip the chooser.
     const preRole = new URLSearchParams(window.location.search).get('role');
     if (preRole === 'landlord' || preRole === 'advertiser') { setRole(preRole); setStep(1); }
   }, []);
