@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminScope } from './lib/admin-auth.js';
+import { cloudflareScheme } from './lib/cloudflare.js';
 
 // 1. CSRF guard (Phase 1b): a state-changing /api request whose Origin
 //    is another site is refused. Session cookies are SameSite=Lax (admin:
@@ -48,6 +49,24 @@ function needsAdmin(pathname, request) {
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+  // Canonical https (same class as Farelune's canonical fix): a visitor
+  // who arrives over plain http must be sent to https, or search engines
+  // see two copies of every page. The origin only ever sees http — the
+  // Cloudflare edge terminates TLS and the tunnel hands it plain requests
+  // — so the real scheme comes from the CF-Visitor header alone (see
+  // lib/cloudflare.js for why X-Forwarded-Proto cannot be trusted here).
+  // Absent or malformed = do nothing: local dev and direct-origin calls
+  // send no CF-Visitor header and must keep working over http. The
+  // Cloudflare "Always Use HTTPS" toggle does the same redirect at the
+  // edge; this is the code half, so the canonical holds even if the
+  // toggle is off, and it goes dormant (edge redirects first) if the
+  // toggle is later turned on.
+  const scheme = cloudflareScheme(request.headers.get('cf-visitor'));
+  if (scheme === 'http') {
+    const url = request.nextUrl.clone();
+    url.protocol = 'https:';
+    return NextResponse.redirect(url, 308);
+  }
   if (pathname.startsWith('/api/') && !SAFE.has(request.method) && !sameSite(request)) {
     return NextResponse.json({ error: 'Cross-site request refused' }, { status: 403 });
   }
@@ -74,5 +93,9 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/api/:path*', '/:locale/admin', '/:locale/stats'],
+  // API routes (CSRF guard + admin gate) plus every page: the https
+  // redirect above has to see page requests, not just /api. Next
+  // internals and files with an extension (/_next, /sw.js, /robots.txt,
+  // /sitemap.xml, /llms.txt, images) skip middleware entirely.
+  matcher: ['/api/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
 };
