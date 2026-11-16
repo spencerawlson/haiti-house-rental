@@ -49,6 +49,14 @@ function needsAdmin(pathname, request) {
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+  // Dotfiles are never real pages: /.env and /.git/* must 404, not
+  // render the app shell (any single segment used to match the [locale]
+  // route and answer 200). Verified clean — no env content ever leaked —
+  // but a 200 shell confuses scanners and search engines. This runs
+  // before the https redirect so the answer is 404 either way.
+  if (pathname === '/.env' || pathname.startsWith('/.env.') || pathname === '/.git' || pathname.startsWith('/.git/')) {
+    return new NextResponse('Not found', { status: 404 });
+  }
   // Canonical https (same class as Farelune's canonical fix): a visitor
   // who arrives over plain http must be sent to https, or search engines
   // see two copies of every page. The origin only ever sees http — the
@@ -104,6 +112,8 @@ export const config = {
   // API routes (CSRF guard + admin gate) plus every page: the https
   // redirect above has to see page requests, not just /api. Next
   // internals and files with an extension (/_next, /sw.js, /robots.txt,
-  // /sitemap.xml, /llms.txt, images) skip middleware entirely.
-  matcher: ['/api/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
+  // /sitemap.xml, /llms.txt, images) skip middleware entirely — except
+  // the dotfiles above, which are matched explicitly so they 404 instead
+  // of rendering the app shell.
+  matcher: ['/api/:path*', '/.env', '/.env.local', '/.git', '/.git/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
 };

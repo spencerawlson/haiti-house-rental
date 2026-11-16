@@ -102,7 +102,7 @@ export default async function LocaleHome(props) {
         <nav className="dept-row" aria-label={t.department}>
           {DEPARTMENTS.map((d, i) => (
             <Link key={d.id} className="dept" href={`${base}/listings?department=${d.id}`}>
-              <span className="dept-photo" style={{ backgroundImage: `url(/images/${DEPT_ART[i % DEPT_ART.length]}.jpg)` }} />
+              <span className="dept-photo" style={{ backgroundImage: `url(/images/${DEPT_ART[i % DEPT_ART.length]}.webp)` }} />
               {departmentName(d.id, params.locale)}
             </Link>
           ))}
@@ -123,7 +123,7 @@ export default async function LocaleHome(props) {
               {campaigns.map((c) => (
                 <article key={`c:${c.id}`} className="lcard" data-ad-card={`c:${c.id}`}>
                   <a href={c.linkUrl} target="_blank" rel="noopener noreferrer">
-                    <img className="lcard-photo" src={c.imageUrl} alt="" loading="lazy" decoding="async" />
+                    <img className="lcard-photo" src={c.imageUrl} alt={c.title} loading="lazy" decoding="async" />
                     <div className="lcard-body"><strong>{c.title}</strong></div>
                   </a>
                 </article>

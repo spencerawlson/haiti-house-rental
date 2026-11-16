@@ -8,7 +8,7 @@ import { getDict } from '@/lib/dictionaries';
 // Onboarding (design: docs/design/app-showcase.png, screen 2): three short
 // slides after the first-visit splash — find a home, talk and visit,
 // list your own home — with dots, a next arrow and Skip. Ends in the app.
-const ART = ['/images/landing-house.jpg', '/images/landing-palms.jpg', '/images/landing-beach.jpg'];
+const ART = ['/images/landing-house.webp', '/images/landing-palms.jpg', '/images/landing-beach.jpg'];
 
 export default function Welcome(props) {
   const params = use(props.params);

@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import PresencePing from '@/components/PresencePing';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 import OutboxFlusher from '@/components/OutboxFlusher';
+import CookieConsent from '@/components/CookieConsent';
 
 // Nunito, self-hosted. next/font/google fetches from Google at build
 // time, so a blocked or flaky fetch fails the whole build: it broke CI
@@ -38,9 +39,13 @@ export const metadata = {
     siteName: 'Kay Ayiti',
     title: 'Kay Ayiti — Kay pou lwe ak pou vann an Ayiti',
     description: 'Jwenn kay pou lwe oswa pou vann nan tout depatman Ayiti. Gratis pou lokatè.',
-    images: [{ url: '/images/landing-house.jpg', width: 1200, height: 1200 }],
+    images: [{ url: '/images/landing-house.webp', width: 1920, height: 1280 }],
   },
   twitter: { card: 'summary_large_image' },
+  // Real favicon file (public/favicon.ico, from the app icon) — without
+  // this the browser's default /favicon.ico request fell through to the
+  // [locale] route and came back as the app shell with a 200.
+  icons: { icon: '/favicon.ico' },
 };
 
 // viewport-fit=cover lets the safe-area env() vars report the real iPhone
@@ -70,6 +75,7 @@ export default function RootLayout({ children }) {
         <PresencePing />
         <ServiceWorkerRegister />
         <OutboxFlusher />
+        <CookieConsent />
         {children}
       </body>
     </html>
