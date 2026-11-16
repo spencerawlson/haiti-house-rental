@@ -23,7 +23,7 @@ export default function Splash() {
   }
   return (
     <main className="splash">
-      <img className="splash-bg" src="/images/landing-mountain.jpg" alt="" />
+      <img className="splash-bg" src="/images/landing-mountain.webp" alt="" />
       <div className="splash-wash" />
       <div className="splash-content">
         <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">

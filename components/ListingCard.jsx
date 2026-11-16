@@ -15,7 +15,7 @@ export default function ListingCard({ listing, locale, t, adCardId }) {
       <FavoriteButton listingId={listing.id} />
       <Link href={`/${locale}/listings/${listing.id}`}>
         {listing.photos?.length > 0 ? (
-          <img className="lcard-photo" src={photoSrc(listing.photos[0], 480)} alt="" loading="lazy" decoding="async" />
+          <img className="lcard-photo" src={photoSrc(listing.photos[0], 480)} alt={listing.title} loading="lazy" decoding="async" />
         ) : (
           <div className="lcard-art">{communeName(listing.commune, locale)}</div>
         )}

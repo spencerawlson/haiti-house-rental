@@ -46,7 +46,7 @@ import { safeJsonLd } from '@/lib/jsonld';
 // Prices render in whatever currency the landlord chose (0017), which is
 // HTG for almost everything — ListingCard handles it. Nothing here
 // invents a price, a home, or a figure.
-const HERO_IMAGE = '/images/landing-mountain.jpg';
+const HERO_IMAGE = '/images/landing-mountain.webp';
 
 // Quick links, taken from the real commune list so each one resolves to
 // an actual search rather than a free-text guess.
@@ -169,7 +169,7 @@ export default async function Landing() {
             background in the DOM at once; on Haitian mobile data that is
             paid for by the visitor. Sized down and eager, since it is the
             first thing on the page. */}
-        <img className="lp-hero-img" src={HERO_IMAGE} alt="" fetchPriority="high" decoding="async" />
+        <img className="lp-hero-img" src={HERO_IMAGE} alt={t.heroAlt} fetchPriority="high" decoding="async" />
         <div className="lp-hero-wash" aria-hidden="true" />
         <div className="lp-hero-inner">
           <h1>{t.landingHero}</h1>

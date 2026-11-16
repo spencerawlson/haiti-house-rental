@@ -47,7 +47,7 @@ export async function generateMetadata(props) {
   const { price, place, rooms } = previewText(l, t, params.locale);
   const title = `${l.title} · ${price}`;
   const description = [place, rooms, String(l.description || '').slice(0, 140)].filter(Boolean).join(' · ');
-  const image = l.photos?.[0] ? photoSrc(l.photos[0], 1200, 'jpg') : '/images/landing-house.jpg';
+  const image = l.photos?.[0] ? photoSrc(l.photos[0], 1200, 'jpg') : '/images/landing-house.webp';
   const url = `/${params.locale}/listings/${l.id}`;
   return {
     title: `${title} — Kay Ayiti`,

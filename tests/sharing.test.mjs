@@ -20,7 +20,7 @@ before(async () => {
   landlord = client();
   assert.equal((await landlord('/api/accounts/signin', { method: 'POST', body: { username: u, passwordHash: sha('pw') } })).status, 200);
   const form = new FormData();
-  form.append('file', new Blob([readFileSync(new URL('../public/images/landing-house.jpg', import.meta.url))], { type: 'image/jpeg' }), 'house.jpg');
+  form.append('file', new Blob([readFileSync(new URL('../public/images/landing-house.webp', import.meta.url))], { type: 'image/webp' }), 'house.webp');
   const up = await landlord('/api/upload', { method: 'POST', form });
   assert.equal(up.status, 200, JSON.stringify(up.data));
   photo = up.data.url;
@@ -43,8 +43,10 @@ test('resized photos: much smaller WebP for cards, JPEG for previews, original u
   const again = await fetch(`${BASE}${photo}?w=480`);
   assert.equal((await again.arrayBuffer()).byteLength, cardBytes);
   // Sizes outside the list get the original, never an arbitrary resize.
+  // The fixture is WebP now (landing-house.webp), so the untouched
+  // original comes back as image/webp.
   const odd = await fetch(`${BASE}${photo}?w=7`);
-  assert.equal(odd.headers.get('content-type'), 'image/jpeg');
+  assert.equal(odd.headers.get('content-type'), 'image/webp');
   assert.equal((await odd.arrayBuffer()).byteLength, origBytes);
 });
 
