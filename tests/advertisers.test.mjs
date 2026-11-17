@@ -211,3 +211,47 @@ test('freeForever copy is on the landing page and the in-app home, in all three 
     assert.ok(home.includes(FREE[locale]), `in-app home (${locale}) says free forever`);
   }
 });
+
+// The advertiser service is NOT OFFERED (Nov 17, 2026, Spencer —
+// "we will not yet offer this service"): SHOW_ADVERTISE is false, so
+// no public page may link to it and both of its pages redirect to the
+// home page. The machinery behind the flag (signup role, campaign
+// creation, payments) keeps working, exactly like the hidden Shop —
+// these tests only cover what a visitor can reach. They need no admin.
+async function fetchNoRedirect(path, headers = {}) {
+  const res = await fetch(`${BASE}${path}`, { headers, redirect: 'manual' });
+  return { res, text: await res.text() };
+}
+
+test('the advertise page redirects to the home page in every locale', async () => {
+  for (const locale of ['ht', 'fr', 'en']) {
+    const { res } = await fetchNoRedirect(`/${locale}/advertise`);
+    assert.ok([307, 308].includes(res.status), `/${locale}/advertise redirects, got ${res.status}`);
+    assert.match(res.headers.get('location') || '', new RegExp(`/${locale}$`), 'redirect lands on the home page');
+  }
+});
+
+test('the advertiser dashboard redirects to the home page in every locale', async () => {
+  for (const locale of ['ht', 'fr', 'en']) {
+    const { res } = await fetchNoRedirect(`/${locale}/advertiser`);
+    assert.ok([307, 308].includes(res.status), `/${locale}/advertiser redirects, got ${res.status}`);
+    assert.match(res.headers.get('location') || '', new RegExp(`/${locale}$`), 'redirect lands on the home page');
+  }
+});
+
+test('no public page links to the advertiser service, in any locale', async () => {
+  for (const locale of ['ht', 'fr', 'en']) {
+    const landing = await (await fetch(`${BASE}/`, { headers: { Cookie: `kay_locale=${locale}` } })).text();
+    assert.doesNotMatch(landing, /\/advertise/, `landing (${locale}) has no advertise link`);
+    assert.doesNotMatch(landing, /role=advertiser/, `landing (${locale}) has no advertiser signup link`);
+    const home = await (await fetch(`${BASE}/${locale}`, { headers: { Cookie: `kay_locale=${locale}` } })).text();
+    assert.doesNotMatch(home, /\/advertise/, `in-app home (${locale}) has no advertise link`);
+    assert.doesNotMatch(home, /role=advertiser/, `in-app home (${locale}) has no advertiser signup link`);
+    const signup = await (await fetch(`${BASE}/${locale}/signup`)).text();
+    assert.doesNotMatch(signup, /role=advertiser/, `signup (${locale}) offers no advertiser deep link`);
+  }
+  const llms = await (await fetch(`${BASE}/llms.txt`)).text();
+  assert.doesNotMatch(llms, /\/advertise/, 'llms.txt lists no advertise page');
+  const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text();
+  assert.doesNotMatch(sitemap, /\/advertise/, 'sitemap lists no advertise page');
+});

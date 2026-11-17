@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getDict } from '@/lib/dictionaries';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
+import { SHOW_ADVERTISE } from '@/lib/config';
 import { createAccount } from '@/lib/account';
 import TabBar from '@/components/TabBar';
 import BackButton from '@/components/BackButton';
@@ -37,9 +38,11 @@ export default function Signup(props) {
   useEffect(() => {
     fetch('/api/settings').then((r) => r.json()).then(setDestination).catch(() => {});
     // Deep links that already chose a role (e.g. "Post a home")
-    // skip the chooser.
+    // skip the chooser. The advertiser deep link (?role=advertiser)
+    // is ignored while SHOW_ADVERTISE is false — the service is not
+    // offered (Nov 17, 2026, Spencer) — so the chooser stays up.
     const preRole = new URLSearchParams(window.location.search).get('role');
-    if (preRole === 'landlord' || preRole === 'advertiser') { setRole(preRole); setStep(1); }
+    if (preRole === 'landlord' || (preRole === 'advertiser' && SHOW_ADVERTISE)) { setRole(preRole); setStep(1); }
   }, []);
 
   function chooseRole() {

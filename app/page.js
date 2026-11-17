@@ -9,7 +9,7 @@ import { getPromoCounts } from '@/lib/promo-server';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT, SHOW_PROMO_BANNER } from '@/lib/config';
+import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT, SHOW_PROMO_BANNER, SHOW_ADVERTISE } from '@/lib/config';
 import Icon from '@/components/Icon';
 import PromoPrice from '@/components/PromoPrice';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
@@ -33,10 +33,13 @@ import { safeJsonLd } from '@/lib/jsonld';
 //   it waits until there is a check behind it. The value strip says only
 //   what the site actually does today.
 //
-// - No "Local Stores" nav item. Advertisers get one footer link to the
-//   Advertise page (/{locale}/advertise), which explains the 100–1,000
-//   HTG picture-ad model; their ads appear in the app-home carousel,
-//   never mixed into landing search results.
+// - No "Local Stores" nav item. Advertisers used to get one footer
+//   link to the Advertise page (/{locale}/advertise), which explains
+//   the 100–1,000 HTG picture-ad model; their ads appear in the
+//   app-home carousel, never mixed into landing search results. NOT
+//   OFFERED (Nov 17, 2026, Spencer — "we will not yet offer this
+//   service"): while SHOW_ADVERTISE is false the footer link is gone
+//   and the Advertise page redirects to the home page.
 //
 // - Nothing is described as "handpicked". The homes below are the NEWEST
 //   real listings, in the order the server returns them. Paid placement
@@ -283,7 +286,7 @@ export default async function Landing() {
 
         <footer className="lp-footer">
           <Link href={`/${lang}/privacy`}>{t.privacy}</Link>
-          <Link href={`/${lang}/advertise`}>{t.advertiseTitle}</Link>
+          {SHOW_ADVERTISE && <Link href={`/${lang}/advertise`}>{t.advertiseTitle}</Link>}
         </footer>
       </main>
     </div>
