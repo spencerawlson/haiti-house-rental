@@ -147,6 +147,20 @@ export default async function Listings(props) {
             failedText={t.searchSaveFailed}
           />
         </div>
+        {/* AdSense "Listing Top" (spot 3): responsive Display unit, at
+            the top of the results, under the filters, above the listing
+            cards. Only the slot + push go here — the loader script is
+            already in <head> (app/layout.js). No creative renders until
+            AdSense approves the site; this is the slot markup only. */}
+        <div style={{ marginBottom: 16 }}>
+          <ins className="adsbygoogle"
+            style={{ display: 'block' }}
+            data-ad-client="ca-pub-7457789518091238"
+            data-ad-slot="5062595612"
+            data-ad-format="auto"
+            data-full-width-responsive="true" />
+          <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
+        </div>
         {view === 'map' ? (
           <ListingMap listings={mapPins(shown)} locale={params.locale} t={t} />
         ) : (
