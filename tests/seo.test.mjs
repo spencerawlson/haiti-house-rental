@@ -73,6 +73,16 @@ for (const locale of ['ht', 'fr', 'en']) {
   });
 }
 
+test('the home page carries the AdSense loader script (unconditional)', async () => {
+  const { html } = await home('ht');
+  const m = html.match(
+    /<script[^>]*pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js\?client=ca-pub-7457789518091238[^>]*>/,
+  );
+  assert.ok(m, 'AdSense script tag present');
+  assert.match(m[0], /\basync\b/, 'AdSense script is async');
+  assert.match(m[0], /crossorigin="anonymous"/, 'AdSense script carries crossorigin="anonymous"');
+});
+
 test('/llms.txt is real text/plain, not the home page', async () => {
   const res = await fetch(`${BASE}/llms.txt`);
   assert.equal(res.status, 200);

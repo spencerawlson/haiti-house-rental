@@ -63,6 +63,11 @@ export default function RootLayout({ children }) {
             https://ventoryn.app in script-src and connect-src and give this
             tag the nonce. */}
         <script defer data-site="8e4efb3617282d82871983cd" src="https://ventoryn.app/v.js" />
+        {/* Google AdSense loader (publisher ca-pub-7457789518091238) —
+            unconditional: no consent gating, no ad units/slots here — those
+            are separate work. The JSX crossOrigin renders as
+            crossorigin="anonymous" in the HTML, exactly the tag supplied. */}
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7457789518091238" crossOrigin="anonymous" />
       </head>
       <body className={nunito.className}>
         {/* No-flash theme script: applies the stored theme (or the system
