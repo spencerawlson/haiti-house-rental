@@ -11,7 +11,9 @@
 // listings, or the map feed; the Shop page shows sections first and
 // filters to one section; empty sections say so plainly; no
 // furniture purchase payment exists in v1 (browse + contact seller).
-// The Shop is visible (SHOW_SHOP=true). Nobody pays anything any
+// The Shop cards are hidden (SHOW_SHOP=false, Nov 2026): the landing and
+// Account pages show no Shop entry, but the Shop page itself still
+// renders for direct visits. Nobody pays anything any
 // more: landlords and the founder seller are active at signup /
 // creation, with paid_until NULL.
 import { test, before } from 'node:test';
@@ -159,6 +161,40 @@ test('the Shop is NOT visible from the landing page', { skip }, async () => {
   const landing = await (await fetch(`${BASE}/`, { headers: { Cookie: 'kay_locale=ht' } })).text();
   assert.ok(!landing.includes('Mèble Kay Ou'), 'landing shows no Shop banner');
   assert.ok(!landing.includes('/ht/shop'), 'landing does not link into the Shop');
+});
+
+// Nov 2026 (Spencer, correction): the strip STAYS, but its first item is
+// free for everyone — renters looking, people looking for homes, AND
+// owners wanting tenants — not just seekers. The other three items
+// are unchanged.
+test('the landing strip says free for everyone, in all three locales', { skip }, async () => {
+  const want = {
+    ht: ['Gratis pou tout moun', 'Mesaj prive ak pwopriyetè a', 'Pran randevou pou vizite nan app la', 'Ou ka siyale nenpòt anons'],
+    fr: ['Gratuit pour tout le monde'],
+    en: ['Free for everyone'],
+  };
+  const gone = {
+    ht: ['Gratis pou moun k ap chèche kay'],
+    fr: ['Gratuit pour les locataires'],
+    en: ['Free for people looking for a home'],
+  };
+  for (const locale of ['ht', 'fr', 'en']) {
+    const html = await (await fetch(`${BASE}/`, { headers: { Cookie: `kay_locale=${locale}` } })).text();
+    for (const s of want[locale]) assert.ok(html.includes(s), `${locale}: strip shows "${s}"`);
+    for (const s of gone[locale]) assert.ok(!html.includes(s), `${locale}: old wording gone "${s}"`);
+  }
+});
+
+// Nov 2026 (Spencer): the "Mèble Kay Ou" furniture card is gone from the
+// Account page (SHOW_SHOP=false). The Shop page itself still renders;
+// the seller post flow is untouched (see the seller tests above).
+test('the Account page shows no Shop card when SHOW_SHOP is false', { skip }, async () => {
+  const logged = await signInRaw(L.username, 'pw-l');
+  assert.equal(logged.status, 200, JSON.stringify(logged.data));
+  const html = await (await fetch(`${BASE}/ht/account`, { headers: { Cookie: logged.cookie } })).text();
+  assert.ok(!html.includes('Mèble Kay Ou'), 'account shows no Shop card title');
+  assert.ok(!html.includes('Gade Boutik la'), 'account shows no Shop browse link');
+  assert.ok(!html.includes('/ht/shop'), 'account does not link into the Shop');
 });
 
 test('the admin sees Shop items to moderate; the admin house feed stays houses-only', { skip }, async () => {
