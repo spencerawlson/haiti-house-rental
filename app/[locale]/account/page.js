@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, use } from 'react';
 import { getDict } from '@/lib/dictionaries';
-import { LOCALES, SHOW_SHOP } from '@/lib/config';
+import { LOCALES, SHOW_SHOP, SHOW_ADVERTISE } from '@/lib/config';
 import { departmentName, communeName } from '@/lib/departments';
 import { getMyAccount, signOut } from '@/lib/account';
 import AvatarUpload from '@/components/AvatarUpload';
@@ -191,7 +191,7 @@ export default function Account(props) {
           <MenuRow href={`${base}/near-me`} icon="pin" label={t.nearMe} />
           {isLandlord && <MenuRow href={`${base}/library`} icon="home" label={t.library} />}
           {isLandlord && <MenuRow href={`${base}/payments`} icon="card" label={t.myPayments} badge={0} />}
-          {isAdvertiser && <MenuRow href={`${base}/advertiser`} icon="megaphone" label={t.advertiserTitle} />}
+          {SHOW_ADVERTISE && isAdvertiser && <MenuRow href={`${base}/advertiser`} icon="megaphone" label={t.advertiserTitle} />}
           {loaded && !me && <MenuRow href={`${base}/list`} icon="＋" label={t.postHome} />}
         </nav>
 

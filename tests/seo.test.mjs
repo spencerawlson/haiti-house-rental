@@ -90,7 +90,7 @@ test('/llms.txt is real text/plain, not the home page', async () => {
   const txt = await res.text();
   assert.match(txt, /^# Kay Ayiti/m);
   assert.match(txt, /\/ht\/listings/);
-  assert.match(txt, /\/fr\/advertise/);
+  assert.doesNotMatch(txt, /\/advertise/, 'the hidden advertiser service is not advertised');
   assert.match(txt, /\/en\/shop/);
   assert.match(txt, /sitemap\.xml/);
   assert.doesNotMatch(txt, /<!DOCTYPE html|<html/i, 'not the home page HTML');
