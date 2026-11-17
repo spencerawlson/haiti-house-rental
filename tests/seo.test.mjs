@@ -96,6 +96,15 @@ test('/llms.txt is real text/plain, not the home page', async () => {
   assert.doesNotMatch(txt, /<!DOCTYPE html|<html/i, 'not the home page HTML');
 });
 
+test('/ads.txt serves the AdSense publisher line, not the home page', async () => {
+  const res = await fetch(`${BASE}/ads.txt`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-type') || '', /text\/plain/);
+  const txt = await res.text();
+  assert.equal(txt.trim(), 'google.com, pub-7457789518091238, DIRECT, f08c47fec0942fa0');
+  assert.doesNotMatch(txt, /<!DOCTYPE html|<html/i, 'not the home page HTML');
+});
+
 test('a plain-http visitor (CF-Visitor) is redirected to https', async () => {
   const res = await fetch(`${BASE}/ht`, {
     headers: { 'cf-visitor': '{"scheme":"http"}' },
