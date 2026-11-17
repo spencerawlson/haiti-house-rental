@@ -155,6 +155,26 @@ test('the root landing (saved ht locale) shows the free-forever message', async 
   assert.ok(html.includes('Kay Ayiti gratis nèt pou tout moun, pou tout tan.'));
 });
 
+// AdSense "Landing Top" (spot 1): the slot + push, directly under the
+// search box. No creative renders until AdSense approves the site —
+// this asserts the slot markup only.
+test('the root landing carries the AdSense Landing Top slot', async () => {
+  const res = await fetch(`${BASE}/`, { headers: { Cookie: 'kay_locale=ht' } });
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.ok(html.includes('data-ad-slot="4617366344"'), 'Landing Top slot present');
+  assert.ok(html.includes('(adsbygoogle = window.adsbygoogle || []).push({});'), 'push call present');
+});
+
+// AdSense "Listing Top" (spot 3): the slot + push, top of the results.
+test('the listings page carries the AdSense Listing Top slot', async () => {
+  const res = await fetch(`${BASE}/ht/listings`);
+  assert.equal(res.status, 200);
+  const html = await res.text();
+  assert.ok(html.includes('data-ad-slot="5062595612"'), 'Listing Top slot present');
+  assert.ok(html.includes('(adsbygoogle = window.adsbygoogle || []).push({});'), 'push call present');
+});
+
 test('an https visitor is not redirected', async () => {
   const res = await fetch(`${BASE}/ht`, {
     headers: { 'cf-visitor': '{"scheme":"https"}' },

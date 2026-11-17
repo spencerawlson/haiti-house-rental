@@ -151,10 +151,14 @@ test('furniture never appears in house listings; the Shop page filters by sectio
   assert.ok(allHtml.includes('Ou jwenn kay la. Kounye a, mèble l.'), 'Shop subline renders');
 });
 
-test('the Shop is visible from the landing page', { skip }, async () => {
+// Nov 2026: the "Mèble Kay Ou" banner was removed from the landing page
+// (Spencer) — the Shop stays hidden, so the landing must not show the
+// banner or link into the Shop. The Shop page itself still renders
+// (see the section test above).
+test('the Shop is NOT visible from the landing page', { skip }, async () => {
   const landing = await (await fetch(`${BASE}/`, { headers: { Cookie: 'kay_locale=ht' } })).text();
-  assert.ok(landing.includes('Mèble Kay Ou'), 'landing shows the Shop banner');
-  assert.ok(landing.includes('/ht/shop'), 'landing links into the Shop');
+  assert.ok(!landing.includes('Mèble Kay Ou'), 'landing shows no Shop banner');
+  assert.ok(!landing.includes('/ht/shop'), 'landing does not link into the Shop');
 });
 
 test('the admin sees Shop items to moderate; the admin house feed stays houses-only', { skip }, async () => {

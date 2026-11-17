@@ -9,7 +9,7 @@ import { getPromoCounts } from '@/lib/promo-server';
 import { getDict } from '@/lib/dictionaries';
 import { getListings } from '@/lib/listings-server';
 import { DEPARTMENTS, departmentName, communeName } from '@/lib/departments';
-import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT, SHOW_PROMO_BANNER, SHOW_SHOP } from '@/lib/config';
+import { LOCALES, JOIN_FEE_HTG, QUARTER_FEE_HTG, PROMO_SHOW_COUNT_AT, SHOW_PROMO_BANNER } from '@/lib/config';
 import Icon from '@/components/Icon';
 import PromoPrice from '@/components/PromoPrice';
 import LandingLangSwitch from '@/components/LandingLangSwitch';
@@ -206,6 +206,21 @@ export default async function Landing() {
             </div>
           </form>
 
+          {/* AdSense "Landing Top" (spot 1): responsive Display unit,
+              directly under the search box, above the chips. Only the
+              slot + push go here — the loader script is already in
+              <head> (app/layout.js). No creative renders until AdSense
+              approves the site; this is the slot markup only. */}
+          <div className="lp-ad">
+            <ins className="adsbygoogle"
+              style={{ display: 'block' }}
+              data-ad-client="ca-pub-7457789518091238"
+              data-ad-slot="4617366344"
+              data-ad-format="auto"
+              data-full-width-responsive="true" />
+            <script dangerouslySetInnerHTML={{ __html: '(adsbygoogle = window.adsbygoogle || []).push({});' }} />
+          </div>
+
           <nav className="lp-chips" aria-label={t.department}>
             {QUICK_COMMUNES.map((c) => (
               <Link key={c} href={`/${lang}/listings?q=${encodeURIComponent(c)}`}>{communeName(c, lang)}</Link>
@@ -223,21 +238,6 @@ export default async function Landing() {
       </section>
 
       <main className="container lp-main">
-        {/* Shop banner (Nov 2026): "Mèble Kay Ou" — the catchy
-            furniture entry. Real seller items only, via the Shop page;
-            this banner itself invents no product, price or seller. */}
-        {SHOW_SHOP && (
-        <section className="card" style={{ background: 'var(--primary-soft)' }}>
-          <div className="card-body" style={{ display: 'grid', gap: 8 }}>
-            <h2 style={{ margin: 0 }}>{t.shopTitle}</h2>
-            <p className="muted" style={{ margin: 0 }}>{t.shopSubline}</p>
-            <p style={{ margin: 0, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Link className="btn" href={`/${lang}/shop`}>{t.shopBrowse} →</Link>
-            </p>
-          </div>
-        </section>
-        )}
-
         {/* Real listings only. When there are barely any, say so rather
             than padding the page with invented homes. */}
         <div className="section-head">
