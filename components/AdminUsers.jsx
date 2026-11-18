@@ -200,10 +200,13 @@ export default function AdminUsers({ locale, t }) {
         {total > 0 && <span className="muted">{t.showingRange.replace('{first}', first).replace('{last}', last).replace('{total}', total.toLocaleString())}</span>}
       </div>
 
-      {/* One row per account instead of a card each: the same
-          information and the same actions, in a table that scrolls
-          sideways on a narrow phone (report-table pattern). */}
-      <div className="report-scroll">
+      {/* One row per account in an Excel-style sheet: gridlines on
+          every cell, sticky header and sticky account column, and
+          the sheet scrolls both ways (up/down and left/right), so a
+          number is never clipped — it scrolls into view. The partner
+          form sits below the table, in its own section, so the grid
+          gets the full width of the admin content area. */}
+      <div className="accounts-scroll">
         <table className="report-table accounts-table">
           <thead>
             <tr>
