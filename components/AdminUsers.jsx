@@ -200,83 +200,117 @@ export default function AdminUsers({ locale, t }) {
         {total > 0 && <span className="muted">{t.showingRange.replace('{first}', first).replace('{last}', last).replace('{total}', total.toLocaleString())}</span>}
       </div>
 
-      <div className="grid">
-        {accounts.map((a) => (
-          <section key={a.username} className="card">
-            <div className="card-body">
-              <h3 style={{ margin: '0 0 4px' }}>{a.id ? `${a.id} · ` : ''}{a.name} · @{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? <> · <Icon name="partner" /> {t.partner}</> : ''}</h3>
-              <p className="muted" style={{ margin: '0 0 4px' }}>
-                {a.phone}{a.email ? ` · ${a.email}` : ''}{a.location ? ` · ${communeName(a.location.commune, locale)}, ${departmentName(a.location.department, locale)}` : ''}
-              </p>
-              <p className="muted" style={{ margin: '0 0 8px' }}>
-                {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? <><Icon name="hourglass" /> {t.transferFrom} {a.phone} {t.viaProvider} {a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}</> : t.accountPending}
-                {a.role === 'landlord' && !a.partner && (
-                  <>
-                    {' · '}
-                    {{ pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[a.billingStatus || 'pending']}
-                    {a.paidUntil ? ` · ${t.paidUntilLabel} ${new Date(a.paidUntil).toLocaleDateString(dateLocale)}` : ''}
-                  </>
-                )}
-              </p>
-              <div className="metric-row">
-                <span title={t.lastSeenHelp}>
-                  <Icon name="eye" /> {t.lastSeen}: <strong>{sinceLabel(a.metrics?.lastSeenAt, t)}</strong>
-                  {a.metrics?.activeSessions > 0 && <span className="live-dot" title={t.liveNow} />}
-                </span>
-                <span title={t.loginsHelp}><Icon name="key" /> {t.logins}: <strong>{a.metrics?.logins ?? 0}</strong></span>
-                <span title={t.avgSessionHelp}><Icon name="timer" /> {t.avgSession}: <strong>{durationLabel(a.metrics?.avgSessionMs)}</strong></span>
-                <span title={t.visitsCountHelp}>
-                  <Icon name="calendar" /> {t.visitsCount}: <strong>{a.metrics?.visits ?? 0}</strong>
-                  {' '}<span className="muted">({a.metrics?.visitsActive ?? 0} {t.visitsLive})</span>
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {a.role !== 'tenant' && !a.activated && (
-                  <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
-                )}
-                {a.role !== 'tenant' && a.activated && (
-                  <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
-                )}
-                <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="key" /> {t.resetCodeButton}</button>
-                <Link className="btn btn-secondary" href={`/${locale}/admin/chats?username=${encodeURIComponent(a.username)}`} title={t.adminChatTitle} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="chat" /></Link>
-                {a.fraudSuspended ? (
-                  <button className="btn" type="button" onClick={() => setFraudSuspended(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsReactivate}</button>
-                ) : (
-                  <button className="btn btn-secondary" type="button" onClick={() => setFraudSuspended(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsSuspend}</button>
-                )}
-              </div>
-              {a.fraudSuspended && (
-                <p className="notice" style={{ margin: '8px 0 0' }}>{t.flagsSuspendedBadge}{a.fraudReason ? ` · ${a.fraudReason}` : ''}</p>
-              )}
-              {a.role !== 'tenant' && (
-                <div className="limit-row">
-                  <span><Icon name="home" /> {t.listingLimitLabel}: <strong>{a.liveListings ?? 0}{a.listingLimit !== null && a.listingLimit !== undefined ? ` / ${a.listingLimit}` : ''}</strong>{a.listingLimit === null || a.listingLimit === undefined ? <span className="muted"> · {t.listingLimitNone}</span> : ''}</span>
-                  <input
-                    className="input"
-                    type="number"
-                    min="0"
-                    inputMode="numeric"
-                    value={limits[a.username] ?? (a.listingLimit ?? '')}
-                    onChange={(e) => setLimits((prev) => ({ ...prev, [a.username]: e.target.value }))}
-                    placeholder={t.listingLimitNone}
-                    aria-label={t.listingLimitLabel}
-                    style={{ width: 110 }}
-                  />
-                  <button className="btn btn-secondary" type="button" onClick={() => saveLimit(a)} style={{ minHeight: 40, padding: '8px 14px' }}>{t.listingLimitSave}</button>
-                  {a.listingLimit !== null && a.listingLimit !== undefined && (
-                    <button className="btn btn-secondary" type="button" onClick={() => saveLimit(a, true)} style={{ minHeight: 40, padding: '8px 14px' }}>{t.listingLimitClear}</button>
+      {/* One row per account instead of a card each: the same
+          information and the same actions, in a table that scrolls
+          sideways on a narrow phone (report-table pattern). */}
+      <div className="report-scroll">
+        <table className="report-table accounts-table">
+          <thead>
+            <tr>
+              <th>{t.account}</th>
+              <th>{t.accountsColContact}</th>
+              <th>{t.accountsColStatus}</th>
+              <th title={t.lastSeenHelp}>{t.lastSeen}</th>
+              <th title={t.loginsHelp}>{t.logins}</th>
+              <th title={t.avgSessionHelp}>{t.avgSession}</th>
+              <th title={t.visitsCountHelp}>{t.visitsCount}</th>
+              <th>{t.listingLimitLabel}</th>
+              <th>{t.accountsColActions}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {accounts.map((a) => (
+              <tr key={a.username}>
+                <td>
+                  <strong>{a.id ? `${a.id} · ` : ''}{a.name}</strong>
+                  <br />
+                  <span className="muted">@{a.username} · {a.role === 'tenant' ? t.roleTenant : t.roleLandlord}{a.partner ? <> · <Icon name="partner" /> {t.partner}</> : ''}</span>
+                </td>
+                <td>
+                  {a.phone}
+                  {a.email && <><br />{a.email}</>}
+                  {a.location && <><br /><span className="muted">{communeName(a.location.commune, locale)}, {departmentName(a.location.department, locale)}</span></>}
+                </td>
+                <td>
+                  {a.activated ? `✓ ${t.accountActive}` : a.transferSent ? <><Icon name="hourglass" /> {t.transferFrom} {a.phone} {t.viaProvider} {a.transferProvider === 'natcash' ? 'NatCash' : 'MonCash'}</> : t.accountPending}
+                  {a.role === 'landlord' && !a.partner && (
+                    <>
+                      <br />
+                      <span className="muted">
+                        {{ pending: t.billingPending, active: t.billingActive, suspended: t.billingSuspended, deactivated: t.billingDeactivated }[a.billingStatus || 'pending']}
+                        {a.paidUntil ? ` · ${t.paidUntilLabel} ${new Date(a.paidUntil).toLocaleDateString(dateLocale)}` : ''}
+                      </span>
+                    </>
                   )}
-                  {limitMsg[a.username] && <span className="muted">{limitMsg[a.username]}</span>}
-                </div>
-              )}
-              {resetCodes[a.username] && (
-                <p style={{ margin: '8px 0 0' }}>{t.resetCodeIssued} <strong style={{ fontFamily: 'monospace', fontSize: 18 }}>{resetCodes[a.username]}</strong></p>
-              )}
-            </div>
-          </section>
-        ))}
-        {!loading && accounts.length === 0 && <p className="muted">{t.noAccounts}</p>}
+                  {a.fraudSuspended && (
+                    <>
+                      <br />
+                      <span className="notice">{t.flagsSuspendedBadge}{a.fraudReason ? ` · ${a.fraudReason}` : ''}</span>
+                    </>
+                  )}
+                </td>
+                <td>
+                  {sinceLabel(a.metrics?.lastSeenAt, t)}
+                  {a.metrics?.activeSessions > 0 && <span className="live-dot" title={t.liveNow} />}
+                </td>
+                <td>{a.metrics?.logins ?? 0}</td>
+                <td>{durationLabel(a.metrics?.avgSessionMs)}</td>
+                <td>
+                  {a.metrics?.visits ?? 0}
+                  {' '}<span className="muted">({a.metrics?.visitsActive ?? 0} {t.visitsLive})</span>
+                </td>
+                <td>
+                  {a.role === 'tenant' ? '—' : (
+                    <>
+                      <strong>{a.liveListings ?? 0}{a.listingLimit !== null && a.listingLimit !== undefined ? ` / ${a.listingLimit}` : ''}</strong>
+                      {a.listingLimit === null || a.listingLimit === undefined ? <span className="muted"> · {t.listingLimitNone}</span> : ''}
+                      <div className="limit-row">
+                        <input
+                          className="input"
+                          type="number"
+                          min="0"
+                          inputMode="numeric"
+                          value={limits[a.username] ?? (a.listingLimit ?? '')}
+                          onChange={(e) => setLimits((prev) => ({ ...prev, [a.username]: e.target.value }))}
+                          placeholder={t.listingLimitNone}
+                          aria-label={t.listingLimitLabel}
+                          style={{ width: 110 }}
+                        />
+                        <button className="btn btn-secondary" type="button" onClick={() => saveLimit(a)} style={{ minHeight: 40, padding: '8px 14px' }}>{t.listingLimitSave}</button>
+                        {a.listingLimit !== null && a.listingLimit !== undefined && (
+                          <button className="btn btn-secondary" type="button" onClick={() => saveLimit(a, true)} style={{ minHeight: 40, padding: '8px 14px' }}>{t.listingLimitClear}</button>
+                        )}
+                        {limitMsg[a.username] && <span className="muted">{limitMsg[a.username]}</span>}
+                      </div>
+                    </>
+                  )}
+                </td>
+                <td>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+                    {a.role !== 'tenant' && !a.activated && (
+                      <button className="btn" type="button" onClick={() => setActivated(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.activateAccount}</button>
+                    )}
+                    {a.role !== 'tenant' && a.activated && (
+                      <button className="btn btn-secondary" type="button" onClick={() => setActivated(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.deactivateAccount}</button>
+                    )}
+                    <button className="btn btn-secondary" type="button" onClick={() => issueResetCode(a.username)} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="key" /> {t.resetCodeButton}</button>
+                    <Link className="btn btn-secondary" href={`/${locale}/admin/chats?username=${encodeURIComponent(a.username)}`} title={t.adminChatTitle} style={{ minHeight: 40, padding: '8px 16px' }}><Icon name="chat" /></Link>
+                    {a.fraudSuspended ? (
+                      <button className="btn" type="button" onClick={() => setFraudSuspended(a.username, false)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsReactivate}</button>
+                    ) : (
+                      <button className="btn btn-secondary" type="button" onClick={() => setFraudSuspended(a.username, true)} style={{ minHeight: 40, padding: '8px 16px' }}>{t.flagsSuspend}</button>
+                    )}
+                  </div>
+                  {resetCodes[a.username] && (
+                    <p style={{ margin: '8px 0 0' }}>{t.resetCodeIssued} <strong style={{ fontFamily: 'monospace', fontSize: 18 }}>{resetCodes[a.username]}</strong></p>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+      {!loading && accounts.length === 0 && <p className="muted">{t.noAccounts}</p>}
 
       {pages > 1 && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center', marginTop: 16, flexWrap: 'wrap' }}>

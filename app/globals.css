@@ -529,7 +529,7 @@ a:hover { text-decoration: underline; }
 .admin-h2 { margin: 34px 0 12px; padding-top: 8px; font-size: 1.15rem; scroll-margin-top: 64px; border-top: 1px solid var(--line); }
 /* Users tab: accounts list beside the partner form on wide screens, so
    creating the next account never means scrolling past the whole list. */
-.admin-users-layout { display: grid; gap: 20px; align-items: start; }
+.admin-users-layout { display: grid; gap: 20px; align-items: start; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 900px) { .admin-users-layout { grid-template-columns: minmax(0, 1fr) 360px; } }
 .admin .card + .card { margin-top: 0; }
 
