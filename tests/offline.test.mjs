@@ -54,6 +54,11 @@ test('robots.txt and sitemap.xml are real files, not the home page', async () =>
   const rt = await robots.text();
   assert.match(rt, /Disallow: \/api\//);
   assert.match(rt, /Sitemap: /);
+  // The `list` rule must end-anchor: a bare `/*/list` prefix-matches
+  // `/[locale]/listings` and every listing page, blocking them from
+  // Google indexing (Search Console "Blocked by robots.txt", Nov 19 2026).
+  assert.match(rt, /Disallow: \/\*\/list\$/);
+  assert.doesNotMatch(rt, /Disallow: \/\*\/list\n/);
   const sm = await fetch(`${BASE}/sitemap.xml`);
   assert.match(sm.headers.get('content-type') || '', /xml/);
   const xml = await sm.text();
